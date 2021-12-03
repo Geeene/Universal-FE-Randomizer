@@ -1,6 +1,6 @@
-package ui.fe4;
+package ui.model;
 
-public class FE4PromotionOptions {
+public class PromotionOptions {
 	
 	public enum Mode {
 		STRICT,
@@ -11,11 +11,11 @@ public class FE4PromotionOptions {
 	public final Mode promotionMode;
 	
 	public final boolean allowMountChanges;
-	public final boolean allowEnemyOnlyPromotedClasses;
+	public final boolean allowEnemyOnlyPromotedClasses; //FE4 Only
 	
 	public final boolean requireCommonWeapon;
 	
-	public FE4PromotionOptions(Mode mode, boolean allowMountChange, boolean allowEnemyClass, boolean commonWeapon) {
+	public PromotionOptions(Mode mode, boolean allowMountChange, boolean allowEnemyClass, boolean commonWeapon) {
 		super();
 		this.promotionMode = mode;
 		

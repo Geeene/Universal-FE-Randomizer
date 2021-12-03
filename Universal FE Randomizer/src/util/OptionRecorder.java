@@ -7,7 +7,6 @@ import com.google.gson.Gson;
 import fedata.general.FEBase;
 import ui.fe4.FE4ClassOptions;
 import ui.fe4.FE4EnemyBuffOptions;
-import ui.fe4.FE4PromotionOptions;
 import ui.fe4.HolyBloodOptions;
 import ui.fe4.SkillsOptions;
 import ui.fe9.FE9ClassOptions;
@@ -15,6 +14,7 @@ import ui.fe9.FE9SkillsOptions;
 import ui.model.BaseOptions;
 import ui.model.ClassOptions;
 import ui.model.EnemyOptions;
+import ui.model.PromotionOptions;
 import ui.model.FE9EnemyBuffOptions;
 import ui.model.FE9OtherCharacterOptions;
 import ui.model.GrowthOptions;
@@ -49,6 +49,7 @@ public class OptionRecorder {
 		public ItemAssignmentOptions itemAssignmentOptions;
 		public String seed;
 		public Integer version;
+		public PromotionOptions promo;
 	}
 	
 	public static class FE4OptionBundle {
@@ -57,7 +58,7 @@ public class OptionRecorder {
 		public HolyBloodOptions holyBlood;
 		public SkillsOptions skills;
 		public FE4ClassOptions classes;
-		public FE4PromotionOptions promo;
+		public PromotionOptions promo;
 		public FE4EnemyBuffOptions enemyBuff;
 		public MiscellaneousOptions misc;
 		public String seed;
@@ -250,7 +251,7 @@ public class OptionRecorder {
 	}
 	
 	public static void recordFE4Options(GrowthOptions growthOptions, BaseOptions basesOptions, HolyBloodOptions bloodOptions, SkillsOptions skillOptions, 
-			FE4ClassOptions classOptions, FE4PromotionOptions promoOptions, FE4EnemyBuffOptions buffOptions, MiscellaneousOptions miscOptions, String seed) {
+			FE4ClassOptions classOptions, PromotionOptions promoOptions, FE4EnemyBuffOptions buffOptions, MiscellaneousOptions miscOptions, String seed) {
 		FE4OptionBundle bundle = new FE4OptionBundle();
 		bundle.growths = growthOptions;
 		bundle.bases = basesOptions;
@@ -268,7 +269,7 @@ public class OptionRecorder {
 		saveOptions(options);
 	}
 	
-	public static void recordGBAFEOptions(FEBase.GameType gameType, GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
+	public static void recordGBAFEOptions(FEBase.GameType gameType, GrowthOptions growths, BaseOptions bases, ClassOptions classes, PromotionOptions promos, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions, RecruitmentOptions recruitment, ItemAssignmentOptions itemAssignment, String seed) {
 		GBAOptionBundle bundle = new GBAOptionBundle();
 		bundle.growths = growths;

@@ -33,7 +33,7 @@ import util.AddressRange;
 import util.WhyDoesJavaNotHaveThese;
 
 public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAFEItemProvider {
-	public static final String FriendlyName = "ファイアーエムブレム　封印の剣";
+	public static final String FriendlyName = "ãƒ•ã‚¡ã‚¤ã‚¢ãƒ¼ã‚¨ãƒ ãƒ–ãƒ¬ãƒ ã€€å°�å�°ã�®å‰£";
 	public static final String GameCode = "AFEJ";
 
 	public static final long CleanCRC32 = 0xD38763E1L;
@@ -2091,7 +2091,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	}
 	
 	public Set<GBAFECharacter> extraCharacters() {
-		return new HashSet<GBAFECharacter>();
+		return new HashSet<GBAFECharacter>(Arrays.asList(Character.ZEPHIEL, Character.BRUNYA, Character.HECTOR, Character.MURDOCK, Character.GALE, Character.GUINEVERE, Character.ELIWOOD, Character.NARSHEN));
 	}
 	
 	public Set<GBAFECharacter> charactersExcludedFromRandomRecruitment() {

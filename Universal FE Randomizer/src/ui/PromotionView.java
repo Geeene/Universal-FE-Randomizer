@@ -1,4 +1,4 @@
-package ui.fe4;
+package ui;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
@@ -7,7 +7,10 @@ import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
 
-public class FE4PromotionView extends Composite {
+import ui.model.PromotionOptions;
+import ui.model.PromotionOptions.Mode;
+
+public class PromotionView extends Composite {
 	private Group container;
 	
 	private Button strictButton;
@@ -19,9 +22,9 @@ public class FE4PromotionView extends Composite {
 	private Button randomButton;
 	private Button commonWeaponButton;
 	
-	private FE4PromotionOptions.Mode currentMode;
+	private PromotionOptions.Mode currentMode;
 	
-	public FE4PromotionView(Composite parent, int style) {
+	public PromotionView(Composite parent, int style) {
 		super(parent, style);
 		
 		setLayout(new FillLayout());
@@ -45,7 +48,7 @@ public class FE4PromotionView extends Composite {
 		strictButton.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
-				setMode(FE4PromotionOptions.Mode.STRICT);
+				setMode(PromotionOptions.Mode.STRICT);
 			}
 		});
 		
@@ -62,7 +65,7 @@ public class FE4PromotionView extends Composite {
 		looseButton.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
-				setMode(FE4PromotionOptions.Mode.LOOSE);
+				setMode(PromotionOptions.Mode.LOOSE);
 			}
 		});
 		
@@ -101,7 +104,7 @@ public class FE4PromotionView extends Composite {
 		randomButton.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
-				setMode(FE4PromotionOptions.Mode.RANDOM);
+				setMode(PromotionOptions.Mode.RANDOM);
 			}
 		});
 		
@@ -122,37 +125,37 @@ public class FE4PromotionView extends Composite {
 		commonWeaponButton.setLayoutData(optionData);
 	}
 	
-	private void setMode(FE4PromotionOptions.Mode mode) {
+	private void setMode(PromotionOptions.Mode mode) {
 		currentMode = mode;
 		
-		allowMountChangeButton.setEnabled(currentMode == FE4PromotionOptions.Mode.LOOSE);
-		allowEnemyClassButton.setEnabled(currentMode == FE4PromotionOptions.Mode.LOOSE);
-		commonWeaponButton.setEnabled(currentMode == FE4PromotionOptions.Mode.RANDOM);	
+		allowMountChangeButton.setEnabled(currentMode == PromotionOptions.Mode.LOOSE);
+		allowEnemyClassButton.setEnabled(currentMode == PromotionOptions.Mode.LOOSE);
+		commonWeaponButton.setEnabled(currentMode == PromotionOptions.Mode.RANDOM);	
 	}
 	
-	public FE4PromotionOptions getPromotionOptions() {
-		return new FE4PromotionOptions(currentMode, allowMountChangeButton.getSelection(), allowEnemyClassButton.getSelection(), commonWeaponButton.getSelection());
+	public PromotionOptions getPromotionOptions() {
+		return new PromotionOptions(currentMode, allowMountChangeButton.getSelection(), allowEnemyClassButton.getSelection(), commonWeaponButton.getSelection());
 	}
 	
-	public void setPromotionOptions(FE4PromotionOptions options) {
+	public void setPromotionOptions(PromotionOptions options) {
 		if (options == null) {
 			// Shouldn't happen.
 		} else {
 			currentMode = options.promotionMode;
 			
-			if (currentMode == null) { currentMode = FE4PromotionOptions.Mode.STRICT; }
+			if (currentMode == null) { currentMode = PromotionOptions.Mode.STRICT; }
 			
-			strictButton.setSelection(currentMode == FE4PromotionOptions.Mode.STRICT);
+			strictButton.setSelection(currentMode == PromotionOptions.Mode.STRICT);
 			
-			looseButton.setSelection(currentMode == FE4PromotionOptions.Mode.LOOSE);
-			allowMountChangeButton.setEnabled(currentMode == FE4PromotionOptions.Mode.LOOSE);
+			looseButton.setSelection(currentMode == PromotionOptions.Mode.LOOSE);
+			allowMountChangeButton.setEnabled(currentMode == PromotionOptions.Mode.LOOSE);
 			allowMountChangeButton.setSelection(options.allowMountChanges);
-			allowEnemyClassButton.setEnabled(currentMode == FE4PromotionOptions.Mode.LOOSE);
+			allowEnemyClassButton.setEnabled(currentMode == PromotionOptions.Mode.LOOSE);
 			allowEnemyClassButton.setSelection(options.allowEnemyOnlyPromotedClasses);
 			
 			
-			randomButton.setSelection(currentMode == FE4PromotionOptions.Mode.RANDOM);
-			commonWeaponButton.setEnabled(currentMode == FE4PromotionOptions.Mode.RANDOM);
+			randomButton.setSelection(currentMode == PromotionOptions.Mode.RANDOM);
+			commonWeaponButton.setEnabled(currentMode == PromotionOptions.Mode.RANDOM);
 			commonWeaponButton.setSelection(options.requireCommonWeapon);
 		}
 	}

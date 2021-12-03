@@ -102,7 +102,7 @@ public class FE9ClassRandomizer {
 					}).collect(Collectors.toList());
 					PoolDistributor<FE9Class> pool = new PoolDistributor<FE9Class>();
 					for (FE9Class charClass : classList) {
-						pool.addItem(charClass, classPool.itemCount(charClass));
+						pool.addItem(charClass);
 					}
 					newClass = pool.getRandomItem(rng, true);
 					classPool.removeItem(newClass, false);

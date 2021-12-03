@@ -56,6 +56,7 @@ import ui.model.ItemAssignmentOptions.WeaponReplacementPolicy;
 import ui.model.MiscellaneousOptions;
 import ui.model.OtherCharacterOptions;
 import ui.model.PromotionOptions;
+import ui.model.PromotionOptions.Mode;
 import ui.model.RecruitmentOptions;
 import ui.model.WeaponOptions;
 import util.Diff;
@@ -80,7 +81,7 @@ public class GBARandomizer extends Randomizer {
 	private GrowthOptions growths;
 	private BaseOptions bases;
 	private ClassOptions classes;
-	private PromotionOptions promos;
+	private PromotionOptions promoOptions;
 	private WeaponOptions weapons;
 	private OtherCharacterOptions otherCharacterOptions;
 	private EnemyOptions enemies;
@@ -127,7 +128,7 @@ public class GBARandomizer extends Randomizer {
 		this.growths = growths;
 		this.bases = bases;
 		this.classes = classes;
-		this.promos = promos;
+		this.promoOptions = promos;
 		this.weapons = weapons;
 		otherCharacterOptions = other;
 		this.enemies = enemies;
@@ -332,12 +333,14 @@ public class GBARandomizer extends Randomizer {
 		charData.compileDiffs(diffCompiler);
 		chapterData.compileDiffs(diffCompiler);
 		classData.compileDiffs(diffCompiler, handler, freeSpace);
-		promotionData.compileDiffs(diffCompiler, handler);
 		itemData.compileDiffs(diffCompiler, handler);
 		paletteData.compileDiffs(diffCompiler);
 		textData.commitChanges(freeSpace, diffCompiler);
 
 		if (gameType == GameType.FE8) {
+			// Promotion Data Compile only needed for FE8, for FE6 and FE7 it's commited
+			// with the Class Data
+			promotionData.compileDiffs(diffCompiler, handler);
 			fe8_paletteMapper.commitChanges(diffCompiler);
 			fe8_promotionManager.compileDiffs(diffCompiler);
 
@@ -768,14 +771,52 @@ public class GBARandomizer extends Randomizer {
 		}
 	}
 
-	private void randomizePromotionsIfNecessary(String seed) {
-		if (gameType == GameType.FE8) {
-			if (recruitOptions != null) {
-				updateStatusString("Randomizing Promotions...");
-				Random rng = new Random(SeedGenerator.generateSeedValue(seed, RecruitmentRandomizer.rngSalt));
-				FE8PromotionRandomizer.randomizePromotions(promos, promotionData, rng);
-			}
+	private void randomizePromotionsIfNecessary(String seed) throws IOException {
+		prepareForPromotionRandomization();
+		if (promoOptions != null && !promoOptions.promotionMode.equals(Mode.STRICT)) {
+			updateStatusString("Randomizing Promotions...");
+			Random rng = new Random(SeedGenerator.generateSeedValue(seed, RecruitmentRandomizer.rngSalt));
+			PromotionRandomizer.randomizePromotions(promoOptions, promotionData, classData, gameType, rng);
 		}
+	}
+
+	/**
+	 * If you promote and lose a weapon type, by default the old weapon type would
+	 * still be available, these patches by "Vennobennu" fix that, by resetting the
+	 * Weapon types to 0.
+	 */
+	private void prepareForPromotionRandomization() throws IOException {
+		String resourceFile;
+		byte[] bytes;
+		long offset;
+
+		switch (gameType) {
+		case FE6:
+			bytes = new byte[0x49];
+			resourceFile = "FE6Promotion.dmp";
+			offset = 0x252F8;
+			break;
+		case FE7:
+			bytes = new byte[0x49];
+			resourceFile = "FE7Promotion.dmp";
+			offset = 0x298B4;
+			break;
+		case FE8:
+			bytes = new byte[0x35];
+			resourceFile = "FE8Promotion.dmp";
+			offset = 0x2BE38;
+			break;
+
+		default:
+			return;
+
+		}
+
+		InputStream stream = UPSPatcher.class.getClassLoader().getResourceAsStream(resourceFile);
+		stream.read(bytes);
+		stream.close();
+
+		diffCompiler.addDiff(new Diff(offset, 0x35, bytes, null));
 	}
 
 	private void makePreliminaryAdjustments() {

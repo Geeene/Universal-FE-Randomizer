@@ -56,7 +56,6 @@ import ui.model.ItemAssignmentOptions.WeaponReplacementPolicy;
 import ui.model.MiscellaneousOptions;
 import ui.model.OtherCharacterOptions;
 import ui.model.PromotionOptions;
-import ui.model.PromotionOptions.Mode;
 import ui.model.RecruitmentOptions;
 import ui.model.WeaponOptions;
 import util.Diff;
@@ -244,7 +243,9 @@ public class GBARandomizer extends Randomizer {
 		try {
 			randomizePromotionsIfNecessary(seed);
 		} catch (Exception e) {
-			notifyError("shit");
+			notifyError("Encountered error while randomizing Promotions.\n\n" + e.getClass().getSimpleName()
+					+ "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream()
+							.map(element -> (element.toString())).limit(10).collect(Collectors.toList())));
 		}
 		;
 		try {
@@ -772,8 +773,9 @@ public class GBARandomizer extends Randomizer {
 	}
 
 	private void randomizePromotionsIfNecessary(String seed) throws IOException {
+
 		prepareForPromotionRandomization();
-		if (promoOptions != null && !promoOptions.promotionMode.equals(Mode.STRICT)) {
+		if (promoOptions != null) {
 			updateStatusString("Randomizing Promotions...");
 			Random rng = new Random(SeedGenerator.generateSeedValue(seed, RecruitmentRandomizer.rngSalt));
 			PromotionRandomizer.randomizePromotions(promoOptions, promotionData, classData, gameType, rng);
@@ -875,9 +877,9 @@ public class GBARandomizer extends Randomizer {
 			// FE8 stores this in a separate table.
 			for (GBAFEClassData charClass : classData.allClasses()) {
 				if (classData.isPromotedClass(charClass.getID())) {
-					int demotedID1 = fe8_promotionManager.getFirstPromotionOptionClassID(charClass.getID());
-					int demotedID2 = fe8_promotionManager.getSecondPromotionOptionClassID(charClass.getID());
-					if (demotedID1 == 0 && demotedID2 == 0) {
+					int promotedID1 = fe8_promotionManager.getFirstPromotionOptionClassID(charClass.getID());
+					int promotedID2 = fe8_promotionManager.getSecondPromotionOptionClassID(charClass.getID());
+					if (promotedID1 == 0 && promotedID2 == 0) {
 						// If we have no promotions and we are a promoted class, then apply our fix.
 						// Promote into yourself if this happens.
 						fe8_promotionManager.setFirstPromotionOptionForClass(charClass.getID(), charClass.getID());

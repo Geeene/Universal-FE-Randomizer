@@ -8,12 +8,15 @@ public class PromotionOptions {
 
 	public final Mode promotionMode;
 
-	public final boolean allowMountChanges;
-	public final boolean allowEnemyOnlyPromotedClasses; // FE4 Only
+	public final Boolean allowMountChanges;
+	public final Boolean allowEnemyOnlyPromotedClasses; // FE4 Only
 
-	public final boolean requireCommonWeapon;
+	public final Boolean requireCommonWeapon;
+	public final Boolean allowMonsterClasses;
+	public Boolean keepSameDamageType;
 
-	public PromotionOptions(Mode mode, boolean allowMountChange, boolean allowEnemyClass, boolean commonWeapon) {
+	public PromotionOptions(Mode mode, Boolean allowMountChange, Boolean allowEnemyClass, Boolean commonWeapon,
+			Boolean allowMonsterClasses, Boolean keepSameDamageType) {
 		super();
 		this.promotionMode = mode;
 
@@ -21,6 +24,8 @@ public class PromotionOptions {
 		this.allowEnemyOnlyPromotedClasses = allowEnemyClass;
 
 		this.requireCommonWeapon = commonWeapon;
+		this.allowMonsterClasses = allowMonsterClasses;
+		this.keepSameDamageType = keepSameDamageType;
 	}
 
 }

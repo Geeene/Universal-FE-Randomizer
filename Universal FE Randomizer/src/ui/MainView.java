@@ -1,14 +1,11 @@
 package ui;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
@@ -17,7 +14,6 @@ import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
-import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FillLayout;
@@ -49,8 +45,6 @@ import fedata.gcnwii.fe9.FE9Data;
 import fedata.general.FEBase.GameType;
 import fedata.snes.fe4.FE4Data;
 import io.FileHandler;
-import io.FileWriter;
-import io.gcn.GCNFileHandler;
 import io.gcn.GCNISOException;
 import io.gcn.GCNISOHandler;
 import random.gba.randomizer.GBARandomizer;
@@ -70,170 +64,175 @@ import ui.general.MessageModal;
 import ui.general.ModalButtonListener;
 import ui.general.OpenFileFlow;
 import ui.general.ProgressModal;
-import ui.model.FE9OtherCharacterOptions;
 import util.DebugListener;
 import util.DebugPrinter;
 import util.DiffCompiler;
-import util.LZ77;
 import util.OptionRecorder;
-import util.SeedGenerator;
-import util.WhyDoesJavaNotHaveThese;
 import util.OptionRecorder.FE4OptionBundle;
 import util.OptionRecorder.FE9OptionBundle;
 import util.OptionRecorder.GBAOptionBundle;
+import util.SeedGenerator;
 import util.recordkeeper.ChangelogBuilder;
-import util.recordkeeper.ChangelogHeader;
-import util.recordkeeper.ChangelogHeader.HeaderLevel;
-import util.recordkeeper.ChangelogSection;
-import util.recordkeeper.ChangelogTable;
 import util.recordkeeper.RecordKeeper;
 
 public class MainView implements FileFlowDelegate {
-	
+
 	public Shell mainShell;
-	
+
 	private Shell consoleShell;
 	private Table consoleLog;
 	private boolean consoleShellOpened;
-	
+
 	private ScrolledComposite scrollable;
 	private Composite container;
-	
+
 	private ControlListener resizeListener;
-	
+
 	private int screenHeight;
-	
+
 	private Text filenameField;
-	
+
 	private Label seedLabel;
 	private Text seedField;
 	private Button generateButton;
-	
+
 	private GameType loadedGameType = GameType.UNKNOWN;
 	private Boolean hasLoadedInfo = false;
-	
+
 	private boolean patchingAvailable = false;
-	
+
 	private Group romInfoGroup;
 	private Label romName;
 	private Label romCode;
 	private Label friendlyName;
-	
+
 	private Label length;
 	private Label checksum;
-	
+
 	private GrowthsView growthView;
 	private BasesView baseView;
 	private ClassesView classView;
 	private MOVCONAffinityView otherCharOptionView;
 	private WeaponsView weaponView;
-	private EnemyBuffsView enemyView; 
+	private EnemyBuffsView enemyView;
 	private MiscellaneousView miscView;
 	private RecruitmentView recruitView;
 	private ItemAssignmentView itemAssignmentView;
-	
+
 	// FE4
 	private SkillsView skillsView;
 	private HolyBloodView holyBloodView;
 	private FE4ClassesView fe4ClassView;
 	private PromotionView promotionView;
 	private FE4EnemyBuffView fe4EnemyBuffView;
-	
+
 	// FE9
 	private FE9SkillView fe9SkillView;
 	private CONAffinityView conAffinityView;
 	private FE9EnemyBuffView fe9EnemyView;
 	private FE9ClassesView fe9ClassesView;
-	
+
 	private Button randomizeButton;
-	
+
 	private Boolean isShowingModalProgressDialog = false;
 	private ProgressModal progressBox;
-	
+
 	public MainView(Display mainDisplay) {
 		super();
-		
-		Shell shell = new Shell(mainDisplay, SWT.SHELL_TRIM & ~SWT.MAX); 
-		 shell.setText("Yune: A Universal Fire Emblem Randomizer (v0.9.3)");
-		 shell.setImage(new Image(mainDisplay, Main.class.getClassLoader().getResourceAsStream("YuneIcon.png")));
-		 
-		 screenHeight = mainDisplay.getBounds().height;
-		 for (Monitor monitor : mainDisplay.getMonitors()) {
-			 screenHeight = Math.max(screenHeight, monitor.getClientArea().height);
-		 }
-		 
-		 screenHeight -= 20;
-		 
-		 mainShell = shell;
-		 
-		 setupMainShell();
-		 
-		 resize();
-		 
-		 /* Open shell window */
-		  mainShell.open();
-		  
-		  mainDisplay.addFilter(SWT.KeyDown, new Listener() {
+
+		Shell shell = new Shell(mainDisplay, SWT.SHELL_TRIM & ~SWT.MAX);
+		shell.setText("Yune: A Universal Fire Emblem Randomizer (v0.9.3)");
+		shell.setImage(new Image(mainDisplay, Main.class.getClassLoader().getResourceAsStream("YuneIcon.png")));
+
+		screenHeight = mainDisplay.getBounds().height;
+		for (Monitor monitor : mainDisplay.getMonitors()) {
+			screenHeight = Math.max(screenHeight, monitor.getClientArea().height);
+		}
+
+		screenHeight -= 20;
+
+		mainShell = shell;
+
+		setupMainShell();
+
+		resize();
+
+		/* Open shell window */
+		mainShell.open();
+
+		mainDisplay.addFilter(SWT.KeyDown, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
-				if (((event.stateMask & SWT.CTRL) != 0) && ((event.stateMask & SWT.SHIFT) != 0) && (event.keyCode == 'c') && !consoleShellOpened) {
+				if (((event.stateMask & SWT.CTRL) != 0) && ((event.stateMask & SWT.SHIFT) != 0)
+						&& (event.keyCode == 'c') && !consoleShellOpened) {
 					openConsole();
 				}
 			}
-		  });
+		});
 	}
-	
+
 	private void resize() {
 		mainShell.layout();
 		container.layout();
 		int titleBarHeight = mainShell.getBounds().height - mainShell.getClientArea().height;
 		Point containerSize = container.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 		// For some reason, in debug, everything works fine, but when exporting to JAR,
-		// the right margin is off (maybe due to different JREs?) The +10 is to make sure the
+		// the right margin is off (maybe due to different JREs?) The +10 is to make
+		// sure the
 		// JAR being run is shown correctly.
 		Point actualSize = new Point(containerSize.x + 10, Math.min(containerSize.y + titleBarHeight, screenHeight));
-		
+
 		final Point contentSize = actualSize;
-		
+
 		if (actualSize.y - titleBarHeight < containerSize.y) {
 			ScrollBar verticalScrollBar = scrollable.getVerticalBar();
-			FormLayout containerLayout = (FormLayout)container.getLayout();
+			FormLayout containerLayout = (FormLayout) container.getLayout();
 			containerLayout.marginRight = verticalScrollBar.getSize().x + 5;
 
 			mainShell.layout();
 			container.layout();
 			containerSize = container.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
-			actualSize = new Point(containerSize.x + 10, Math.min(containerSize.y + (mainShell.getBounds().height - mainShell.getClientArea().height), screenHeight));
+			actualSize = new Point(containerSize.x + 10, Math.min(
+					containerSize.y + (mainShell.getBounds().height - mainShell.getClientArea().height), screenHeight));
 		}
-		
-		// On Ubuntu, 44 is the size of the natural container size, so we'll give some additional margin too.
+
+		// On Ubuntu, 44 is the size of the natural container size, so we'll give some
+		// additional margin too.
 		if (containerSize.y < 50) {
 			mainShell.setMinimumSize(containerSize.x + 10, 0);
 		} else {
 			mainShell.setMinimumSize(containerSize.x + 10, 300);
 		}
-		
-		if (resizeListener != null) { mainShell.removeControlListener(resizeListener); }
-		
+
+		if (resizeListener != null) {
+			mainShell.removeControlListener(resizeListener);
+		}
+
 		resizeListener = new ControlListener() {
 			@Override
-			public void controlMoved(ControlEvent e) {}
+			public void controlMoved(ControlEvent e) {
+			}
+
 			@Override
 			public void controlResized(ControlEvent e) {
 				Point size = mainShell.getSize();
-				if (contentSize.y < 50) { return; }
-				if (size.y >= screenHeight) { return; } // This is to allow Full screen to work on Mac OS.
+				if (contentSize.y < 50) {
+					return;
+				}
+				if (size.y >= screenHeight) {
+					return;
+				} // This is to allow Full screen to work on Mac OS.
 				if (size.y > contentSize.y || size.x > contentSize.x) {
 					mainShell.setSize(contentSize.x, contentSize.y);
 				}
 			}
 		};
-		
+
 		mainShell.addControlListener(resizeListener);
-		
+
 		container.setSize(containerSize);
 		mainShell.setSize(actualSize);
-		
+
 		FormData scrollableData = new FormData();
 		scrollableData.top = new FormAttachment(0, 0);
 		scrollableData.left = new FormAttachment(0, 0);
@@ -243,7 +242,7 @@ public class MainView implements FileFlowDelegate {
 		scrollableData.height = actualSize.y;
 		scrollable.setLayoutData(scrollableData);
 	}
-	
+
 	public void showModalProgressDialog() {
 		if (!isShowingModalProgressDialog) {
 			isShowingModalProgressDialog = true;
@@ -253,7 +252,7 @@ public class MainView implements FileFlowDelegate {
 			progressBox.show();
 		}
 	}
-	
+
 	public void hideModalProgressDialog() {
 		if (isShowingModalProgressDialog) {
 			isShowingModalProgressDialog = false;
@@ -262,9 +261,9 @@ public class MainView implements FileFlowDelegate {
 		}
 	}
 
-	public void setupMainShell() {		  
+	public void setupMainShell() {
 		mainShell.setLayout(new FillLayout());
-		  
+
 		scrollable = new ScrolledComposite(mainShell, SWT.V_SCROLL);
 
 		container = new Composite(scrollable, SWT.NONE);
@@ -307,7 +306,7 @@ public class MainView implements FileFlowDelegate {
 		buttonData.width = 100;
 		button.setLayoutData(buttonData);
 	}
-	
+
 	private void openConsole() {
 		Display mainDisplay = Display.getDefault();
 		consoleShell = new Shell(mainDisplay, SWT.SHELL_TRIM & ~SWT.MAX);
@@ -316,59 +315,60 @@ public class MainView implements FileFlowDelegate {
 		setupConsoleShell();
 		consoleShell.open();
 		consoleShellOpened = true;
-		
+
 		consoleShell.addShellListener(new ShellListener() {
-			
+
 			@Override
 			public void shellIconified(ShellEvent e) {
 			}
-			
+
 			@Override
 			public void shellDeiconified(ShellEvent e) {
 			}
-			
+
 			@Override
 			public void shellDeactivated(ShellEvent e) {
 			}
-			
+
 			@Override
 			public void shellClosed(ShellEvent e) {
 				DebugPrinter.unregisterListener("consoleLog");
 				consoleShellOpened = false;
 			}
-			
+
 			@Override
 			public void shellActivated(ShellEvent e) {
 			}
 		});
 	}
-	
+
 	private void setupConsoleShell() {
 		consoleShell.setLayout(new FillLayout());
 		consoleShell.setSize(400, 400);
-		
+
 		consoleLog = new Table(consoleShell, SWT.BORDER | SWT.FULL_SELECTION);
 		consoleLog.setHeaderVisible(true);
 		consoleLog.setLinesVisible(true);
 		consoleLog.setSize(400, 400);
-		
+
 		TableColumn categoryColumn = new TableColumn(consoleLog, SWT.NONE);
 		categoryColumn.setText("Namespace");
 		categoryColumn.pack();
 		TableColumn messageColumn = new TableColumn(consoleLog, SWT.NONE);
 		messageColumn.setText("Message");
-		
+
 		consoleShell.addControlListener(new ControlListener() {
 			@Override
 			public void controlResized(ControlEvent e) {
 				consoleLog.setSize(consoleShell.getSize());
 				messageColumn.setWidth(consoleLog.getSize().x - categoryColumn.getWidth());
 			}
+
 			@Override
-			public void controlMoved(ControlEvent e) {	
+			public void controlMoved(ControlEvent e) {
 			}
 		});
-		
+
 		DebugPrinter.registerListener(new DebugListener() {
 			@Override
 			public void logMessage(String category, String message) {
@@ -382,28 +382,28 @@ public class MainView implements FileFlowDelegate {
 			}
 		}, "consoleLog");
 	}
-	
+
 	private void setupInfoLayout() {
 		romInfoGroup = new Group(container, SWT.NONE);
 		romInfoGroup.setText("ROM Info");
 		romInfoGroup.setVisible(false);
-		  
+
 		FormData infoGroupData = new FormData();
 		infoGroupData.left = new FormAttachment(0, 5);
 		infoGroupData.right = new FormAttachment(100, -5);
 		infoGroupData.top = new FormAttachment(filenameField, 5);
 		romInfoGroup.setLayoutData(infoGroupData);
-		  
+
 		FillLayout infoLayout = new FillLayout();
 		infoLayout.type = SWT.VERTICAL;
 		romInfoGroup.setLayout(infoLayout);
-		  
+
 		Composite topInfo = new Composite(romInfoGroup, 0);
 		topInfo.setLayout(new FillLayout());
-		  
+
 		Composite bottomInfo = new Composite(romInfoGroup, 0);
 		bottomInfo.setLayout(new FillLayout());
-		  
+
 		romName = new Label(topInfo, SWT.LEFT);
 		romCode = new Label(topInfo, SWT.LEFT);
 		friendlyName = new Label(topInfo, SWT.LEFT);
@@ -411,40 +411,86 @@ public class MainView implements FileFlowDelegate {
 		checksum = new Label(bottomInfo, SWT.LEFT);
 		new Label(bottomInfo, SWT.LEFT); // Spacer
 	}
-	
+
 	private void disposeRandomizationOptionsViews() {
-		if (growthView != null) { growthView.dispose(); }
-		if (baseView != null) { baseView.dispose(); }
-		if (otherCharOptionView != null) { otherCharOptionView.dispose(); }
-		if (weaponView != null) { weaponView.dispose(); }
-		if (classView != null) { classView.dispose(); }
-		if (enemyView != null) { enemyView.dispose(); }
-		if (miscView != null) { miscView.dispose(); }
-		if (recruitView != null) { recruitView.dispose(); }
-		if (itemAssignmentView != null) { itemAssignmentView.dispose(); }
-		if (randomizeButton != null) { randomizeButton.dispose(); }
-		
-		if (seedField != null) { seedField.dispose(); }
-		if (generateButton != null) { generateButton.dispose(); }
-		if (seedLabel != null) { seedLabel.dispose(); }
-		
-		if (skillsView != null) { skillsView.dispose(); }
-		if (holyBloodView != null) { holyBloodView.dispose(); }
-		if (fe4ClassView != null) { fe4ClassView.dispose(); }
-		if (promotionView != null) { promotionView.dispose(); }
-		if (fe4EnemyBuffView != null) { fe4EnemyBuffView.dispose(); }
-		
-		if (fe9SkillView != null) { fe9SkillView.dispose(); }
-		if (conAffinityView != null) { conAffinityView.dispose(); }
-		if (fe9EnemyView != null) { fe9EnemyView.dispose(); }
-		if (fe9ClassesView != null) { fe9ClassesView.dispose(); }
-		
+		if (growthView != null) {
+			growthView.dispose();
+		}
+		if (baseView != null) {
+			baseView.dispose();
+		}
+		if (otherCharOptionView != null) {
+			otherCharOptionView.dispose();
+		}
+		if (weaponView != null) {
+			weaponView.dispose();
+		}
+		if (classView != null) {
+			classView.dispose();
+		}
+		if (enemyView != null) {
+			enemyView.dispose();
+		}
+		if (miscView != null) {
+			miscView.dispose();
+		}
+		if (recruitView != null) {
+			recruitView.dispose();
+		}
+		if (itemAssignmentView != null) {
+			itemAssignmentView.dispose();
+		}
+		if (randomizeButton != null) {
+			randomizeButton.dispose();
+		}
+
+		if (seedField != null) {
+			seedField.dispose();
+		}
+		if (generateButton != null) {
+			generateButton.dispose();
+		}
+		if (seedLabel != null) {
+			seedLabel.dispose();
+		}
+
+		if (skillsView != null) {
+			skillsView.dispose();
+		}
+		if (holyBloodView != null) {
+			holyBloodView.dispose();
+		}
+		if (fe4ClassView != null) {
+			fe4ClassView.dispose();
+		}
+		if (promotionView != null) {
+			promotionView.dispose();
+		}
+		if (fe4EnemyBuffView != null) {
+			fe4EnemyBuffView.dispose();
+		}
+
+		if (fe9SkillView != null) {
+			fe9SkillView.dispose();
+		}
+		if (conAffinityView != null) {
+			conAffinityView.dispose();
+		}
+		if (fe9EnemyView != null) {
+			fe9EnemyView.dispose();
+		}
+		if (fe9ClassesView != null) {
+			fe9ClassesView.dispose();
+		}
+
 		resize();
 	}
-	
+
 	private void preloadOptions(GameType type) {
-		if (OptionRecorder.options == null) { return; }
-		
+		if (OptionRecorder.options == null) {
+			return;
+		}
+
 		if (type == GameType.FE4 && OptionRecorder.options.fe4 != null) {
 			FE4OptionBundle bundle = OptionRecorder.options.fe4;
 			growthView.setGrowthOptions(bundle.growths);
@@ -453,13 +499,17 @@ public class MainView implements FileFlowDelegate {
 			miscView.setMiscellaneousOptions(bundle.misc);
 			skillsView.setSkillOptions(bundle.skills);
 			fe4ClassView.setClassOptions(bundle.classes);
-			promotionView.setPromotionOptions(bundle.promo);
+			promotionView.setPromotionOptions(bundle.promo, type);
 			fe4EnemyBuffView.setBuffOptions(bundle.enemyBuff);
-		} else if (type.isGBA()) { 
+		} else if (type.isGBA()) {
 			GBAOptionBundle bundle = null;
-			if (type == GameType.FE6) { bundle = OptionRecorder.options.fe6; }
-			else if (type == GameType.FE7) { bundle = OptionRecorder.options.fe7; }
-			else if (type == GameType.FE8) { bundle = OptionRecorder.options.fe8; }
+			if (type == GameType.FE6) {
+				bundle = OptionRecorder.options.fe6;
+			} else if (type == GameType.FE7) {
+				bundle = OptionRecorder.options.fe7;
+			} else if (type == GameType.FE8) {
+				bundle = OptionRecorder.options.fe8;
+			}
 			if (bundle != null) {
 				growthView.setGrowthOptions(bundle.growths);
 				baseView.setBasesOptions(bundle.bases);
@@ -467,8 +517,9 @@ public class MainView implements FileFlowDelegate {
 				weaponView.setWeaponOptions(bundle.weapons);
 				classView.setClassOptions(bundle.classes);
 				enemyView.setEnemyOptions(bundle.enemies);
-				miscView.setMiscellaneousOptions(bundle.otherOptions);	
-				promotionView.setPromotionOptions(bundle.promo);
+				miscView.setMiscellaneousOptions(bundle.otherOptions);
+				promotionView.setPromotionOptions(bundle.promo, type);
+
 				recruitView.setRecruitmentOptions(bundle.recruitmentOptions);
 				itemAssignmentView.setItemAssignmentOptions(bundle.itemAssignmentOptions);
 			}
@@ -484,15 +535,15 @@ public class MainView implements FileFlowDelegate {
 			miscView.setMiscellaneousOptions(bundle.misc);
 		}
 	}
-	
+
 	private void updateLayoutForGameType(GameType type) {
-		
+
 		disposeRandomizationOptionsViews();
-		
+
 		if (type == GameType.UNKNOWN) {
 			return;
 		}
-		
+
 		seedField = new Text(container, SWT.BORDER);
 		seedField.addListener(SWT.CHANGED, new Listener() {
 			@Override
@@ -510,137 +561,135 @@ public class MainView implements FileFlowDelegate {
 			}
 		});
 		generateButton = button;
-		  
+
 		seedLabel = new Label(container, SWT.NONE);
 		seedLabel.setText("Randomizer Seed Phrase: ");
-		  
+
 		seedField.setVisible(false);
 		generateButton.setVisible(false);
 		seedLabel.setVisible(false);
-		  
+
 		FormData seedFieldData = new FormData();
 		seedFieldData.top = new FormAttachment(romInfoGroup, 10);
 		seedFieldData.right = new FormAttachment(button, -5);
 		seedFieldData.left = new FormAttachment(seedLabel, 5);
 		seedField.setLayoutData(seedFieldData);
-		  
+
 		FormData seedLabelData = new FormData();
 		seedLabelData.top = new FormAttachment(seedField, 0, SWT.CENTER);
 		seedLabelData.left = new FormAttachment(romInfoGroup, 0, SWT.LEFT);
 		seedLabel.setLayoutData(seedLabelData);
-		  
+
 		FormData generateData = new FormData();
 		generateData.top = new FormAttachment(seedField, 0, SWT.CENTER);
 		generateData.right = new FormAttachment(100, -5);
 		generateData.width = 100;
 		button.setLayoutData(generateData);
-		
+
 		growthView = new GrowthsView(container, SWT.NONE, type.hasSTRMAGSplit());
 		growthView.setSize(200, 200);
 		growthView.setVisible(false);
-		  
+
 		FormData growthData = new FormData();
 		growthData.top = new FormAttachment(seedField, 10);
 		growthData.left = new FormAttachment(romInfoGroup, 0, SWT.LEFT);
 		growthView.setLayoutData(growthData);
-		  
+
 		baseView = new BasesView(container, SWT.NONE, type);
 		baseView.setSize(200, 200);
 		baseView.setVisible(false);
-		  
+
 		FormData baseData = new FormData();
 		baseData.top = new FormAttachment(growthView, 5);
 		baseData.left = new FormAttachment(growthView, 0, SWT.LEFT);
 		baseData.right = new FormAttachment(growthView, 0, SWT.RIGHT);
 		baseView.setLayoutData(baseData);
-		
+
 		randomizeButton = new Button(container, SWT.PUSH);
 		randomizeButton.setText("Randomize!");
 		randomizeButton.setVisible(false);
-		  
+
 		if (Arrays.asList(GameType.FE6, GameType.FE7, GameType.FE8).contains(type)) {
 			otherCharOptionView = new MOVCONAffinityView(container, SWT.NONE);
 			otherCharOptionView.setSize(200, 200);
 			otherCharOptionView.setVisible(false);
-			  
+
 			FormData otherData = new FormData();
 			otherData.top = new FormAttachment(baseView, 5);
 			otherData.left = new FormAttachment(baseView, 0, SWT.LEFT);
 			otherData.right = new FormAttachment(baseView, 0, SWT.RIGHT);
 			otherCharOptionView.setLayoutData(otherData);
-			
+
 			miscView = new MiscellaneousView(container, SWT.NONE, type);
 			miscView.setSize(200, 200);
 			miscView.setVisible(false);
-			
+
 			FormData miscData = new FormData();
 			miscData.top = new FormAttachment(otherCharOptionView, 5);
 			miscData.left = new FormAttachment(otherCharOptionView, 0, SWT.LEFT);
 			miscData.right = new FormAttachment(otherCharOptionView, 0, SWT.RIGHT);
 			miscData.bottom = new FormAttachment(100, -10);
 			miscView.setLayoutData(miscData);
-			
+
 			weaponView = new WeaponsView(container, SWT.NONE, type);
 			weaponView.setSize(200, 200);
 			weaponView.setVisible(false);
-		  
+
 			FormData weaponData = new FormData();
 			weaponData.top = new FormAttachment(growthView, 0, SWT.TOP);
 			weaponData.left = new FormAttachment(growthView, 5);
 			weaponData.bottom = new FormAttachment(100, -10);
 			weaponView.setLayoutData(weaponData);
-			
+
 			classView = new ClassesView(container, SWT.NONE, type);
 			classView.setSize(200, 200);
 			classView.setVisible(false);
-			  
+
 			FormData classData = new FormData();
 			classData.top = new FormAttachment(weaponView, 0, SWT.TOP);
 			classData.left = new FormAttachment(weaponView, 5);
 			classView.setLayoutData(classData);
-			
-			
+
 			enemyView = new EnemyBuffsView(container, SWT.NONE);
 			enemyView.setSize(200, 200);
 			enemyView.setVisible(false);
-			  
+
 			FormData enemyData = new FormData();
 			enemyData.top = new FormAttachment(classView, 0, SWT.TOP);
 			enemyData.left = new FormAttachment(classView, 5);
 			enemyView.setLayoutData(enemyData);
-			
-			promotionView = new PromotionView(container, SWT.NONE);
+
+			promotionView = new PromotionView(container, SWT.NONE, type);
 			promotionView.setSize(200, 200);
 			promotionView.setVisible(false);
-			
+
 			FormData promoData = new FormData();
 			promoData.top = new FormAttachment(enemyView, 5);
 			promoData.left = new FormAttachment(enemyView, 0, SWT.LEFT);
 			promoData.right = new FormAttachment(enemyView, 0, SWT.RIGHT);
 			promoData.bottom = new FormAttachment(100, -10);
 			promotionView.setLayoutData(promoData);
-			
-			
+
 			recruitView = new RecruitmentView(container, SWT.NONE, type);
 			recruitView.setSize(200, 200);
 			recruitView.setVisible(false);
-			
+
 			FormData recruitData = new FormData();
 			recruitData.top = new FormAttachment(enemyView, 0, SWT.TOP);
 			recruitData.left = new FormAttachment(enemyView, 5);
 			recruitData.right = new FormAttachment(100, -5);
 			recruitView.setLayoutData(recruitData);
-			
+
 			itemAssignmentView = new ItemAssignmentView(container, SWT.NONE, type);
 			itemAssignmentView.setSize(200, 200);
 			itemAssignmentView.setVisible(false);
-			
+
 			FormData itemAssignData = new FormData();
 			itemAssignData.top = new FormAttachment(recruitView, 5);
 			itemAssignData.left = new FormAttachment(recruitView, 0, SWT.LEFT);
 			itemAssignData.right = new FormAttachment(recruitView, 0, SWT.RIGHT);
 			itemAssignmentView.setLayoutData(itemAssignData);
-			  
+
 			FormData randomizeData = new FormData();
 			randomizeData.top = new FormAttachment(itemAssignmentView, 5);
 			randomizeData.left = new FormAttachment(itemAssignmentView, 0, SWT.LEFT);
@@ -648,9 +697,9 @@ public class MainView implements FileFlowDelegate {
 			randomizeData.bottom = new FormAttachment(100, -10);
 			randomizeButton.setLayoutData(randomizeData);
 		} else {
-		
+
 		}
-		
+
 		resize();
 	}
 
@@ -661,51 +710,48 @@ public class MainView implements FileFlowDelegate {
 		} else {
 			return;
 		}
-		
+
 		if (!hasLoadedInfo) {
 			setupInfoLayout();
 			hasLoadedInfo = true;
 		}
-		
+
 		MessageModal loadingModal = new MessageModal(mainShell, "Loading", "Verifying File...");
 		loadingModal.showRaw();
-		
+
 		try {
 			FileHandler handler = new FileHandler(pathToFile);
-			byte [] result = handler.readBytesAtOffset(0xA0, 12);
+			byte[] result = handler.readBytesAtOffset(0xA0, 12);
 			String gameTitle = new String(result, StandardCharsets.US_ASCII);
 			romName.setText("ROM Name: " + gameTitle);
-			
+
 			result = handler.readBytesAtOffset(0xAC, 4);
 			String gameCode = new String(result, StandardCharsets.US_ASCII);
 			romCode.setText("ROM Code: " + gameCode);
-			
+
 			length.setText("File Length: " + handler.getFileLength());
 			checksum.setText("CRC-32: " + Long.toHexString(handler.getCRC32()).toUpperCase());
-			
+
 			GameType type = loadedGameType;
 			patchingAvailable = false;
-			if (handler.getCRC32() == FE6Data.CleanCRC32) { 
+			if (handler.getCRC32() == FE6Data.CleanCRC32) {
 				type = GameType.FE6;
 				patchingAvailable = true;
 				friendlyName.setText("Display Name: " + FE6Data.FriendlyName);
-			}
-			else if (handler.getCRC32() == FE7Data.CleanCRC32) { 
+			} else if (handler.getCRC32() == FE7Data.CleanCRC32) {
 				type = GameType.FE7;
 				friendlyName.setText("Display Name: " + FE7Data.FriendlyName);
-			}
-			else if (handler.getCRC32() == FE8Data.CleanCRC32) {
+			} else if (handler.getCRC32() == FE8Data.CleanCRC32) {
 				type = GameType.FE8;
 				friendlyName.setText("Display Name: " + FE8Data.FriendlyName);
-			}
-			else if (handler.getCRC32() == FE4Data.CleanHeaderedCRC32 || handler.getCRC32() == FE4Data.CleanUnheaderedCRC32) {
+			} else if (handler.getCRC32() == FE4Data.CleanHeaderedCRC32
+					|| handler.getCRC32() == FE4Data.CleanUnheaderedCRC32) {
 				type = GameType.FE4;
 				patchingAvailable = true;
 				friendlyName.setText("Display Name: " + FE4Data.FriendlyName);
 				romName.setText("ROM Name: " + FE4Data.InternalName);
 				romCode.setText("ROM Code: --");
-			}
-			else if (handler.getCRC32() == FE9Data.CleanCRC32) {
+			} else if (handler.getCRC32() == FE9Data.CleanCRC32) {
 				type = GameType.FE9;
 				friendlyName.setText("Display Name: " + FE9Data.FriendlyName);
 				try {
@@ -718,22 +764,22 @@ public class MainView implements FileFlowDelegate {
 					romCode.setText("ROM Code: Read Failed");
 					type = GameType.UNKNOWN;
 				}
-			}
-			else { 
+			} else {
 				type = GameType.UNKNOWN;
 				friendlyName.setText("Display Name: Unknown");
 			}
-			
+
 			if (type != GameType.UNKNOWN) {
 				loadGameType(type, pathToFile, handler);
 				loadingModal.hide();
 			} else {
 				loadingModal.hide();
-				
-				MessageModal checksumFailure = new MessageModal(mainShell, "Unrecognized Checksum", "Yune was unable to determine the game from the file selected.\n"
-						+ "If you know the game for the file, you may select it below.\n\nNote: Patching cannot be guaranteed, and is therefore, disabled.\n\n"
-						+ "Warning: Be aware that this file is likely untested and may cause errors.\n" 
-						+ "There will be very limited support for issues from randomizing this file.");
+
+				MessageModal checksumFailure = new MessageModal(mainShell, "Unrecognized Checksum",
+						"Yune was unable to determine the game from the file selected.\n"
+								+ "If you know the game for the file, you may select it below.\n\nNote: Patching cannot be guaranteed, and is therefore, disabled.\n\n"
+								+ "Warning: Be aware that this file is likely untested and may cause errors.\n"
+								+ "There will be very limited support for issues from randomizing this file.");
 				ModalButtonListener fe4Selection = new ModalButtonListener() {
 					@Override
 					public void onSelected() {
@@ -775,21 +821,20 @@ public class MainView implements FileFlowDelegate {
 				selectionMap.put("FE7 (Blazing Sword)", fe7Selection);
 				selectionMap.put("FE8 (The Sacred Stones)", fe8Selection);
 				selectionMap.put("FE9 (Path of Radiance)", fe9Selection);
-				checksumFailure.addSelectionItems(selectionMap, Arrays.asList("FE4 (Genealogy of the Holy War)",
-						"FE6 (Binding Blade)",
-						"FE7 (Blazing Sword)",
-						"FE8 (The Sacred Stones)",
-						"FE9 (Path of Radiance)"), new ModalButtonListener() {
+				checksumFailure.addSelectionItems(
+						selectionMap, Arrays.asList("FE4 (Genealogy of the Holy War)", "FE6 (Binding Blade)",
+								"FE7 (Blazing Sword)", "FE8 (The Sacred Stones)", "FE9 (Path of Radiance)"),
+						new ModalButtonListener() {
 							@Override
 							public void onSelected() {
 								// On cancel...
 								disposeRandomizationOptionsViews();
 							}
-					
-				});
+
+						});
 				checksumFailure.show();
-			} 
-			
+			}
+
 			romInfoGroup.setVisible(true);
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -800,33 +845,36 @@ public class MainView implements FileFlowDelegate {
 			System.err.println("Failed to calculate checksum on input file.");
 			e.printStackTrace();
 		}
-		
+
 		if (loadedGameType == GameType.FE9 && System.getProperty("sun.arch.data.model").equals("32")) {
-			MessageModal memoryWarning = new MessageModal(mainShell, "Warning", "You seem to be running a 32-bit Java VM.\nThere are known out of memory issues with\nrandomizing FE9 when using a 32-bit VM.\n\nThis may be addressed in a future release,\nbut please consider upgrading to a 64-bit JRE.");
+			MessageModal memoryWarning = new MessageModal(mainShell, "Warning",
+					"You seem to be running a 32-bit Java VM.\nThere are known out of memory issues with\nrandomizing FE9 when using a 32-bit VM.\n\nThis may be addressed in a future release,\nbut please consider upgrading to a 64-bit JRE.");
 			memoryWarning.show();
 		}
 	}
-	
+
 	private void loadGameType(GameType type, String pathToFile, FileHandler handler) {
 		loadedGameType = type;
-		
-		if (type == GameType.UNKNOWN) { return; }
-		
+
+		if (type == GameType.UNKNOWN) {
+			return;
+		}
+
 		updateLayoutForGameType(type);
-		
+
 		// Preload options if there are any.
 		preloadOptions(type);
-		
+
 		growthView.setVisible(true);
 		baseView.setVisible(true);
-		
+
 		if (type == GameType.FE4) {
 			fe4ClassView.setVisible(true);
 			holyBloodView.setVisible(true);
 			skillsView.setVisible(true);
 			promotionView.setVisible(true);
 			fe4EnemyBuffView.setVisible(true);
-			
+
 		} else if (type == GameType.FE9) {
 			fe9SkillView.setVisible(true);
 			conAffinityView.setVisible(true);
@@ -843,28 +891,27 @@ public class MainView implements FileFlowDelegate {
 			promotionView.setVisible(true);
 		}
 
-		
 		miscView.setVisible(true);
 		miscView.setPatchingEnabled(patchingAvailable);
-		
+
 		randomizeButton.setVisible(true);
-		
+
 		seedField.setVisible(true);
 		generateButton.setVisible(true);
 		seedLabel.setVisible(true);
-		
+
 		seedField.setText(SeedGenerator.generateRandomSeed(type));
 		for (Listener listener : generateButton.getListeners(SWT.Selection)) {
 			generateButton.removeListener(SWT.Selection, listener);
 		}
 		generateButton.addListener(SWT.Selection, new Listener() {
-			  @Override
-				public void handleEvent(Event event) {
-					seedField.setText(SeedGenerator.generateRandomSeed(type));
-					randomizeButton.setEnabled(seedField.getText().length() > 0);
-				}
-		  });
-		
+			@Override
+			public void handleEvent(Event event) {
+				seedField.setText(SeedGenerator.generateRandomSeed(type));
+				randomizeButton.setEnabled(seedField.getText().length() > 0);
+			}
+		});
+
 		for (Listener listener : randomizeButton.getListeners(SWT.Selection)) {
 			randomizeButton.removeListener(SWT.Selection, listener);
 		}
@@ -873,14 +920,14 @@ public class MainView implements FileFlowDelegate {
 			public void handleEvent(Event event) {
 				FileDialog openDialog = new FileDialog(mainShell, SWT.SAVE);
 				if (type.isGBA()) {
-					openDialog.setFilterExtensions(new String[] {"*.gba"});
+					openDialog.setFilterExtensions(new String[] { "*.gba" });
 				} else if (type.isSFC()) {
-					openDialog.setFilterExtensions(new String[] {"*.smc"});
+					openDialog.setFilterExtensions(new String[] { "*.smc" });
 				} else if (type.isGCN()) {
-					openDialog.setFilterExtensions(new String[] {"*.iso"});
+					openDialog.setFilterExtensions(new String[] { "*.iso" });
 				}
 				String writePath = openDialog.open();
-				
+
 				if (writePath != null && writePath.length() > 0) {
 					if (writePath.equals(pathToFile)) {
 						String extension = writePath.substring(writePath.length() - 4);
@@ -891,96 +938,69 @@ public class MainView implements FileFlowDelegate {
 						writePath = sb.toString();
 					}
 					DiffCompiler compiler = new DiffCompiler();
-					
+
 					if (type == GameType.FE7) {
 						try {
 							compiler.addDiffsFromFile("tutorialSlayer");
 						} catch (IOException e) {
-							MessageBox tutorialSlayerFail = new MessageBox(mainShell, SWT.ICON_ERROR | SWT.OK | SWT.CANCEL);
+							MessageBox tutorialSlayerFail = new MessageBox(mainShell,
+									SWT.ICON_ERROR | SWT.OK | SWT.CANCEL);
 							tutorialSlayerFail.setText("Error");
-							tutorialSlayerFail.setMessage("Failed to patch the tutorial slayer.\n\nThe randomizer can continue, but it is recommended that Lyn Normal mode not be used.");
+							tutorialSlayerFail.setMessage(
+									"Failed to patch the tutorial slayer.\n\nThe randomizer can continue, but it is recommended that Lyn Normal mode not be used.");
 							int selectedButton = tutorialSlayerFail.open();
 							if (selectedButton == SWT.CANCEL) {
 								return;
 							}
 						}
 					}
-					
+
 					Randomizer randomizer = null;
-					
+
 					if (type.isGBA()) {
-						randomizer = new GBARandomizer(pathToFile, writePath, type, compiler, 
-								growthView.getGrowthOptions(),
-								baseView.getBaseOptions(),
-								classView.getClassOptions(),
-								promotionView.getPromotionOptions(),
-								weaponView.getWeaponOptions(),
-								otherCharOptionView.getOtherCharacterOptions(),
-								enemyView.getEnemyOptions(),
-								miscView.getMiscellaneousOptions(),
-								recruitView.getRecruitmentOptions(),
-								itemAssignmentView.getAssignmentOptions(),
-								seedField.getText());
-						
-						OptionRecorder.recordGBAFEOptions(type, 
-								growthView.getGrowthOptions(),
-								baseView.getBaseOptions(),
-								classView.getClassOptions(),
-								promotionView.getPromotionOptions(),
-								weaponView.getWeaponOptions(),
-								otherCharOptionView.getOtherCharacterOptions(),
-								enemyView.getEnemyOptions(),
-								miscView.getMiscellaneousOptions(),
-								recruitView.getRecruitmentOptions(),
-								itemAssignmentView.getAssignmentOptions(),
-								seedField.getText());
+						randomizer = new GBARandomizer(pathToFile, writePath, type, compiler,
+								growthView.getGrowthOptions(), baseView.getBaseOptions(), classView.getClassOptions(),
+								promotionView.getPromotionOptions(), weaponView.getWeaponOptions(),
+								otherCharOptionView.getOtherCharacterOptions(), enemyView.getEnemyOptions(),
+								miscView.getMiscellaneousOptions(), recruitView.getRecruitmentOptions(),
+								itemAssignmentView.getAssignmentOptions(), seedField.getText());
+
+						OptionRecorder.recordGBAFEOptions(type, growthView.getGrowthOptions(),
+								baseView.getBaseOptions(), classView.getClassOptions(),
+								promotionView.getPromotionOptions(), weaponView.getWeaponOptions(),
+								otherCharOptionView.getOtherCharacterOptions(), enemyView.getEnemyOptions(),
+								miscView.getMiscellaneousOptions(), recruitView.getRecruitmentOptions(),
+								itemAssignmentView.getAssignmentOptions(), seedField.getText());
 					} else if (type.isSFC()) {
 						if (type == GameType.FE4) {
-							boolean headeredROM = handler.getCRC32() == FE4Data.CleanHeaderedCRC32;;
-							randomizer = new FE4Randomizer(pathToFile, headeredROM, writePath, compiler, 
-									growthView.getGrowthOptions(),
-									baseView.getBaseOptions(),
-									holyBloodView.getHolyBloodOptions(),
-									skillsView.getSkillOptions(),
-									fe4ClassView.getClassOptions(),
-									promotionView.getPromotionOptions(),
-									fe4EnemyBuffView.getBuffOptions(),
-									miscView.getMiscellaneousOptions(), 
+							boolean headeredROM = handler.getCRC32() == FE4Data.CleanHeaderedCRC32;
+
+							randomizer = new FE4Randomizer(pathToFile, headeredROM, writePath, compiler,
+									growthView.getGrowthOptions(), baseView.getBaseOptions(),
+									holyBloodView.getHolyBloodOptions(), skillsView.getSkillOptions(),
+									fe4ClassView.getClassOptions(), promotionView.getPromotionOptions(),
+									fe4EnemyBuffView.getBuffOptions(), miscView.getMiscellaneousOptions(),
 									seedField.getText());
-							
-							OptionRecorder.recordFE4Options(growthView.getGrowthOptions(),
-									baseView.getBaseOptions(),
-									holyBloodView.getHolyBloodOptions(),
-									skillsView.getSkillOptions(),
-									fe4ClassView.getClassOptions(),
-									promotionView.getPromotionOptions(),
-									fe4EnemyBuffView.getBuffOptions(),
-									miscView.getMiscellaneousOptions(), 
+
+							OptionRecorder.recordFE4Options(growthView.getGrowthOptions(), baseView.getBaseOptions(),
+									holyBloodView.getHolyBloodOptions(), skillsView.getSkillOptions(),
+									fe4ClassView.getClassOptions(), promotionView.getPromotionOptions(),
+									fe4EnemyBuffView.getBuffOptions(), miscView.getMiscellaneousOptions(),
 									seedField.getText());
 						}
 					} else if (type.isGCN()) {
-						randomizer = new FE9Randomizer(pathToFile, writePath,
-								growthView.getGrowthOptions(),
-								baseView.getBaseOptions(),
-								fe9SkillView.getSkillOptions(),
-								conAffinityView.getOtherCharacterOptions(),
-								fe9EnemyView.getEnemyBuffOptions(),
-								fe9ClassesView.getClassOptions(),
-								weaponView.getWeaponOptions(),
-								miscView.getMiscellaneousOptions(),
-								seedField.getText());
-						
-						OptionRecorder.recordFE9Options(growthView.getGrowthOptions(), 
-								baseView.getBaseOptions(), 
-								fe9SkillView.getSkillOptions(), 
-								conAffinityView.getOtherCharacterOptions(), 
-								fe9EnemyView.getEnemyBuffOptions(), 
-								fe9ClassesView.getClassOptions(), 
-								weaponView.getWeaponOptions(),
-								miscView.getMiscellaneousOptions(),
-								seedField.getText());
+						randomizer = new FE9Randomizer(pathToFile, writePath, growthView.getGrowthOptions(),
+								baseView.getBaseOptions(), fe9SkillView.getSkillOptions(),
+								conAffinityView.getOtherCharacterOptions(), fe9EnemyView.getEnemyBuffOptions(),
+								fe9ClassesView.getClassOptions(), weaponView.getWeaponOptions(),
+								miscView.getMiscellaneousOptions(), seedField.getText());
+
+						OptionRecorder.recordFE9Options(growthView.getGrowthOptions(), baseView.getBaseOptions(),
+								fe9SkillView.getSkillOptions(), conAffinityView.getOtherCharacterOptions(),
+								fe9EnemyView.getEnemyBuffOptions(), fe9ClassesView.getClassOptions(),
+								weaponView.getWeaponOptions(), miscView.getMiscellaneousOptions(), seedField.getText());
 					}
-					
+
 					final String romPath = writePath;
 					randomizer.setListener(new RandomizerListener() {
 
@@ -994,21 +1014,24 @@ public class MainView implements FileFlowDelegate {
 							hideModalProgressDialog();
 							MessageModal randomSuccess;
 							if (rk != null) {
-								randomSuccess = new MessageModal(mainShell, "Success", "Finished Randomizing!\n\nSave changelog?");
+								randomSuccess = new MessageModal(mainShell, "Success",
+										"Finished Randomizing!\n\nSave changelog?");
 								randomSuccess.addButton("Yes", new ModalButtonListener() {
 									@Override
 									public void onSelected() {
 										randomSuccess.hide();
 										FileDialog openDialog = new FileDialog(mainShell, SWT.SAVE);
-										openDialog.setFilterExtensions(new String[] {"*.html"});
+										openDialog.setFilterExtensions(new String[] { "*.html" });
 										String writePath = openDialog.open();
 										if (writePath != null) {
 											Boolean success = rk.exportRecordsToHTML(writePath);
 											if (success) {
-												MessageModal saveSuccess = new MessageModal(mainShell, "Success", "Changelog saved.");
+												MessageModal saveSuccess = new MessageModal(mainShell, "Success",
+														"Changelog saved.");
 												saveSuccess.show();
 											} else {
-												MessageModal saveFail = new MessageModal(mainShell, "Error", "Failed to write changelog.");
+												MessageModal saveFail = new MessageModal(mainShell, "Error",
+														"Failed to write changelog.");
 												saveFail.show();
 											}
 										}
@@ -1020,24 +1043,27 @@ public class MainView implements FileFlowDelegate {
 									}
 								});
 							} else if (cb != null) {
-								randomSuccess = new MessageModal(mainShell, "Success", "Finished Randomizing!\n\nSave changelog?");
+								randomSuccess = new MessageModal(mainShell, "Success",
+										"Finished Randomizing!\n\nSave changelog?");
 								randomSuccess.addButton("Yes", new ModalButtonListener() {
 									@Override
 									public void onSelected() {
 										randomSuccess.hide();
 										FileDialog openDialog = new FileDialog(mainShell, SWT.SAVE);
-										openDialog.setFilterExtensions(new String[] {"*.html"});
+										openDialog.setFilterExtensions(new String[] { "*.html" });
 										String changelogPath = openDialog.open();
 										if (changelogPath != null) {
 											int index = Math.max(romPath.lastIndexOf('/'), romPath.lastIndexOf('\\'));
-											String title =  romPath.substring(index + 1);
+											String title = romPath.substring(index + 1);
 											cb.setDocumentTitle("Changelog for " + title);
 											Boolean success = cb.writeToPath(changelogPath);
 											if (success) {
-												MessageModal saveSuccess = new MessageModal(mainShell, "Success", "Changelog saved.");
+												MessageModal saveSuccess = new MessageModal(mainShell, "Success",
+														"Changelog saved.");
 												saveSuccess.show();
 											} else {
-												MessageModal saveFail = new MessageModal(mainShell, "Error", "Failed to write changelog.");
+												MessageModal saveFail = new MessageModal(mainShell, "Error",
+														"Failed to write changelog.");
 												saveFail.show();
 											}
 										}
@@ -1051,27 +1077,28 @@ public class MainView implements FileFlowDelegate {
 							} else {
 								randomSuccess = new MessageModal(mainShell, "Success", "Finished Randomizing!");
 							}
-							
+
 							randomSuccess.show();
 						}
 
 						@Override
 						public void onError(String errorString) {
 							hideModalProgressDialog();
-							MessageModal randomFailure = new MessageModal(mainShell, "Error", "Randomization failed with error: " + errorString);
+							MessageModal randomFailure = new MessageModal(mainShell, "Error",
+									"Randomization failed with error: " + errorString);
 							randomFailure.show();
 						}
 
 						@Override
 						public void onProgressUpdate(double progress) {
-							progressBox.progressBar.setSelection((int)(progress * 100));
+							progressBox.progressBar.setSelection((int) (progress * 100));
 						}
 					});
-					
+
 					randomizer.start();
 					showModalProgressDialog();
 				}
 			}
-		  });
+		});
 	}
 }

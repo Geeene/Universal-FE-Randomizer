@@ -14,13 +14,13 @@ import ui.fe9.FE9SkillsOptions;
 import ui.model.BaseOptions;
 import ui.model.ClassOptions;
 import ui.model.EnemyOptions;
-import ui.model.PromotionOptions;
 import ui.model.FE9EnemyBuffOptions;
 import ui.model.FE9OtherCharacterOptions;
 import ui.model.GrowthOptions;
 import ui.model.ItemAssignmentOptions;
 import ui.model.MiscellaneousOptions;
 import ui.model.OtherCharacterOptions;
+import ui.model.PromotionOptions;
 import ui.model.RecruitmentOptions;
 import ui.model.WeaponOptions;
 
@@ -28,7 +28,7 @@ public class OptionRecorder {
 	private static final Integer FE4OptionBundleVersion = 5;
 	private static final Integer GBAOptionBundleVersion = 13;
 	private static final Integer FE9OptionBundleVersion = 12;
-	
+
 	public static class AllOptions {
 		public FE4OptionBundle fe4;
 		public GBAOptionBundle fe6;
@@ -36,7 +36,7 @@ public class OptionRecorder {
 		public GBAOptionBundle fe8;
 		public FE9OptionBundle fe9;
 	}
-	
+
 	public static class GBAOptionBundle {
 		public GrowthOptions growths;
 		public BaseOptions bases;
@@ -51,7 +51,7 @@ public class OptionRecorder {
 		public Integer version;
 		public PromotionOptions promo;
 	}
-	
+
 	public static class FE4OptionBundle {
 		public GrowthOptions growths;
 		public BaseOptions bases;
@@ -64,7 +64,7 @@ public class OptionRecorder {
 		public String seed;
 		public Integer version;
 	}
-	
+
 	public static class FE9OptionBundle {
 		public GrowthOptions growths;
 		public BaseOptions bases;
@@ -77,17 +77,17 @@ public class OptionRecorder {
 		public String seed;
 		public Integer version;
 	}
-	
+
 	public static AllOptions options = loadOptions();
-	
+
 	private static final String SettingsKey = "saved_settings";
-	
+
 	private static final String FE4Suffix = "_fe4";
 	private static final String FE6Suffix = "_fe6";
 	private static final String FE7Suffix = "_fe7";
 	private static final String FE8Suffix = "_fe8";
 	private static final String FE9Suffix = "_fe9";
-	
+
 	private static AllOptions loadOptions() {
 		Preferences prefs = Preferences.userRoot().node(OptionRecorder.class.getName());
 		String jsonString = prefs.get(SettingsKey, null);
@@ -95,16 +95,26 @@ public class OptionRecorder {
 			Gson gson = new Gson();
 			AllOptions loadedOptions = gson.fromJson(jsonString, AllOptions.class);
 			// Version check.
-			if (loadedOptions.fe4 != null && FE4OptionBundleVersion != loadedOptions.fe4.version) { loadedOptions.fe4 = null; }
-			if (loadedOptions.fe6 != null && GBAOptionBundleVersion != loadedOptions.fe6.version) { loadedOptions.fe6 = null; }
-			if (loadedOptions.fe7 != null && GBAOptionBundleVersion != loadedOptions.fe7.version) { loadedOptions.fe7 = null; }
-			if (loadedOptions.fe8 != null && GBAOptionBundleVersion != loadedOptions.fe8.version) { loadedOptions.fe8 = null; }
-			if (loadedOptions.fe9 != null && FE9OptionBundleVersion != loadedOptions.fe9.version) { loadedOptions.fe9 = null; }
-			
+			if (loadedOptions.fe4 != null && FE4OptionBundleVersion != loadedOptions.fe4.version) {
+				loadedOptions.fe4 = null;
+			}
+			if (loadedOptions.fe6 != null && GBAOptionBundleVersion != loadedOptions.fe6.version) {
+				loadedOptions.fe6 = null;
+			}
+			if (loadedOptions.fe7 != null && GBAOptionBundleVersion != loadedOptions.fe7.version) {
+				loadedOptions.fe7 = null;
+			}
+			if (loadedOptions.fe8 != null && GBAOptionBundleVersion != loadedOptions.fe8.version) {
+				loadedOptions.fe8 = null;
+			}
+			if (loadedOptions.fe9 != null && FE9OptionBundleVersion != loadedOptions.fe9.version) {
+				loadedOptions.fe9 = null;
+			}
+
 			// Migrate to pieced JSON.
 			prefs.remove(SettingsKey);
 			saveOptions(loadedOptions);
-			
+
 			return loadedOptions;
 		} else {
 			AllOptions options = new AllOptions();
@@ -116,7 +126,7 @@ public class OptionRecorder {
 			return options;
 		}
 	}
-	
+
 	private static FE4OptionBundle loadFE4Options() {
 		Preferences prefs = Preferences.userRoot().node(OptionRecorder.class.getName());
 		String jsonString = prefs.get(SettingsKey + FE4Suffix, null);
@@ -131,16 +141,16 @@ public class OptionRecorder {
 			}
 			return FE4OptionBundleVersion != loadedOptions.version ? null : loadedOptions;
 		}
-		
+
 		return null;
 	}
-	
+
 	private static GBAOptionBundle loadFE6Options() {
 		Preferences prefs = Preferences.userRoot().node(OptionRecorder.class.getName());
 		String jsonString = prefs.get(SettingsKey + FE6Suffix, null);
 		if (jsonString != null) {
 			Gson gson = new Gson();
-			
+
 			GBAOptionBundle loadedOptions;
 			try {
 				loadedOptions = gson.fromJson(jsonString, GBAOptionBundle.class);
@@ -149,10 +159,10 @@ public class OptionRecorder {
 			}
 			return GBAOptionBundleVersion != loadedOptions.version ? null : loadedOptions;
 		}
-		
+
 		return null;
 	}
-	
+
 	private static GBAOptionBundle loadFE7Options() {
 		Preferences prefs = Preferences.userRoot().node(OptionRecorder.class.getName());
 		String jsonString = prefs.get(SettingsKey + FE7Suffix, null);
@@ -166,10 +176,10 @@ public class OptionRecorder {
 			}
 			return GBAOptionBundleVersion != loadedOptions.version ? null : loadedOptions;
 		}
-		
+
 		return null;
 	}
-	
+
 	private static GBAOptionBundle loadFE8Options() {
 		Preferences prefs = Preferences.userRoot().node(OptionRecorder.class.getName());
 		String jsonString = prefs.get(SettingsKey + FE8Suffix, null);
@@ -183,10 +193,10 @@ public class OptionRecorder {
 			}
 			return GBAOptionBundleVersion != loadedOptions.version ? null : loadedOptions;
 		}
-		
+
 		return null;
 	}
-	
+
 	private static FE9OptionBundle loadFE9Options() {
 		Preferences prefs = Preferences.userRoot().node(OptionRecorder.class.getName());
 		String jsonString = prefs.get(SettingsKey + FE9Suffix, null);
@@ -200,14 +210,14 @@ public class OptionRecorder {
 			}
 			return FE9OptionBundleVersion != loadedOptions.version ? null : loadedOptions;
 		}
-		
+
 		return null;
 	}
-	
+
 	private static void saveOptions(AllOptions options) {
 		Gson gson = new Gson();
 		Preferences prefs = Preferences.userRoot().node(OptionRecorder.class.getName());
-		
+
 		if (options.fe4 != null) {
 			String fe4String = gson.toJson(options.fe4);
 			prefs.put(SettingsKey + FE4Suffix, fe4String);
@@ -229,10 +239,10 @@ public class OptionRecorder {
 			prefs.put(SettingsKey + FE9Suffix, fe9String);
 		}
 	}
-	
-	public static void recordFE9Options(GrowthOptions growthOptions, BaseOptions baseOptions, FE9SkillsOptions skillOptions,
-			FE9OtherCharacterOptions otherOptions, FE9EnemyBuffOptions buffOptions, FE9ClassOptions classOptions, WeaponOptions weaponOptions,
-			MiscellaneousOptions miscOptions, String seed) {
+
+	public static void recordFE9Options(GrowthOptions growthOptions, BaseOptions baseOptions,
+			FE9SkillsOptions skillOptions, FE9OtherCharacterOptions otherOptions, FE9EnemyBuffOptions buffOptions,
+			FE9ClassOptions classOptions, WeaponOptions weaponOptions, MiscellaneousOptions miscOptions, String seed) {
 		FE9OptionBundle bundle = new FE9OptionBundle();
 		bundle.growths = growthOptions;
 		bundle.bases = baseOptions;
@@ -244,14 +254,16 @@ public class OptionRecorder {
 		bundle.misc = miscOptions;
 		bundle.seed = seed;
 		bundle.version = FE9OptionBundleVersion;
-		
+
 		options.fe9 = bundle;
-		
+
 		saveOptions(options);
 	}
-	
-	public static void recordFE4Options(GrowthOptions growthOptions, BaseOptions basesOptions, HolyBloodOptions bloodOptions, SkillsOptions skillOptions, 
-			FE4ClassOptions classOptions, PromotionOptions promoOptions, FE4EnemyBuffOptions buffOptions, MiscellaneousOptions miscOptions, String seed) {
+
+	public static void recordFE4Options(GrowthOptions growthOptions, BaseOptions basesOptions,
+			HolyBloodOptions bloodOptions, SkillsOptions skillOptions, FE4ClassOptions classOptions,
+			PromotionOptions promoOptions, FE4EnemyBuffOptions buffOptions, MiscellaneousOptions miscOptions,
+			String seed) {
 		FE4OptionBundle bundle = new FE4OptionBundle();
 		bundle.growths = growthOptions;
 		bundle.bases = basesOptions;
@@ -263,18 +275,21 @@ public class OptionRecorder {
 		bundle.misc = miscOptions;
 		bundle.seed = seed;
 		bundle.version = FE4OptionBundleVersion;
-		
+
 		options.fe4 = bundle;
-		
+
 		saveOptions(options);
 	}
-	
-	public static void recordGBAFEOptions(FEBase.GameType gameType, GrowthOptions growths, BaseOptions bases, ClassOptions classes, PromotionOptions promos, WeaponOptions weapons,
-			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions, RecruitmentOptions recruitment, ItemAssignmentOptions itemAssignment, String seed) {
+
+	public static void recordGBAFEOptions(FEBase.GameType gameType, GrowthOptions growths, BaseOptions bases,
+			ClassOptions classes, PromotionOptions promos, WeaponOptions weapons, OtherCharacterOptions other,
+			EnemyOptions enemies, MiscellaneousOptions otherOptions, RecruitmentOptions recruitment,
+			ItemAssignmentOptions itemAssignment, String seed) {
 		GBAOptionBundle bundle = new GBAOptionBundle();
 		bundle.growths = growths;
 		bundle.bases = bases;
 		bundle.classes = classes;
+		bundle.promo = promos;
 		bundle.weapons = weapons;
 		bundle.other = other;
 		bundle.enemies = enemies;
@@ -283,7 +298,7 @@ public class OptionRecorder {
 		bundle.itemAssignmentOptions = itemAssignment;
 		bundle.seed = seed;
 		bundle.version = GBAOptionBundleVersion;
-		
+
 		switch (gameType) {
 		case FE6:
 			options.fe6 = bundle;
@@ -297,7 +312,7 @@ public class OptionRecorder {
 		default:
 			return;
 		}
-		
+
 		saveOptions(options);
 	}
 

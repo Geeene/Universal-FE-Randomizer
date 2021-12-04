@@ -137,19 +137,19 @@ public class PromotionView extends Composite {
 		optionData.top = new FormAttachment(randomButton, 5);
 		commonWeaponButton.setLayoutData(optionData);
 
-		if (GameType.FE8.equals(type)) {
-			keepDamageTypeButton = new Button(container, SWT.CHECK);
-			keepDamageTypeButton.setText("Keep Same Damage Type");
-			keepDamageTypeButton.setToolTipText(
-					"Magical classes will promote into random magical classes, while physical classes will stay in physical classes.");
-			keepDamageTypeButton.setEnabled(false);
-			keepDamageTypeButton.setSelection(false);
+		keepDamageTypeButton = new Button(container, SWT.CHECK);
+		keepDamageTypeButton.setText("Keep Same Damage Type");
+		keepDamageTypeButton.setToolTipText(
+				"Magical classes will promote into random magical classes, while physical classes will stay in physical classes.");
+		keepDamageTypeButton.setEnabled(false);
+		keepDamageTypeButton.setSelection(false);
 
-			optionData = new FormData();
-			optionData.left = new FormAttachment(randomButton, 10, SWT.LEFT);
-			optionData.top = new FormAttachment(commonWeaponButton, 5);
-			keepDamageTypeButton.setLayoutData(optionData);
+		optionData = new FormData();
+		optionData.left = new FormAttachment(randomButton, 10, SWT.LEFT);
+		optionData.top = new FormAttachment(commonWeaponButton, 5);
+		keepDamageTypeButton.setLayoutData(optionData);
 
+		if (type.equals(GameType.FE8)) {
 			allowMonsterClassButton = new Button(container, SWT.CHECK);
 			allowMonsterClassButton.setText("Allow Monster Promotions");
 			allowMonsterClassButton.setToolTipText(
@@ -171,9 +171,11 @@ public class PromotionView extends Composite {
 		if (GameType.FE4.equals(type)) {
 			allowEnemyClassButton.setEnabled(currentMode == PromotionOptions.Mode.LOOSE);
 		}
-		if (GameType.FE8.equals(type)) {
-			allowMonsterClassButton.setEnabled(true);
+		if (type.isGBA()) {
 			keepDamageTypeButton.setEnabled(currentMode == PromotionOptions.Mode.RANDOM);
+			if (GameType.FE8.equals(type)) {
+				allowMonsterClassButton.setEnabled(true);
+			}
 		}
 		commonWeaponButton.setEnabled(currentMode == PromotionOptions.Mode.RANDOM);
 	}
@@ -206,8 +208,10 @@ public class PromotionView extends Composite {
 			}
 
 			if (type.isGBA()) {
-				allowMonsterClassButton.setEnabled(true);
-				allowMonsterClassButton.setSelection(options.allowMonsterClasses);
+				if (type.equals(GameType.FE8)) {
+					allowMonsterClassButton.setEnabled(true);
+					allowMonsterClassButton.setSelection(options.allowMonsterClasses);
+				}
 				keepDamageTypeButton.setEnabled(currentMode == PromotionOptions.Mode.RANDOM);
 				keepDamageTypeButton.setSelection(options.keepSameDamageType);
 			}

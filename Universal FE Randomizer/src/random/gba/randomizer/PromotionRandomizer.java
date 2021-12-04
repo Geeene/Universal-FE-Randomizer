@@ -140,10 +140,10 @@ public class PromotionRandomizer {
 				.filter(e -> unpromotedClasses.contains(e.getKey())
 						|| e.getKey().getName().matches(REGEX_SHOULD_NOT_PROMOTE))
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
-		PoolDistributor<GBAFEClass> promotionDistributor = new PoolDistributor<>();
-		promotionDistributor.addAll(getValidPromotionsForClass(options, classData, null, type));
 
 		for (GBAFEClass unpromotedClass : unpromotedClassDataMapping.keySet()) {
+			PoolDistributor<GBAFEClass> promotionDistributor = new PoolDistributor<>();
+			promotionDistributor.addAll(getValidPromotionsForClass(options, classData, unpromotedClass, type));
 			GBAFEClassData classToEdit = unpromotedClassDataMapping.get(unpromotedClass);
 			classToEdit.setTargetPromotionID(promotionDistributor.getRandomItem(rng, false).getID());
 		}

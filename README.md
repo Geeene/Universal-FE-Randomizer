@@ -1,7 +1,7 @@
-# Custom variant of the Yune Randomizer. See Yune [here](https://github.com/lushen124/Universal-FE-Randomizer")
+# Custom variant of the Yune Randomizer. See Yune [here](https://github.com/lushen124/Universal-FE-Randomizer)
 
 ## Main Goals of this Custom Build:
-Randomized Promotions <br>
+~~Randomized Promotions ~~<br> ✓ Done, needs some more testing though.
 (maybe) Combining the Unit pool of FE6,7,8.<br>
 
 ### Smaller Changes

@@ -30,8 +30,6 @@ public class PromotionRandomizer {
 
 	public static void randomizePromotions(PromotionOptions options, PromotionDataLoader promotionData,
 			ClassDataLoader classData, GameType type, Random rng) {
-		if (options.promotionMode.equals(Mode.STRICT)) {
-		}
 
 		switch (type) {
 		case FE6:
@@ -138,7 +136,7 @@ public class PromotionRandomizer {
 		Map<GBAFEClass, GBAFEClassData> unpromotedClassDataMapping = getClassMapForGame(classData, type).entrySet()
 				.stream()
 				.filter(e -> unpromotedClasses.contains(e.getKey())
-						|| e.getKey().getName().matches(REGEX_SHOULD_NOT_PROMOTE))
+						&& !e.getKey().getName().matches(REGEX_SHOULD_NOT_PROMOTE))
 				.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
 
 		for (GBAFEClass unpromotedClass : unpromotedClassDataMapping.keySet()) {

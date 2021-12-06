@@ -65,7 +65,13 @@ public class PromotionView extends Composite {
 
 		looseButton = new Button(container, SWT.RADIO);
 		looseButton.setText("Similar Promotions");
-		looseButton.setToolTipText("Sets promotions based on weapon ranks, holy blood, class skills, and base stats.");
+		if (GameType.FE4.equals(type)) {
+			looseButton
+					.setToolTipText("Sets promotions based on weapon ranks, holy blood, class skills, and base stats.");
+		} else {
+			looseButton.setToolTipText(
+					"Sets promotions primarily based on weapon ranks. \nnot recommended, heavily limited options especially for FE6.");
+		}
 		looseButton.setEnabled(true);
 		looseButton.setSelection(false);
 		looseButton.addListener(SWT.Selection, new Listener() {
@@ -136,18 +142,19 @@ public class PromotionView extends Composite {
 		optionData.left = new FormAttachment(randomButton, 10, SWT.LEFT);
 		optionData.top = new FormAttachment(randomButton, 5);
 		commonWeaponButton.setLayoutData(optionData);
+		if (type.isGBA()) {
+			keepDamageTypeButton = new Button(container, SWT.CHECK);
+			keepDamageTypeButton.setText("Keep Same Damage Type");
+			keepDamageTypeButton.setToolTipText(
+					"Magical classes will promote into random magical classes, while physical classes will stay in physical classes.");
+			keepDamageTypeButton.setEnabled(false);
+			keepDamageTypeButton.setSelection(false);
 
-		keepDamageTypeButton = new Button(container, SWT.CHECK);
-		keepDamageTypeButton.setText("Keep Same Damage Type");
-		keepDamageTypeButton.setToolTipText(
-				"Magical classes will promote into random magical classes, while physical classes will stay in physical classes.");
-		keepDamageTypeButton.setEnabled(false);
-		keepDamageTypeButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(randomButton, 10, SWT.LEFT);
-		optionData.top = new FormAttachment(commonWeaponButton, 5);
-		keepDamageTypeButton.setLayoutData(optionData);
+			optionData = new FormData();
+			optionData.left = new FormAttachment(randomButton, 10, SWT.LEFT);
+			optionData.top = new FormAttachment(commonWeaponButton, 5);
+			keepDamageTypeButton.setLayoutData(optionData);
+		}
 
 		if (type.equals(GameType.FE8)) {
 			allowMonsterClassButton = new Button(container, SWT.CHECK);

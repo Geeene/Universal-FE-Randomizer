@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.SWTException;
@@ -609,7 +611,150 @@ public class MainView implements FileFlowDelegate {
 		randomizeButton.setText("Randomize!");
 		randomizeButton.setVisible(false);
 
-		if (Arrays.asList(GameType.FE6, GameType.FE7, GameType.FE8).contains(type)) {
+		if (type == GameType.FE4) {
+			// To prevent gen 2 overflow, the max growth allowed for any single stat is 85%.
+			growthView.overrideMaxGrowthAllowed(85);
+
+			holyBloodView = new HolyBloodView(container, SWT.NONE);
+			holyBloodView.setSize(200, 200);
+			holyBloodView.setVisible(false);
+
+			FormData holyBloodData = new FormData();
+			holyBloodData.top = new FormAttachment(baseView, 5);
+			holyBloodData.left = new FormAttachment(baseView, 0, SWT.LEFT);
+			holyBloodData.right = new FormAttachment(baseView, 0, SWT.RIGHT);
+			holyBloodData.bottom = new FormAttachment(100, -10);
+			holyBloodView.setLayoutData(holyBloodData);
+
+			skillsView = new SkillsView(container, SWT.NONE);
+			skillsView.setSize(200, 200);
+			skillsView.setVisible(false);
+
+			FormData skillsData = new FormData();
+			skillsData.top = new FormAttachment(growthView, 0, SWT.TOP);
+			skillsData.left = new FormAttachment(growthView, 5);
+			skillsData.bottom = new FormAttachment(100, -10);
+			skillsView.setLayoutData(skillsData);
+
+			fe4ClassView = new FE4ClassesView(container, SWT.NONE);
+			fe4ClassView.setSize(200, 200);
+			fe4ClassView.setVisible(false);
+
+			FormData classData = new FormData();
+			classData.top = new FormAttachment(skillsView, 0, SWT.TOP);
+			classData.left = new FormAttachment(skillsView, 5);
+			classData.bottom = new FormAttachment(100, -10);
+			fe4ClassView.setLayoutData(classData);
+
+			promotionView = new PromotionView(container, SWT.NONE, type);
+			promotionView.setSize(200, 200);
+			promotionView.setVisible(false);
+
+			FormData promoData = new FormData();
+			promoData.top = new FormAttachment(fe4ClassView, 0, SWT.TOP);
+			promoData.left = new FormAttachment(fe4ClassView, 5);
+			promoData.right = new FormAttachment(100, -5);
+			promotionView.setLayoutData(promoData);
+
+			fe4EnemyBuffView = new FE4EnemyBuffView(container, SWT.NONE);
+			fe4EnemyBuffView.setSize(200, 200);
+			fe4EnemyBuffView.setVisible(false);
+
+			FormData buffData = new FormData();
+			buffData.top = new FormAttachment(promotionView, 5);
+			buffData.left = new FormAttachment(promotionView, 0, SWT.LEFT);
+			buffData.right = new FormAttachment(promotionView, 0, SWT.RIGHT);
+			fe4EnemyBuffView.setLayoutData(buffData);
+
+			miscView = new MiscellaneousView(container, SWT.NONE, type);
+			miscView.setSize(200, 200);
+			miscView.setVisible(false);
+
+			FormData miscData = new FormData();
+			miscData.top = new FormAttachment(fe4EnemyBuffView, 5);
+			miscData.left = new FormAttachment(fe4EnemyBuffView, 0, SWT.LEFT);
+			miscData.right = new FormAttachment(fe4EnemyBuffView, 0, SWT.RIGHT);
+			// miscData.bottom = new FormAttachment(100, -10);
+			miscView.setLayoutData(miscData);
+
+			FormData randomizeData = new FormData();
+			randomizeData.top = new FormAttachment(miscView, 5);
+			randomizeData.left = new FormAttachment(miscView, 0, SWT.LEFT);
+			randomizeData.right = new FormAttachment(miscView, 0, SWT.RIGHT);
+			randomizeData.bottom = new FormAttachment(100, -10);
+			randomizeButton.setLayoutData(randomizeData);
+
+		} else if (type == GameType.FE9) {
+			conAffinityView = new CONAffinityView(container, SWT.NONE);
+			conAffinityView.setSize(200, 200);
+			conAffinityView.setVisible(false);
+
+			FormData conAffinityData = new FormData();
+			conAffinityData.top = new FormAttachment(baseView, 5);
+			conAffinityData.left = new FormAttachment(baseView, 0, SWT.LEFT);
+			conAffinityData.right = new FormAttachment(baseView, 0, SWT.RIGHT);
+			conAffinityView.setLayoutData(conAffinityData);
+
+			miscView = new MiscellaneousView(container, SWT.NONE, type);
+			miscView.setSize(200, 200);
+			miscView.setVisible(false);
+
+			FormData miscData = new FormData();
+			miscData.top = new FormAttachment(conAffinityView, 5);
+			miscData.left = new FormAttachment(conAffinityView, 0, SWT.LEFT);
+			miscData.right = new FormAttachment(conAffinityView, 0, SWT.RIGHT);
+			// miscData.bottom = new FormAttachment(100, -10);
+			miscView.setLayoutData(miscData);
+
+			List<String> skills = FE9Data.Skill.allValidSkills.stream().map(skill -> {
+				return skill.getDisplayString();
+			}).collect(Collectors.toList());
+			fe9SkillView = new FE9SkillView(container, SWT.NONE, skills);
+			fe9SkillView.setSize(200, 200);
+			fe9SkillView.setVisible(false);
+
+			FormData skillData = new FormData();
+			skillData.top = new FormAttachment(growthView, 0, SWT.TOP);
+			skillData.left = new FormAttachment(growthView, 5);
+			skillData.bottom = new FormAttachment(100, -10);
+			fe9SkillView.setLayoutData(skillData);
+
+			weaponView = new WeaponsView(container, SWT.NONE, type);
+			weaponView.setSize(200, 200);
+			weaponView.setVisible(false);
+
+			FormData weaponData = new FormData();
+			weaponData.top = new FormAttachment(growthView, 0, SWT.TOP);
+			weaponData.left = new FormAttachment(fe9SkillView, 5);
+			weaponView.setLayoutData(weaponData);
+
+			fe9ClassesView = new FE9ClassesView(container, SWT.NONE);
+			fe9ClassesView.setSize(200, 200);
+			fe9ClassesView.setVisible(false);
+
+			FormData classData = new FormData();
+			classData.top = new FormAttachment(growthView, 0, SWT.TOP);
+			classData.left = new FormAttachment(weaponView, 5);
+			classData.right = new FormAttachment(100, -5);
+			fe9ClassesView.setLayoutData(classData);
+
+			fe9EnemyView = new FE9EnemyBuffView(container, SWT.NONE);
+			fe9EnemyView.setSize(200, 200);
+			fe9EnemyView.setVisible(false);
+
+			FormData enemyData = new FormData();
+			enemyData.top = new FormAttachment(fe9ClassesView, 5);
+			enemyData.left = new FormAttachment(fe9ClassesView, 0, SWT.LEFT);
+			enemyData.right = new FormAttachment(100, -5);
+			fe9EnemyView.setLayoutData(enemyData);
+
+			FormData randomizeData = new FormData();
+			randomizeData.top = new FormAttachment(fe9EnemyView, 5);
+			randomizeData.left = new FormAttachment(fe9EnemyView, 0, SWT.LEFT);
+			randomizeData.right = new FormAttachment(fe9EnemyView, 0, SWT.RIGHT);
+			randomizeData.bottom = new FormAttachment(100, -10);
+			randomizeButton.setLayoutData(randomizeData);
+		} else if (Arrays.asList(GameType.FE6, GameType.FE7, GameType.FE8).contains(type)) {
 			otherCharOptionView = new MOVCONAffinityView(container, SWT.NONE);
 			otherCharOptionView.setSize(200, 200);
 			otherCharOptionView.setVisible(false);

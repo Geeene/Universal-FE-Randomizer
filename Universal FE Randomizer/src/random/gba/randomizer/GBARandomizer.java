@@ -794,17 +794,17 @@ public class GBARandomizer extends Randomizer {
 
 		switch (gameType) {
 		case FE6:
-			bytes = new byte[0x49];
+			bytes = new byte[84];
 			resourceFile = "FE6Promotion.dmp";
 			offset = 0x252F8;
 			break;
 		case FE7:
-			bytes = new byte[0x49];
+			bytes = new byte[74];
 			resourceFile = "FE7Promotion.dmp";
 			offset = 0x298B4;
 			break;
 		case FE8:
-			bytes = new byte[0x35];
+			bytes = new byte[54];
 			resourceFile = "FE8Promotion.dmp";
 			offset = 0x2BE38;
 			break;
@@ -818,7 +818,7 @@ public class GBARandomizer extends Randomizer {
 		stream.read(bytes);
 		stream.close();
 
-		diffCompiler.addDiff(new Diff(offset, 0x35, bytes, null));
+		diffCompiler.addDiff(new Diff(offset, bytes.length, bytes, null));
 	}
 
 	private void makePreliminaryAdjustments() {

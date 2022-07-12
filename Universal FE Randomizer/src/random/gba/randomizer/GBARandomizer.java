@@ -42,7 +42,6 @@ import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.PaletteLoader;
-import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.PromotionDataLoader;
 import random.gba.loader.TextLoader;
 import random.general.Randomizer;
@@ -96,7 +95,6 @@ public class GBARandomizer extends Randomizer {
 	private PaletteLoader paletteData;
 	private TextLoader textData;
 	private PromotionDataLoader promotionData;
-	private PortraitDataLoader portraitData;
 
 	private boolean needsPaletteFix;
 	private Map<GBAFECharacterData, GBAFECharacterData> characterMap; // valid with random recruitment. Maps slots to
@@ -333,7 +331,6 @@ public class GBARandomizer extends Randomizer {
 
 		updateStatusString("Compiling changes...");
 		updateProgress(0.95);
-		portraitData.compileDiffs(diffCompiler);
 		charData.compileDiffs(diffCompiler);
 		chapterData.compileDiffs(diffCompiler);
 		classData.compileDiffs(diffCompiler, handler, freeSpace);
@@ -462,9 +459,6 @@ public class GBARandomizer extends Randomizer {
 		textData = new TextLoader(FEBase.GameType.FE7, handler);
 		textData.allowTextChanges = true;
 
-		updateStatusString("Loading Portrait Data...");
-		portraitData = new PortraitDataLoader(FE7Data.portraitProvider, handler);
-
 		updateStatusString("Loading Character Data...");
 		updateProgress(0.10);
 		charData = new CharacterDataLoader(FE7Data.characterProvider, handler);
@@ -496,10 +490,6 @@ public class GBARandomizer extends Randomizer {
 		if (miscOptions.applyEnglishPatch) {
 			textData.allowTextChanges = true;
 		}
-
-		updateStatusString("Loading Portrait Data...");
-		updateProgress(0.08);
-		portraitData = new PortraitDataLoader(FE6Data.portraitProvider, handler);
 
 		updateStatusString("Loading Character Data...");
 		updateProgress(0.10);
@@ -535,10 +525,6 @@ public class GBARandomizer extends Randomizer {
 		updateStatusString("Loading Promotion Data...");
 		updateProgress(0.06);
 		fe8_promotionManager = new FE8PromotionManager(handler);
-
-		updateStatusString("Loading Portrait Data...");
-		updateProgress(0.08);
-		portraitData = new PortraitDataLoader(FE8Data.portraitProvider, handler);
 
 		updateStatusString("Loading Character Data...");
 		updateProgress(0.10);
@@ -783,7 +769,7 @@ public class GBARandomizer extends Randomizer {
 			Random rng = new Random(
 					SeedGenerator.generateSeedValue(recruitOptions.seed, RecruitmentRandomizer.rngSalt));
 			characterMap = RecruitmentRandomizer.randomizeRecruitment(recruitOptions, itemAssignmentOptions, gameType,
-					charData, classData, itemData, chapterData, textData, freeSpace, rng, handler, portraitData);
+					charData, classData, itemData, chapterData, textData, freeSpace, rng, handler);
 			needsPaletteFix = true;
 		}
 	}

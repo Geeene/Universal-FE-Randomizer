@@ -42,6 +42,7 @@ import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.PaletteLoader;
+import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.PromotionDataLoader;
 import random.gba.loader.TextLoader;
 import random.general.Randomizer;
@@ -95,6 +96,7 @@ public class GBARandomizer extends Randomizer {
 	private PaletteLoader paletteData;
 	private TextLoader textData;
 	private PromotionDataLoader promotionData;
+	private PortraitDataLoader portraitData;
 
 	private boolean needsPaletteFix;
 	private Map<GBAFECharacterData, GBAFECharacterData> characterMap; // valid with random recruitment. Maps slots to
@@ -231,7 +233,7 @@ public class GBARandomizer extends Randomizer {
 		recordKeeper.addHeaderItem("Randomizer Seed Phrase", seed);
 
 		charData.recordCharacters(recordKeeper, true, classData, itemData, textData);
-		classData.recordClasses(recordKeeper, true, classData, textData);
+		classData.recordClasses(recordKeeper, true, classData, textData, promotionData);
 		itemData.recordWeapons(recordKeeper, true, classData, textData, handler);
 		chapterData.recordChapters(recordKeeper, true, charData, classData, itemData, textData);
 
@@ -247,7 +249,7 @@ public class GBARandomizer extends Randomizer {
 					+ "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream()
 							.map(element -> (element.toString())).limit(10).collect(Collectors.toList())));
 		}
-		;
+
 		try {
 			randomizeRecruitmentIfNecessary(seed);
 		} catch (Exception e) {
@@ -331,6 +333,7 @@ public class GBARandomizer extends Randomizer {
 
 		updateStatusString("Compiling changes...");
 		updateProgress(0.95);
+		portraitData.compileDiffs(diffCompiler);
 		charData.compileDiffs(diffCompiler);
 		chapterData.compileDiffs(diffCompiler);
 		classData.compileDiffs(diffCompiler, handler, freeSpace);
@@ -385,7 +388,7 @@ public class GBARandomizer extends Randomizer {
 		}
 
 		charData.recordCharacters(recordKeeper, false, classData, itemData, textData);
-		classData.recordClasses(recordKeeper, false, classData, textData);
+		classData.recordClasses(recordKeeper, false, classData, textData, promotionData);
 		itemData.recordWeapons(recordKeeper, false, classData, textData, targetFileHandler);
 		chapterData.recordChapters(recordKeeper, false, charData, classData, itemData, textData);
 
@@ -459,6 +462,9 @@ public class GBARandomizer extends Randomizer {
 		textData = new TextLoader(FEBase.GameType.FE7, handler);
 		textData.allowTextChanges = true;
 
+		updateStatusString("Loading Portrait Data...");
+		portraitData = new PortraitDataLoader(FE7Data.portraitProvider, handler);
+
 		updateStatusString("Loading Character Data...");
 		updateProgress(0.10);
 		charData = new CharacterDataLoader(FE7Data.characterProvider, handler);
@@ -491,10 +497,15 @@ public class GBARandomizer extends Randomizer {
 			textData.allowTextChanges = true;
 		}
 
+		updateStatusString("Loading Portrait Data...");
+		updateProgress(0.08);
+		portraitData = new PortraitDataLoader(FE6Data.portraitProvider, handler);
+
 		updateStatusString("Loading Character Data...");
 		updateProgress(0.10);
 		charData = new CharacterDataLoader(FE6Data.characterProvider, handler);
 		updateStatusString("Loading Class Data...");
+
 		updateProgress(0.15);
 		classData = new ClassDataLoader(FE6Data.classProvider, handler);
 		updateStatusString("Loading Chapter Data...");
@@ -524,6 +535,10 @@ public class GBARandomizer extends Randomizer {
 		updateStatusString("Loading Promotion Data...");
 		updateProgress(0.06);
 		fe8_promotionManager = new FE8PromotionManager(handler);
+
+		updateStatusString("Loading Portrait Data...");
+		updateProgress(0.08);
+		portraitData = new PortraitDataLoader(FE8Data.portraitProvider, handler);
 
 		updateStatusString("Loading Character Data...");
 		updateProgress(0.10);
@@ -765,9 +780,10 @@ public class GBARandomizer extends Randomizer {
 	private void randomizeRecruitmentIfNecessary(String seed) {
 		if (recruitOptions != null) {
 			updateStatusString("Randomizing recruitment...");
-			Random rng = new Random(SeedGenerator.generateSeedValue(seed, RecruitmentRandomizer.rngSalt));
+			Random rng = new Random(
+					SeedGenerator.generateSeedValue(recruitOptions.seed, RecruitmentRandomizer.rngSalt));
 			characterMap = RecruitmentRandomizer.randomizeRecruitment(recruitOptions, itemAssignmentOptions, gameType,
-					charData, classData, itemData, chapterData, textData, freeSpace, rng);
+					charData, classData, itemData, chapterData, textData, freeSpace, rng, handler, portraitData);
 			needsPaletteFix = true;
 		}
 	}
@@ -777,7 +793,7 @@ public class GBARandomizer extends Randomizer {
 		prepareForPromotionRandomization();
 		if (promoOptions != null) {
 			updateStatusString("Randomizing Promotions...");
-			Random rng = new Random(SeedGenerator.generateSeedValue(seed, RecruitmentRandomizer.rngSalt));
+			Random rng = new Random(SeedGenerator.generateSeedValue(seed, PromotionRandomizer.rngSalt));
 			PromotionRandomizer.randomizePromotions(promoOptions, promotionData, classData, gameType, rng);
 		}
 	}

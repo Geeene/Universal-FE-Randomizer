@@ -769,7 +769,7 @@ public class GBARandomizer extends Randomizer {
 			Random rng = new Random(
 					SeedGenerator.generateSeedValue(recruitOptions.seed, RecruitmentRandomizer.rngSalt));
 			characterMap = RecruitmentRandomizer.randomizeRecruitment(recruitOptions, itemAssignmentOptions, gameType,
-					charData, classData, itemData, chapterData, textData, freeSpace, rng, handler);
+					charData, classData, itemData, chapterData, textData, freeSpace, rng);
 			needsPaletteFix = true;
 		}
 	}

@@ -3,8 +3,6 @@ package ui;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.FormAttachment;
-import org.eclipse.swt.layout.FormData;
-import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
@@ -14,7 +12,7 @@ import org.eclipse.swt.widgets.Listener;
 import fedata.general.FEBase.GameType;
 import ui.model.PromotionOptions;
 
-public class PromotionView extends Composite {
+public class PromotionView extends AbstractYuneView {
 	private Group container;
 
 	private Button strictButton;
@@ -35,33 +33,18 @@ public class PromotionView extends Composite {
 
 		setLayout(new FillLayout());
 
-		container = new Group(this, SWT.NONE);
-		container.setText("Promotions");
-		container.setToolTipText("Controls class promotions for all playable characters.");
+		container = createContainer(this, "Promotions", "Controls class promotions for all playable characters.");
+		setGroupMargins(container);
 
-		FormLayout mainLayout = new FormLayout();
-		mainLayout.marginLeft = 5;
-		mainLayout.marginRight = 5;
-		mainLayout.marginTop = 5;
-		mainLayout.marginBottom = 5;
-		container.setLayout(mainLayout);
-
-		strictButton = new Button(container, SWT.RADIO);
-		strictButton.setText("Default Promotions");
-		strictButton.setToolTipText("Sets promotions based on normal class progression.");
-		strictButton.setEnabled(true);
-		strictButton.setSelection(true);
+		strictButton = createButton(container, SWT.RADIO, "Default Promotions",
+				"Sets promotions based on normal class progression.", true, true);
+		defaultLayout(strictButton);
 		strictButton.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
 				setMode(PromotionOptions.Mode.STRICT, type);
 			}
 		});
-
-		FormData optionData = new FormData();
-		optionData.left = new FormAttachment(0, 0);
-		optionData.top = new FormAttachment(0, 0);
-		strictButton.setLayoutData(optionData);
 
 		looseButton = new Button(container, SWT.RADIO);
 		looseButton.setText("Similar Promotions");
@@ -80,94 +63,46 @@ public class PromotionView extends Composite {
 				setMode(PromotionOptions.Mode.LOOSE, type);
 			}
 		});
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(strictButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(strictButton, 15);
-		looseButton.setLayoutData(optionData);
-
-		allowMountChangeButton = new Button(container, SWT.CHECK);
-		allowMountChangeButton.setText("Allow Mount Change");
-		allowMountChangeButton.setToolTipText(
+		layout(looseButton, new FormAttachment(strictButton, 15), new FormAttachment(strictButton, 0, SWT.LEFT));
+		allowMountChangeButton = createButton(container, SWT.CHECK, "Allow Mount Change",
 				"Allows mounted units to change between mounts (e.g. flying to horseback, and vice versa).");
-		allowMountChangeButton.setEnabled(false);
-		allowMountChangeButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(looseButton, 10, SWT.LEFT);
-		optionData.top = new FormAttachment(looseButton, 5);
-		allowMountChangeButton.setLayoutData(optionData);
+		layout(allowMountChangeButton, new FormAttachment(looseButton, 5),
+				new FormAttachment(looseButton, 10, SWT.LEFT));
 		Button lastButton = allowMountChangeButton;
 
 		if (GameType.FE4.equals(type)) {
-			allowEnemyClassButton = new Button(container, SWT.CHECK);
-			allowEnemyClassButton.setText("Allow Enemy-only Promotions");
-			allowEnemyClassButton
-					.setToolTipText("Allows units to promote into enemy-only classes like Baron, Queen, and Emperor.");
-			allowEnemyClassButton.setEnabled(false);
+			allowEnemyClassButton = createButton(container, SWT.CHECK, "Allow Enemy-only Promotions",
+					"Allows units to promote into enemy-only classes like Baron, Queen, and Emperor.");
 			allowEnemyClassButton.setSelection(false);
-
-			optionData = new FormData();
-			optionData.left = new FormAttachment(allowMountChangeButton, 0, SWT.LEFT);
-			optionData.top = new FormAttachment(allowMountChangeButton, 5);
-			allowEnemyClassButton.setLayoutData(optionData);
+			layout(allowEnemyClassButton, new FormAttachment(allowMountChangeButton, 5),
+					new FormAttachment(allowMountChangeButton, 0, SWT.LEFT));
 			lastButton = allowEnemyClassButton;
 		}
 
-		randomButton = new Button(container, SWT.RADIO);
-		randomButton.setText("Random Promotions");
-		randomButton.setToolTipText("Sets promotions enitrely randomly.");
-		randomButton.setEnabled(true);
-		randomButton.setSelection(false);
+		randomButton = createButton(container, SWT.RADIO, "Random Promotions", "Sets promotions enitrely randomly.",
+				true, false);
+		layout(randomButton, new FormAttachment(lastButton, 15), new FormAttachment(looseButton, 0, SWT.LEFT));
 		randomButton.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
 				setMode(PromotionOptions.Mode.RANDOM, type);
 			}
 		});
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(looseButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(lastButton, 15);
-		randomButton.setLayoutData(optionData);
-
-		commonWeaponButton = new Button(container, SWT.CHECK);
-		commonWeaponButton.setText("Requires Common Weapon");
-		commonWeaponButton
-				.setToolTipText("Requires the promoted class to share at least one weapon type with its predecessor.");
-		commonWeaponButton.setEnabled(false);
-		commonWeaponButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(randomButton, 10, SWT.LEFT);
-		optionData.top = new FormAttachment(randomButton, 5);
-		commonWeaponButton.setLayoutData(optionData);
+		commonWeaponButton = createButton(container, SWT.CHECK, "Requires Common Weapon",
+				"Requires the promoted class to share at least one weapon type with its predecessor.");
+		layout(commonWeaponButton, new FormAttachment(randomButton, 5), new FormAttachment(randomButton, 10, SWT.LEFT));
 		if (type.isGBA()) {
-			keepDamageTypeButton = new Button(container, SWT.CHECK);
-			keepDamageTypeButton.setText("Keep Same Damage Type");
-			keepDamageTypeButton.setToolTipText(
+			keepDamageTypeButton = createButton(container, SWT.CHECK, "Keep Same Damage Type",
 					"Magical classes will promote into random magical classes, while physical classes will stay in physical classes.");
-			keepDamageTypeButton.setEnabled(false);
-			keepDamageTypeButton.setSelection(false);
-
-			optionData = new FormData();
-			optionData.left = new FormAttachment(randomButton, 10, SWT.LEFT);
-			optionData.top = new FormAttachment(commonWeaponButton, 5);
-			keepDamageTypeButton.setLayoutData(optionData);
+			layout(keepDamageTypeButton, new FormAttachment(commonWeaponButton, 5),
+					new FormAttachment(randomButton, 10, SWT.LEFT));
 		}
 
 		if (type.equals(GameType.FE8)) {
-			allowMonsterClassButton = new Button(container, SWT.CHECK);
-			allowMonsterClassButton.setText("Allow Monster Promotions");
-			allowMonsterClassButton.setToolTipText(
+			allowMonsterClassButton = createButton(container, SWT.CHECK, "Allow Monster Promotions",
 					"Allows units to promote into Monster classes like Elder Bael, Wight, and Arch Mogall.");
-			allowMonsterClassButton.setEnabled(false);
-			allowMonsterClassButton.setSelection(false);
-
-			optionData = new FormData();
-			optionData.left = new FormAttachment(randomButton, 0, SWT.LEFT);
-			optionData.top = new FormAttachment(keepDamageTypeButton, 5);
-			allowMonsterClassButton.setLayoutData(optionData);
+			layout(allowMonsterClassButton, new FormAttachment(keepDamageTypeButton, 5),
+					new FormAttachment(randomButton, 0, SWT.LEFT));
 		}
 	}
 

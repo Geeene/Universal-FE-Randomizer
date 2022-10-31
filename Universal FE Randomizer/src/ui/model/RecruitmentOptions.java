@@ -1,5 +1,9 @@
 package ui.model;
 
+import java.util.List;
+
+import fedata.general.FEBase.GameType;
+
 public class RecruitmentOptions {
 	public enum GrowthAdjustmentMode {
 		USE_FILL, USE_SLOT, RELATIVE_TO_SLOT
@@ -30,11 +34,13 @@ public class RecruitmentOptions {
 	public final boolean includeSpecial;
 
 	public final boolean includeExtras;
+	public final boolean useSeperateSeed;
 	public final String seed;
 
 	public RecruitmentOptions(GrowthAdjustmentMode growthMode, StatAdjustmentMode baseMode,
-			BaseStatAutolevelType autolevel, ClassMode classMode, boolean lords, boolean prfs, boolean unbreakablePrfs,
-			boolean thieves, boolean special, boolean crossGender, boolean includeExtras, String seed) {
+			BaseStatAutolevelType autolevel, ClassMode classMode, boolean lords,
+			boolean prfs, boolean unbreakablePrfs, boolean thieves, boolean special, boolean crossGender,
+			boolean includeExtras, boolean useSeperateSeed, String seed) {
 		super();
 		this.growthMode = growthMode;
 		this.baseMode = baseMode;
@@ -50,5 +56,6 @@ public class RecruitmentOptions {
 		this.allowCrossGender = crossGender;
 		this.includeExtras = includeExtras;
 		this.seed = seed;
+		this.useSeperateSeed = useSeperateSeed;
 	}
 }

@@ -48,6 +48,7 @@ public class WeaponEffectSelectionView extends Composite {
 		setLayout(rowLayout);
 		
 		buildView(type);
+		this.setEnabled(false);
 	}
 	
 	protected void buildView(GameType type) {

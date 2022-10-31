@@ -2,22 +2,14 @@ package fedata.gba.fe7;
 
 import java.util.Arrays;
 
+import fedata.gba.AbstractGBAData;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
 import util.WhyDoesJavaNotHaveThese;
 
-public class FE7Class implements GBAFEClassData {
-	
-	private byte[] originalData;
-	private byte[] data;
-	
-	private long originalOffset;
-	private Long addressOverride;
-	
-	private Boolean wasModified = false;
-	private Boolean hasChanges = false;
+public class FE7Class extends AbstractGBAData implements GBAFEClassData {
 	
 	private String debugString = "Uninitialized";
 	
@@ -413,39 +405,6 @@ public class FE7Class implements GBAFEClassData {
 	
 	public int getCON() {
 		return data[17] & 0xFF;
-	}
-
-	public void resetData() {
-		data = originalData;
-		wasModified = false;
-	}
-	
-	public void commitChanges() {
-		if (wasModified) {
-			hasChanges = true;
-		}
-		wasModified = false;
-	}
-	
-	public Boolean hasCommittedChanges() {
-		return hasChanges;
-	}
-	
-	public byte[] getData() {
-		return data;
-	}
-	
-	public Boolean wasModified() {
-		return wasModified;
-	}
-	
-	public long getAddressOffset() {
-		return addressOverride != null ? addressOverride : originalOffset;
-	}
-	
-	public void overrideAddress(long newAddress) {
-		addressOverride = newAddress;
-		wasModified = true;
 	}
 	
 	public Boolean canUseWeapon(GBAFEItemData weapon) {

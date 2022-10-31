@@ -12,6 +12,8 @@ import util.FileReadHelper;
 
 public class PromotionDataLoader {
 
+	public static final String RecordKeeperCategoryKey = "Characters";
+
 	private Map<FE8Data.CharacterClass, PromotionBranch> promotionBranches;
 
 	public PromotionDataLoader(FileHandler handler) {

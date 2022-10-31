@@ -5,13 +5,10 @@ import java.util.Arrays;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.FormAttachment;
-import org.eclipse.swt.layout.FormData;
-import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
@@ -23,22 +20,24 @@ import ui.model.RecruitmentOptions.GrowthAdjustmentMode;
 import ui.model.RecruitmentOptions.StatAdjustmentMode;
 import util.SeedGenerator;
 
-public class RecruitmentView extends Composite {
+public class RecruitmentView extends AbstractYuneView {
 
-	private Group container;
+	private Composite container;
 
 	private Button enableButton;
 
+	private Group seedContainer;
+	private Button seedEnableButton;
 	private Group growthContainer;
 	private Button fillGrowthButton;
 	private Button slotGrowthButton;
 	private Button slotRelativeGrowthButton;
-	private Text recruitmentSeedField;
-	private Label recruitmentSeedLabel;
+	private Button recSeedGenerate;
+	private Text recSeedField;
 
 	private Group basesContainer;
 	private Button autolevelButton;
-	private Composite autolevelTypeContainer;
+	private Group autolevelTypeContainer;
 	private Button autolevelOriginalButton;
 	private Button autolevelNewButton;
 	private Button absoluteButton;
@@ -59,27 +58,18 @@ public class RecruitmentView extends Composite {
 
 	public RecruitmentView(Composite parent, int style, GameType type) {
 		super(parent, style);
+		setLayout(new FillLayout());
 
-		FillLayout layout = new FillLayout();
-		setLayout(layout);
+		container = createContainer(this, "Recruitment", "Randomized character join order.");
+		setGroupMargins(container);
 
-		container = new Group(this, SWT.NONE);
-		container.setText("Recruitment");
-		container.setToolTipText("Randomized character join order.");
-
-		FormLayout mainLayout = new FormLayout();
-		mainLayout.marginLeft = 5;
-		mainLayout.marginTop = 5;
-		mainLayout.marginBottom = 5;
-		mainLayout.marginRight = 5;
-		container.setLayout(mainLayout);
-
-		enableButton = new Button(container, SWT.CHECK);
-		enableButton.setText("Randomize Recruitment");
+		enableButton = createButton(container, SWT.CHECK, "Randomize Recruitment", null, true, false);
+		defaultLayout(enableButton);
 		enableButton.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
 				growthContainer.setEnabled(enableButton.getSelection());
+				seedContainer.setEnabled(enableButton.getSelection());
 				basesContainer.setEnabled(enableButton.getSelection());
 				classContainer.setEnabled(enableButton.getSelection());
 
@@ -113,113 +103,80 @@ public class RecruitmentView extends Composite {
 			}
 		});
 
-		FormData enableData = new FormData();
-		enableData.left = new FormAttachment(0, 0);
-		enableData.top = new FormAttachment(0, 0);
-		enableButton.setLayoutData(enableData);
+		// CUSTOM, add logic to allow setting a different seed for recruitment
+		// Randomization
 
-		// CUSTOM, add logic to share Random Recruitment Order for different overall
-		// Seeds
+		seedContainer = createContainer(container, "Seperate Seed",
+				"Determines if the recruitment randomization uses a different seed than the other settings.");
+		setGroupMargins(seedContainer);
+		layout(seedContainer, new FormAttachment(container, 15), new FormAttachment(container, 10),
+				new FormAttachment(100, -5));
 
-		FormData optionData = new FormData();
-		optionData.left = new FormAttachment(container, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(enableButton, 10);
+		seedEnableButton = createButton(seedContainer, SWT.CHECK, "Use Seperate seed", "", true, false);
+		defaultLayout(seedEnableButton);
+		seedEnableButton.addListener(SWT.Selection, new Listener() {
+			@Override
+			public void handleEvent(Event event) {
+				if (seedEnableButton.getSelection()) {
+					recSeedField.setText(SeedGenerator.generateRandomSeed());
+					recSeedField.setEnabled(true);
+					recSeedGenerate.setEnabled(true);
+				} else {
+					recSeedField.setText("");
+					recSeedField.setEnabled(false);
+					recSeedGenerate.setEnabled(false);
+				}
+			}
+		});
 
-		recruitmentSeedLabel = new Label(container, SWT.NONE);
-		recruitmentSeedLabel.setText("Recruitment Order Seed");
-		recruitmentSeedLabel.setVisible(true);
-		recruitmentSeedLabel.setLayoutData(optionData);
+		recSeedField = createText(seedContainer, SWT.BORDER, "",
+				"Set a seed for specifically the Recruitment Randomization. (Primarily useful for Sollinks)", true);
+		layout(recSeedField, new FormAttachment(seedEnableButton, 5), new FormAttachment(seedContainer, 0));
 
-		optionData = new FormData();
-		optionData.left = new FormAttachment(recruitmentSeedLabel, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(recruitmentSeedLabel, 10);
-
-		recruitmentSeedField = new Text(container, SWT.BORDER);
-		recruitmentSeedField.setText(SeedGenerator.generateRandomSeed());
-		recruitmentSeedField.setToolTipText(
+		recSeedGenerate = createButton(seedContainer, SWT.PUSH, "Generate",
 				"Set a seed for specifically the Recruitment Randomization. (Primarily useful for Sollinks)");
-		recruitmentSeedField.setVisible(true);
-		recruitmentSeedField.setLayoutData(optionData);
+		layout(recSeedGenerate, new FormAttachment(seedEnableButton, 5), new FormAttachment(recSeedField, 5));
 
+		recSeedGenerate.addListener(SWT.Selection, new Listener() {
+			@Override
+			public void handleEvent(Event event) {
+				recSeedField.setText(SeedGenerator.generateRandomSeed());
+			}
+		});
 		///////////////////////////////////////////
 
-		growthContainer = new Group(container, SWT.NONE);
-		growthContainer.setText("Growths");
-		growthContainer.setToolTipText("Determines how growths are assigned.");
+		growthContainer = createContainer(container, "Growths", "Determines how growths are assigned.");
+		setGroupMargins(growthContainer);
+		layout(growthContainer, new FormAttachment(seedContainer, 10), new FormAttachment(recSeedField, 10, SWT.LEFT),
+				new FormAttachment(100, -5));
 
-		FormLayout groupLayout = new FormLayout();
-		groupLayout.marginLeft = 5;
-		groupLayout.marginRight = 5;
-		groupLayout.marginTop = 5;
-		groupLayout.marginBottom = 5;
-		growthContainer.setLayout(groupLayout);
+		fillGrowthButton = createButton(growthContainer, SWT.RADIO, "Use Fill Growths",
+				"Characters use their natural growth rates.", false, true);
+		layout(fillGrowthButton, new FormAttachment(0, 0), new FormAttachment(0, 0), new FormAttachment(100, -5));
 
-		FormData groupData = new FormData();
-		groupData.left = new FormAttachment(recruitmentSeedField, 10, SWT.LEFT);
-		groupData.top = new FormAttachment(recruitmentSeedField, 10);
-		groupData.right = new FormAttachment(100, -5);
-		growthContainer.setLayoutData(groupData);
+		slotGrowthButton = createButton(growthContainer, SWT.RADIO, "Use Slot Growths",
+				"Characters use the growth rates of the character they replace.");
+		layout(slotGrowthButton, new FormAttachment(fillGrowthButton, 5),
+				new FormAttachment(fillGrowthButton, 0, SWT.LEFT));
 
-		fillGrowthButton = new Button(growthContainer, SWT.RADIO);
-		fillGrowthButton.setText("Use Fill Growths");
-		fillGrowthButton.setToolTipText("Characters use their natural growth rates.");
-		fillGrowthButton.setEnabled(false);
-		fillGrowthButton.setSelection(true);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(0, 0);
-		optionData.top = new FormAttachment(0, 0);
-		optionData.right = new FormAttachment(100, -5);
-		fillGrowthButton.setLayoutData(optionData);
-
-		slotGrowthButton = new Button(growthContainer, SWT.RADIO);
-		slotGrowthButton.setText("Use Slot Growths");
-		slotGrowthButton.setToolTipText("Characters use the growth rates of the character they replace.");
-		slotGrowthButton.setEnabled(false);
-		slotGrowthButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(fillGrowthButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(fillGrowthButton, 5);
-		slotGrowthButton.setLayoutData(optionData);
-
-		slotRelativeGrowthButton = new Button(growthContainer, SWT.RADIO);
-		slotRelativeGrowthButton.setText("Slot Relative Growths");
-		slotRelativeGrowthButton.setToolTipText(
-				"Characters use the growth values of the character they replace,\nbut retain their own growth strengths and weaknesses.");
-		slotRelativeGrowthButton.setEnabled(false);
-		slotRelativeGrowthButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(slotGrowthButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(slotGrowthButton, 5);
-		slotRelativeGrowthButton.setLayoutData(optionData);
+		slotRelativeGrowthButton = createButton(growthContainer, SWT.RADIO, "Slot Relative Growths",
+				"Characters use the growth values of the character they replace,\nbut retain their own growth strengths and weaknesses.",
+				false, false);
+		layout(slotRelativeGrowthButton, new FormAttachment(slotGrowthButton, 5),
+				new FormAttachment(slotGrowthButton, 0, SWT.LEFT));
 
 		/////////////////////////////////////////////////
 
-		basesContainer = new Group(container, SWT.NONE);
-		basesContainer.setText("Bases");
-		basesContainer.setToolTipText("Determines how bases are transferred.");
+		basesContainer = createContainer(container, "Bases", "Determines how bases are transferred.");
+		setGroupMargins(basesContainer);
+		layout(basesContainer, new FormAttachment(growthContainer, 5), new FormAttachment(growthContainer, 0, SWT.LEFT),
+				new FormAttachment(100, -5));
 
-		groupLayout = new FormLayout();
-		groupLayout.marginLeft = 5;
-		groupLayout.marginRight = 5;
-		groupLayout.marginTop = 5;
-		groupLayout.marginBottom = 5;
-		basesContainer.setLayout(groupLayout);
+		autolevelButton = createButton(basesContainer, SWT.RADIO, "Autolevel Base Stats",
+				"Uses the character's growth rates to simulate leveling up or down from the character's original stats to their target level.",
+				false, true);
+		defaultLayout(autolevelButton);
 
-		groupData = new FormData();
-		groupData.left = new FormAttachment(growthContainer, 0, SWT.LEFT);
-		groupData.top = new FormAttachment(growthContainer, 10);
-		groupData.right = new FormAttachment(100, -5);
-		basesContainer.setLayoutData(groupData);
-
-		autolevelButton = new Button(basesContainer, SWT.RADIO);
-		autolevelButton.setText("Autolevel Base Stats");
-		autolevelButton.setToolTipText(
-				"Uses the character's growth rates to simulate leveling up or down from the character's original stats to their target level.");
-		autolevelButton.setEnabled(false);
-		autolevelButton.setSelection(true);
 		autolevelButton.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
@@ -229,161 +186,45 @@ public class RecruitmentView extends Composite {
 			}
 		});
 
-		optionData = new FormData();
-		optionData.left = new FormAttachment(0, 0);
-		optionData.top = new FormAttachment(0, 0);
-		autolevelButton.setLayoutData(optionData);
-
-		autolevelTypeContainer = new Composite(basesContainer, SWT.NONE);
-		FillLayout fillLayout = new FillLayout();
-		fillLayout.type = SWT.VERTICAL;
+		autolevelTypeContainer = createContainer(basesContainer);
+		FillLayout fillLayout = new FillLayout(SWT.VERTICAL);
 		fillLayout.spacing = 5;
 		autolevelTypeContainer.setLayout(fillLayout);
+		layout(autolevelTypeContainer, new FormAttachment(autolevelButton, 5),
+				new FormAttachment(autolevelButton, 10, SWT.LEFT), new FormAttachment(100, -5));
 
-		autolevelOriginalButton = new Button(autolevelTypeContainer, SWT.RADIO);
-		autolevelOriginalButton.setText("Use Original Growths");
-		autolevelOriginalButton.setToolTipText("Uses the character's natural growth rates to autolevel.");
-		autolevelOriginalButton.setEnabled(false);
-		autolevelOriginalButton.setSelection(true);
+		autolevelOriginalButton = createButton(autolevelTypeContainer, SWT.RADIO, "Use Original Growths",
+				"Uses the character's natural growth rates to autolevel.", false, true);
 
-		autolevelNewButton = new Button(autolevelTypeContainer, SWT.RADIO);
-		autolevelNewButton.setText("Use New Growths");
-		autolevelNewButton.setToolTipText("Uses the character's newly assigned growth from above to autolevel.");
-		autolevelNewButton.setEnabled(false);
-		autolevelNewButton.setSelection(false);
+		autolevelNewButton = createButton(autolevelTypeContainer, SWT.RADIO, "Use New Growths",
+				"Uses the character's newly assigned growth from above to autolevel.");
 
-		FormData autolevelContainerData = new FormData();
-		autolevelContainerData.left = new FormAttachment(autolevelButton, 10, SWT.LEFT);
-		autolevelContainerData.top = new FormAttachment(autolevelButton, 5);
-		autolevelContainerData.right = new FormAttachment(100, -5);
-		autolevelTypeContainer.setLayoutData(autolevelContainerData);
+		absoluteButton = createButton(basesContainer, SWT.RADIO, "Match Base Stats",
+				"Sets a character's base stats to match the character they replace.");
+		layout(absoluteButton, new FormAttachment(autolevelTypeContainer, 5),
+				new FormAttachment(autolevelButton, 0, SWT.LEFT));
 
-		absoluteButton = new Button(basesContainer, SWT.RADIO);
-		absoluteButton.setText("Match Base Stats");
-		absoluteButton.setToolTipText("Sets a character's base stats to match the character they replace.");
-		absoluteButton.setEnabled(false);
-		absoluteButton.setSelection(false);
+		relativeButton = createButton(basesContainer, SWT.RADIO, "Relative Base Stats",
+				"Pins the character's max stat to the max stat of the character they replace and retains the character's stat spread.",
+				false, false);
+		layout(relativeButton, new FormAttachment(absoluteButton, 5), new FormAttachment(absoluteButton, 0, SWT.LEFT));
 
-		optionData = new FormData();
-		optionData.left = new FormAttachment(autolevelButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(autolevelTypeContainer, 5);
-		absoluteButton.setLayoutData(optionData);
+		classContainer = createContainer(container, "Classes", "Determines how classes are assigned.");
+		setGroupMargins(classContainer);
+		layout(classContainer, new FormAttachment(basesContainer, 5), new FormAttachment(basesContainer, 0, SWT.LEFT),
+				new FormAttachment(100, -5));
 
-		relativeButton = new Button(basesContainer, SWT.RADIO);
-		relativeButton.setText("Relative Base Stats");
-		relativeButton.setToolTipText(
-				"Pins the character's max stat to the max stat of the character they replace and retains the character's stat spread.");
-		relativeButton.setEnabled(false);
-		relativeButton.setSelection(false);
+		fillClassButton = createButton(classContainer, SWT.RADIO, "Use Fill Class", getFillClassTooltip(type), false,
+				true);
+		defaultLayout(fillClassButton);
 
-		optionData = new FormData();
-		optionData.left = new FormAttachment(absoluteButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(absoluteButton, 5);
-		relativeButton.setLayoutData(optionData);
+		slotClassButton = createButton(classContainer, SWT.RADIO, "Use Slot Class", getSlotClassTooltip(type));
+		layout(slotClassButton, new FormAttachment(fillClassButton, 5),
+				new FormAttachment(fillClassButton, 0, SWT.LEFT));
 
-		classContainer = new Group(container, SWT.NONE);
-		classContainer.setText("Classes");
-		classContainer.setToolTipText("Determines how classes are assigned.");
-
-		groupLayout = new FormLayout();
-		groupLayout.marginLeft = 5;
-		groupLayout.marginRight = 5;
-		groupLayout.marginTop = 5;
-		groupLayout.marginBottom = 5;
-		classContainer.setLayout(groupLayout);
-
-		groupData = new FormData();
-		groupData.left = new FormAttachment(basesContainer, 0, SWT.LEFT);
-		groupData.top = new FormAttachment(basesContainer, 10);
-		groupData.right = new FormAttachment(100, -5);
-		classContainer.setLayoutData(groupData);
-
-		fillClassButton = new Button(classContainer, SWT.RADIO);
-		fillClassButton.setText("Use Fill Class");
-		switch (type) {
-		case FE6:
-			fillClassButton.setToolTipText(
-					"Characters retain their original class (after necessary promotion/demotion).\n\nFor example, Percival taking the place of Wolt will be a cavalier.");
-			break;
-		case FE7:
-			fillClassButton.setToolTipText(
-					"Characters retain their original class (after necessary promotion/demotion).\n\nFor example, Louise taking the place of Serra will be an archer.");
-			break;
-		case FE8:
-			fillClassButton.setToolTipText(
-					"Characters retain their original class (after necessary promotion/demotion).\n\nFor example, Duessel taking the place of Garcia will be either a Cavalier or an Armor Knight (due to branched promotion).");
-			break;
-		default:
-			break;
-		}
-		fillClassButton.setEnabled(false);
-		fillClassButton.setSelection(true);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(0, 0);
-		optionData.top = new FormAttachment(0, 0);
-		fillClassButton.setLayoutData(optionData);
-
-		slotClassButton = new Button(classContainer, SWT.RADIO);
-		slotClassButton.setText("Use Slot Class");
-		switch (type) {
-		case FE6:
-			slotClassButton.setToolTipText(
-					"Characters take the class of the slot they fill.\n\nFor example, Percival taking the place of Wolt will be an archer.");
-			break;
-		case FE7:
-			slotClassButton.setToolTipText(
-					"Characters take the class of the slot they fill.\n\nFor example, Louise taking the place of Serra will be a cleric.");
-			break;
-		case FE8:
-			slotClassButton.setToolTipText(
-					"Characters take the class of the slot they fill.\n\nFor example, Duessel taking the place of Garcia will be a fighter.");
-			break;
-		default:
-			break;
-		}
-		slotClassButton.setEnabled(false);
-		slotClassButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(fillClassButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(fillClassButton, 5);
-		slotClassButton.setLayoutData(optionData);
-
-		lordsButton = new Button(container, SWT.CHECK);
-		lordsButton.setText("Include Lords");
-		lordsButton.setToolTipText("Allows Lord characters to randomize their recruitment time.");
-		lordsButton.setEnabled(false);
-		lordsButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(classContainer, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(classContainer, 10);
-		lordsButton.setLayoutData(optionData);
-
-		createPrfsButton = new Button(container, SWT.CHECK);
-		createPrfsButton.setText("Create Matching Prf Weapons");
-		createPrfsButton
-				.setToolTipText("If enabled, creates Prf weapons for characters that randomize into the lord slots.");
-		createPrfsButton.setEnabled(false);
-		createPrfsButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(lordsButton, 10, SWT.LEFT);
-		optionData.top = new FormAttachment(lordsButton, 5);
-		createPrfsButton.setLayoutData(optionData);
-
-		unbreakablePrfsButton = new Button(container, SWT.CHECK);
-		unbreakablePrfsButton.setText("Make Prf Weapons Unbreakable");
-		unbreakablePrfsButton.setToolTipText("If enabled, created Prf weapons are unbreakable.");
-		unbreakablePrfsButton.setEnabled(false);
-		unbreakablePrfsButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(createPrfsButton, 10, SWT.LEFT);
-		optionData.top = new FormAttachment(createPrfsButton, 5);
-		unbreakablePrfsButton.setLayoutData(optionData);
-
+		lordsButton = createButton(container, SWT.CHECK, "Include Lords",
+				"Allows Lord characters to randomize their recruitment time.");
+		layout(lordsButton, new FormAttachment(classContainer, 5), new FormAttachment(classContainer, 0, SWT.LEFT));
 		lordsButton.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
@@ -392,6 +233,9 @@ public class RecruitmentView extends Composite {
 			}
 		});
 
+		createPrfsButton = createButton(container, SWT.CHECK, "Create Matching Prf Weapons",
+				"If enabled, creates Prf weapons for characters that randomize into the lord slots.");
+		layout(createPrfsButton, new FormAttachment(lordsButton, 5), new FormAttachment(lordsButton, 10, SWT.LEFT));
 		createPrfsButton.addListener(SWT.Selection, new Listener() {
 			@Override
 			public void handleEvent(Event event) {
@@ -399,56 +243,59 @@ public class RecruitmentView extends Composite {
 			}
 		});
 
-		thievesButton = new Button(container, SWT.CHECK);
-		thievesButton.setText("Include Thieves");
-		thievesButton.setToolTipText("Allows Thief characters to randomize their recruitment time.");
-		thievesButton.setEnabled(false);
-		thievesButton.setSelection(false);
+		unbreakablePrfsButton = createButton(container, SWT.CHECK, "Make Prf Weapons Unbreakable",
+				"If enabled, created Prf weapons are unbreakable.");
+		layout(unbreakablePrfsButton, new FormAttachment(createPrfsButton, 5),
+				new FormAttachment(createPrfsButton, 10, SWT.LEFT));
 
-		optionData = new FormData();
-		optionData.left = new FormAttachment(lordsButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(unbreakablePrfsButton, 10);
-		thievesButton.setLayoutData(optionData);
+		thievesButton = createButton(container, SWT.CHECK, "Include Thieves",
+				"Allows Thief characters to randomize their recruitment time.");
+		layout(thievesButton, new FormAttachment(unbreakablePrfsButton, 10),
+				new FormAttachment(classContainer, 0, SWT.LEFT));
 
-		specialButton = new Button(container, SWT.CHECK);
-		specialButton.setText("Include Special Characters");
-		specialButton.setToolTipText("Allows Dancers, Bards, and Manaketes to randomize their recruitment time.");
-		specialButton.setEnabled(false);
-		specialButton.setSelection(false);
+		specialButton = createButton(container, SWT.CHECK, "Include Special Characters",
+				"Allows Dancers, Bards, and Manaketes to randomize their recruitment time.");
+		layout(specialButton, new FormAttachment(thievesButton, 5), new FormAttachment(classContainer, 0, SWT.LEFT));
 
-		optionData = new FormData();
-		optionData.left = new FormAttachment(thievesButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(thievesButton, 5);
-		specialButton.setLayoutData(optionData);
-
-		crossGenderButton = new Button(container, SWT.CHECK);
-		crossGenderButton.setText("Allow Cross-gender Assignments");
-		crossGenderButton.setToolTipText("Allows males to be assigned to female slots and vice versa.");
-		crossGenderButton.setEnabled(false);
-		crossGenderButton.setSelection(false);
-
-		optionData = new FormData();
-		optionData.left = new FormAttachment(specialButton, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(specialButton, 5);
-		crossGenderButton.setLayoutData(optionData);
+		crossGenderButton = createButton(container, SWT.CHECK, "Allow Cross-gender Assignments",
+				"Allows males to be assigned to female slots and vice versa.");
+		layout(crossGenderButton, new FormAttachment(specialButton, 5),
+				new FormAttachment(classContainer, 0, SWT.LEFT));
 
 		if (Arrays.asList(GameType.FE8, GameType.FE6).contains(type)) {
-			// Option to include Creature Campaign
-			includeExtras = new Button(container, SWT.CHECK);
-			includeExtras.setText("Include Creature Campaign NPCs");
-			String units = type.equals(GameType.FE6) ? "Hector, Brunnya, Eliwood, and Guinievere"
-					: "Glen, Fado, Hayden, and Ismaire";
-
-			includeExtras.setToolTipText(
-					String.format("Includes NPCs from the creature campaign into the pool.\nSpecifically: %s.", units));
-			includeExtras.setEnabled(false);
-			includeExtras.setSelection(false);
-
-			optionData = new FormData();
-			optionData.left = new FormAttachment(crossGenderButton, 0, SWT.LEFT);
-			optionData.top = new FormAttachment(crossGenderButton, 5);
-			includeExtras.setLayoutData(optionData);
+			includeExtras = createButton(container, SWT.CHECK, "Include Creature Campaign NPCs",
+					getExtraCharacters(type));
+			layout(includeExtras, new FormAttachment(crossGenderButton, 5),
+					new FormAttachment(classContainer, 0, SWT.LEFT));
 		}
+	}
+
+	private String getExtraCharacters(GameType type) {
+		String units = type.equals(GameType.FE6) ? "Hector, Brunnya, Eliwood, and Guinievere"
+				: "Glen, Fado, Hayden, and Ismaire";
+		return String.format("Includes NPCs from the creature campaign into the pool.\nSpecifically: %s.", units);
+	}
+
+	private String getSlotClassTooltip(GameType type) {
+		if (type.equals(GameType.FE6)) {
+			return "Characters take the class of the slot they fill.\n\nFor example, Percival taking the place of Wolt will be an archer.";
+		} else if (type.equals(GameType.FE7)) {
+			return "Characters take the class of the slot they fill.\n\nFor example, Louise taking the place of Serra will be a cleric.";
+		} else if (type.equals(GameType.FE8)) {
+			return "Characters take the class of the slot they fill.\n\nFor example, Duessel taking the place of Garcia will be a fighter.";
+		}
+		return null;
+	}
+
+	private String getFillClassTooltip(GameType type) {
+		if (type.equals(GameType.FE6)) {
+			return "Characters retain their original class (after necessary promotion/demotion).\n\nFor example, Percival taking the place of Wolt will be a cavalier.";
+		} else if (type.equals(GameType.FE7)) {
+			return "Characters retain their original class (after necessary promotion/demotion).\n\nFor example, Louise taking the place of Serra will be an archer.";
+		} else if (type.equals(GameType.FE8)) {
+			return "Characters retain their original class (after necessary promotion/demotion).\n\nFor example, Duessel taking the place of Garcia will be either a Cavalier or an Armor Knight (due to branched promotion).";
+		}
+		return null;
 	}
 
 	public RecruitmentOptions getRecruitmentOptions() {
@@ -485,10 +332,10 @@ public class RecruitmentView extends Composite {
 		}
 
 		if (isEnabled && basesMode != null && growthMode != null) {
-			return new RecruitmentOptions(growthMode, basesMode, autolevel, classMode, lordsButton.getSelection(),
-					createPrfsButton.getSelection(), unbreakablePrfsButton.getSelection(), thievesButton.getSelection(),
-					specialButton.getSelection(), crossGenderButton.getSelection(), extras,
-					recruitmentSeedField.getText());
+			return new RecruitmentOptions(growthMode, basesMode, autolevel, classMode, Arrays.asList(GameType.FE6),
+					lordsButton.getSelection(), createPrfsButton.getSelection(), unbreakablePrfsButton.getSelection(),
+					thievesButton.getSelection(), specialButton.getSelection(), crossGenderButton.getSelection(),
+					extras, seedEnableButton.getSelection(), recSeedField.getText());
 		} else {
 			return null;
 		}
@@ -501,6 +348,7 @@ public class RecruitmentView extends Composite {
 			growthContainer.setEnabled(false);
 			basesContainer.setEnabled(false);
 			classContainer.setEnabled(false);
+			seedContainer.setEnabled(false);
 
 			fillGrowthButton.setEnabled(false);
 			slotGrowthButton.setEnabled(false);
@@ -532,6 +380,8 @@ public class RecruitmentView extends Composite {
 			growthContainer.setEnabled(true);
 			basesContainer.setEnabled(true);
 			classContainer.setEnabled(true);
+			seedContainer.setEnabled(true);
+			seedEnableButton.setEnabled(true);
 
 			fillGrowthButton.setEnabled(true);
 			slotGrowthButton.setEnabled(true);

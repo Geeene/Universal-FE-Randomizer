@@ -11,7 +11,7 @@ import util.WhyDoesJavaNotHaveThese;
 
 // For use with FE6 and FE7 only.
 public class PaletteMapper {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.PALETTE_RECYCLER);
 	public enum ClassType {
 		UNPROMOTED, PROMOTED, UNPROMOTED_ONLY;
 	}
@@ -128,10 +128,10 @@ public class PaletteMapper {
 			int paletteID = character.getUnpromotedPaletteIndex();
 			if (paletteID != character.getPromotedPaletteIndex()) {
 				recyclePaletteID(paletteID);
-				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Recycling unpromoted palette 0x" + Integer.toHexString(paletteID) + " from character 0x" + Integer.toHexString(character.getID()) + " (" + charData.debugStringForCharacter(character.getID()) + ")");
+				LOGGER.log( "Recycling unpromoted palette 0x" + Integer.toHexString(paletteID) + " from character 0x" + Integer.toHexString(character.getID()) + " (" + charData.debugStringForCharacter(character.getID()) + ")");
 				didRecycle = true;
 			} else {
-				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinked unpromoted palette 0x" + Integer.toHexString(paletteID) + " since it's shared with the promoted palette.");
+				LOGGER.log( "Unlinked unpromoted palette 0x" + Integer.toHexString(paletteID) + " since it's shared with the promoted palette.");
 			}
 			for (GBAFECharacterData linkedChar : linked) {
 				linkedChar.setUnpromotedPaletteIndex(0);
@@ -141,10 +141,10 @@ public class PaletteMapper {
 			paletteID = character.getPromotedPaletteIndex();
 			if (paletteID != character.getUnpromotedPaletteIndex()) {
 				recyclePaletteID(paletteID);
-				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Recycling promoted palette 0x" + Integer.toHexString(paletteID) + " from character 0x" + Integer.toHexString(character.getID()) + " (" + charData.debugStringForCharacter(character.getID()) + ")");
+				LOGGER.log( "Recycling promoted palette 0x" + Integer.toHexString(paletteID) + " from character 0x" + Integer.toHexString(character.getID()) + " (" + charData.debugStringForCharacter(character.getID()) + ")");
 				didRecycle = true;
 			} else {
-				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinked promoted palette 0x" + Integer.toHexString(paletteID) + " since it's shared with the unpromoted palette.");
+				LOGGER.log( "Unlinked promoted palette 0x" + Integer.toHexString(paletteID) + " since it's shared with the unpromoted palette.");
 			}
 			for (GBAFECharacterData linkedChar : linked) {
 				linkedChar.setPromotedPaletteIndex(0);
@@ -157,7 +157,7 @@ public class PaletteMapper {
 		
 		if (!waitList.isEmpty() && didRecycle) {
 			WaitListItem queuedItem = waitList.remove(0);
-			DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Processing waitlist item (Character: " + charData.debugStringForCharacter(queuedItem.character.getID()) + ", Type: " + queuedItem.requiredType.toString() + ", Size Needed: " + queuedItem.sizeNeeded + ")");
+			LOGGER.log( "Processing waitlist item (Character: " + charData.debugStringForCharacter(queuedItem.character.getID()) + ", Type: " + queuedItem.requiredType.toString() + ", Size Needed: " + queuedItem.sizeNeeded + ")");
 			allocatePaletteToCharacter(queuedItem.character, queuedItem.requiredType, queuedItem.sizeNeeded);
 		}
 	}
@@ -165,7 +165,7 @@ public class PaletteMapper {
 	private void allocatePaletteToCharacter(GBAFECharacterData character, ClassType type, int size) {
 		if (character == null || type == null) { return; }
 		
-		DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Allocating palette for character 0x" + Integer.toHexString(character.getID()) + " (" + charData.debugStringForCharacter(character.getID()) + "). Type: " + type.toString() + "\tSize: " + size);
+		LOGGER.log( "Allocating palette for character 0x" + Integer.toHexString(character.getID()) + " (" + charData.debugStringForCharacter(character.getID()) + "). Type: " + type.toString() + "\tSize: " + size);
 		
 		int unpromotedPaletteID = character.getUnpromotedPaletteIndex();
 		Integer unpromotedLength = getPaletteLength(unpromotedPaletteID);
@@ -178,19 +178,19 @@ public class PaletteMapper {
 				// Go ahead and separate these now.
 				// If our current one works, then unlink the other. Otherwise, unlink this one.
 				if (unpromotedLength >= size) {
-					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unpromoted Palette OK! ID = 0x" + Integer.toHexString(unpromotedPaletteID) + " Available Length: " + unpromotedLength + "\tRequested Length: " + size);
-					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinking shared promoted palette 0x" + Integer.toHexString(promotedPaletteID));
+					LOGGER.log( "Unpromoted Palette OK! ID = 0x" + Integer.toHexString(unpromotedPaletteID) + " Available Length: " + unpromotedLength + "\tRequested Length: " + size);
+					LOGGER.log( "Unlinking shared promoted palette 0x" + Integer.toHexString(promotedPaletteID));
 					character.setPromotedPaletteIndex(0);
 					return;
 				} else {
-					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinking shared unpromoted palette 0x" + Integer.toHexString(unpromotedPaletteID) + " due to insufficient space.");
+					LOGGER.log( "Unlinking shared unpromoted palette 0x" + Integer.toHexString(unpromotedPaletteID) + " due to insufficient space.");
 					character.setUnpromotedPaletteIndex(0);
 				}
 			} else if (unpromotedLength >= size) {
-				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unpromoted Palette OK! ID = 0x" + Integer.toHexString(unpromotedPaletteID) + " Available Length: " + unpromotedLength + "\tRequested Length: " + size);
+				LOGGER.log( "Unpromoted Palette OK! ID = 0x" + Integer.toHexString(unpromotedPaletteID) + " Available Length: " + unpromotedLength + "\tRequested Length: " + size);
 				return;
 			} else {
-				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unpromoted Palette is unsuitable (unpromoted: 0x" + Integer.toHexString(unpromotedPaletteID) + " promoted: 0x" + Integer.toHexString(promotedPaletteID) + ") (Available Length: " + unpromotedLength + " Required Length: " + size + ")");
+				LOGGER.log( "Unpromoted Palette is unsuitable (unpromoted: 0x" + Integer.toHexString(unpromotedPaletteID) + " promoted: 0x" + Integer.toHexString(promotedPaletteID) + ") (Available Length: " + unpromotedLength + " Required Length: " + size + ")");
 				freePaletteFromCharacter(character, ClassType.UNPROMOTED);
 			}
 		}
@@ -198,19 +198,19 @@ public class PaletteMapper {
 			if (unpromotedPaletteID == promotedPaletteID) {
 				// Same as above, except for promoted, if we get to it first.
 				if (promotedLength >= size) {
-					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Promoted Palette OK! ID = 0x" + Integer.toHexString(promotedPaletteID) + " Available Length: " + promotedLength + "\tRequested Length: " + size);
-					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinking shared unpromoted palette 0x" + Integer.toHexString(unpromotedPaletteID));
+					LOGGER.log( "Promoted Palette OK! ID = 0x" + Integer.toHexString(promotedPaletteID) + " Available Length: " + promotedLength + "\tRequested Length: " + size);
+					LOGGER.log( "Unlinking shared unpromoted palette 0x" + Integer.toHexString(unpromotedPaletteID));
 					character.setUnpromotedPaletteIndex(0);
 					return;
 				} else {
-					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinking shared promoted palette 0x" + Integer.toHexString(promotedPaletteID) + " due to insufficient space.");
+					LOGGER.log( "Unlinking shared promoted palette 0x" + Integer.toHexString(promotedPaletteID) + " due to insufficient space.");
 					character.setPromotedPaletteIndex(0);
 				}
 			} else if (promotedLength >= size) {
-				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Promoted Palette OK! ID = 0x" + Integer.toHexString(promotedPaletteID) + " Available Length: " + promotedLength + "\tRequested Length: " + size);
+				LOGGER.log( "Promoted Palette OK! ID = 0x" + Integer.toHexString(promotedPaletteID) + " Available Length: " + promotedLength + "\tRequested Length: " + size);
 				return;
 			} else {
-				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Promoted Palette is unsuitable (unpromoted: 0x" + Integer.toHexString(unpromotedPaletteID) + " promoted: 0x" + Integer.toHexString(promotedPaletteID) + ") (Available Length: " + promotedLength + " Required Length: " + size + ")");
+				LOGGER.log( "Promoted Palette is unsuitable (unpromoted: 0x" + Integer.toHexString(unpromotedPaletteID) + " promoted: 0x" + Integer.toHexString(promotedPaletteID) + ") (Available Length: " + promotedLength + " Required Length: " + size + ")");
 				freePaletteFromCharacter(character, ClassType.PROMOTED);
 			}
 		}
@@ -228,12 +228,12 @@ public class PaletteMapper {
 		}
 		
 		if (paletteID == 0) {
-			DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "No Palette ID available right now. Adding to waitlist. (" + charData.debugStringForCharacter(character.getID()) + ", " + type.toString() + ", " + size + ")");
+			LOGGER.log( "No Palette ID available right now. Adding to waitlist. (" + charData.debugStringForCharacter(character.getID()) + ", " + type.toString() + ", " + size + ")");
 			waitList.add(new WaitListItem(character, type, size));
 			return;
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Assigning palette ID 0x" + Integer.toHexString(paletteID) + " to " + charData.debugStringForCharacter(character.getID()));
+		LOGGER.log( "Assigning palette ID 0x" + Integer.toHexString(paletteID) + " to " + charData.debugStringForCharacter(character.getID()));
 
 		GBAFECharacterData[] linked = charData.linkedCharactersForCharacter(character);
 		
@@ -256,7 +256,7 @@ public class PaletteMapper {
 		if (emptyPaletteIDs.isEmpty()) { return null; }
 		int paletteID = emptyPaletteIDs.remove(0);
 		registerPalette(paletteID, size, null);
-		DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Consumed Empty Palette ID 0x" + Integer.toHexString(paletteID) + " (Registered Size: " + size + ")");
+		LOGGER.log( "Consumed Empty Palette ID 0x" + Integer.toHexString(paletteID) + " (Registered Size: " + size + ")");
 		return paletteID;
 	}
 	
@@ -271,7 +271,7 @@ public class PaletteMapper {
 			}
 			paletteIDs.add(paletteID);
 			
-			DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Freed Palette ID 0x" + Integer.toHexString(paletteID) + " (Registered Size: " + paletteSize + ")");
+			LOGGER.log( "Freed Palette ID 0x" + Integer.toHexString(paletteID) + " (Registered Size: " + paletteSize + ")");
 		}
 	}
 
@@ -284,7 +284,7 @@ public class PaletteMapper {
 				return requestRecycledPaletteID(sizeNeeded);
 			} else {
 				int paletteID = paletteIDs.remove(0);
-				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Recycled Palette ID 0x" + Integer.toHexString(paletteID) + " (Available Length: " + bestFit + " Requested Size: " + sizeNeeded + ")");
+				LOGGER.log( "Recycled Palette ID 0x" + Integer.toHexString(paletteID) + " (Available Length: " + bestFit + " Requested Size: " + sizeNeeded + ")");
 				return paletteID;
 			}
 		} else {

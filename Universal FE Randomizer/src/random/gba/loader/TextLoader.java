@@ -19,6 +19,7 @@ import util.HuffmanHelper;
 import util.WhyDoesJavaNotHaveThese;
 
 public class TextLoader {
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.TEXT_LOADING);
 	private FEBase.GameType gameType;
 	
 	private String[] allStrings;
@@ -49,8 +50,8 @@ public class TextLoader {
 							FileReadHelper.readAddress(handler, textArrayOffset + 4 * i),
 							treeAddress, 
 							rootAddress), false, gameType);
-					DebugPrinter.log(DebugPrinter.Key.TEXT_LOADING, "Decoded FE6 String for index 0x" + Integer.toHexString(i).toUpperCase());
-					DebugPrinter.log(DebugPrinter.Key.TEXT_LOADING, decoded);
+					LOGGER.log( "Decoded FE6 String for index 0x" + Integer.toHexString(i).toUpperCase());
+					LOGGER.log( decoded);
 					allStrings[i] = decoded;
 				}
 				break;
@@ -66,8 +67,8 @@ public class TextLoader {
 							FileReadHelper.readAddress(handler, textArrayOffset + 4 * i), 
 							treeAddress, 
 							rootAddress), false, gameType);
-					DebugPrinter.log(DebugPrinter.Key.TEXT_LOADING, "Decoded FE7 String for index 0x" + Integer.toHexString(i).toUpperCase());
-					DebugPrinter.log(DebugPrinter.Key.TEXT_LOADING, decoded);
+					LOGGER.log( "Decoded FE7 String for index 0x" + Integer.toHexString(i).toUpperCase());
+					LOGGER.log( decoded);
 					allStrings[i] = decoded;
 				}
 				break;
@@ -83,7 +84,7 @@ public class TextLoader {
 							FileReadHelper.readAddress(handler, textArrayOffset + 4 * i), 
 							treeAddress, 
 							rootAddress), false, gameType);
-					DebugPrinter.log(DebugPrinter.Key.TEXT_LOADING, "Loaded Text for index 0x" + Integer.toHexString(i) + ": " + decoded);
+					LOGGER.log( "Loaded Text for index 0x" + Integer.toHexString(i) + ": " + decoded);
 					allStrings[i] = decoded;
 				}
 				break;
@@ -92,7 +93,7 @@ public class TextLoader {
 				break;
 		}
 		Date end = new Date();
-		DebugPrinter.log(DebugPrinter.Key.TEXT_LOADING, "Text Import took " + Long.toString(end.getTime() - start.getTime()) + "ms");
+		LOGGER.log( "Text Import took " + Long.toString(end.getTime() - start.getTime()) + "ms");
 		huffman.printCache();
 	}
 	

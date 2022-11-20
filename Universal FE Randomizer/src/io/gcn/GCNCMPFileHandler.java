@@ -231,7 +231,7 @@ public class GCNCMPFileHandler extends GCNFileHandler {
 				cachedBuild = originalCompressed; 
 			} else {
 				cachedBuild = LZ77.compress(buildRaw(), 0xFFF);
-				DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "Compressed " + identifier + " to " + cachedBuild.length + " bytes");
+				DebugPrinter.forKey(DebugPrinter.Key.GCN_HANDLER).log("Compressed " + identifier + " to " + cachedBuild.length + " bytes");
 			}
 		}
 		return cachedBuild;

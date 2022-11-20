@@ -26,7 +26,7 @@ import util.FreeSpaceManager;
 import util.WhyDoesJavaNotHaveThese;
 
 public class FE8Item implements GBAFEItemData {
-
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.WEAPONS);
 	private byte[] originalData;
 	private byte[] data;
 	
@@ -292,9 +292,9 @@ public class FE8Item implements GBAFEItemData {
 		String updatedDescription = ingameDescriptionString(itemData);
 		if (updatedDescription != null) {
 			textData.setStringAtIndex(getDescriptionIndex(), updatedDescription + "[X]");
-			DebugPrinter.log(DebugPrinter.Key.WEAPONS, "Weapon " + textData.getStringAtIndex(getNameIndex(), true) + " is now " + updatedDescription);
+			LOGGER.log( "Weapon " + textData.getStringAtIndex(getNameIndex(), true) + " is now " + updatedDescription);
 		} else {
-			DebugPrinter.log(DebugPrinter.Key.WEAPONS, "Weapon " + textData.getStringAtIndex(getNameIndex(), true) + " has no effect.");
+			LOGGER.log( "Weapon " + textData.getStringAtIndex(getNameIndex(), true) + " has no effect.");
 		}
 	}
 	

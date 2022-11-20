@@ -21,7 +21,7 @@ import util.DiffCompiler;
 import util.recordkeeper.RecordKeeper;
 
 public class CharacterDataLoader {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE4_CHARACTER_LOADER);
 	private Map<FE4Data.Character, FE4StaticCharacter> staticPlayableCharacters;
 	private Map<FE4Data.Character, FE4ChildCharacter> childCharacters;
 	
@@ -193,11 +193,11 @@ public class CharacterDataLoader {
 	}
 	
 	private void initializeStaticPlayableCharacters(FileHandler handler) {
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loading Static Playable Characters...");
+		LOGGER.log( "Loading Static Playable Characters...");
 		
 		staticPlayableCharacters = new HashMap<FE4Data.Character, FE4StaticCharacter>();
 		
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loading Gen1 Playable Characters...");
+		LOGGER.log( "Loading Gen1 Playable Characters...");
 		
 		// Load Gen 1 PCs.
 		for (int i = 0; i < FE4Data.Gen1CharacterCount; i++) {
@@ -210,15 +210,15 @@ public class CharacterDataLoader {
 			FE4Data.Character fe4Character = FE4Data.Character.valueOf(staticChar.getCharacterID());
 			if (fe4Character != null) {
 				staticPlayableCharacters.put(fe4Character, staticChar);
-				DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded Character: " + fe4Character.toString());
+				LOGGER.log( "Loaded Character: " + fe4Character.toString());
 			} else {
 				System.err.println("Invalid character found in static playable characters. ID = 0x" + Integer.toHexString(staticChar.getCharacterID()));
 			}
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Finished Loading Gen1 Playable Characters!");
+		LOGGER.log( "Finished Loading Gen1 Playable Characters!");
 		
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loading Gen2 Playable Characters...");
+		LOGGER.log( "Loading Gen2 Playable Characters...");
 		
 		// Load Gen2 Statics.
 		// Shanan, Dalvin, Asaello
@@ -232,7 +232,7 @@ public class CharacterDataLoader {
 			FE4Data.Character fe4Character = FE4Data.Character.valueOf(staticChar.getCharacterID());
 			if (fe4Character != null) {
 				staticPlayableCharacters.put(fe4Character, staticChar);
-				DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded Character: " + fe4Character.toString());
+				LOGGER.log( "Loaded Character: " + fe4Character.toString());
 			} else {
 				System.err.println("Invalid character found in static playable characters. ID = 0x" + Integer.toHexString(staticChar.getCharacterID()));
 			}
@@ -249,7 +249,7 @@ public class CharacterDataLoader {
 			FE4Data.Character fe4Character = FE4Data.Character.valueOf(staticChar.getCharacterID());
 			if (fe4Character != null) {
 				staticPlayableCharacters.put(fe4Character, staticChar);
-				DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded Character: " + fe4Character.toString());
+				LOGGER.log( "Loaded Character: " + fe4Character.toString());
 			} else {
 				System.err.println("Invalid character found in static playable characters. ID = 0x" + Integer.toHexString(staticChar.getCharacterID()));
 			}
@@ -266,19 +266,19 @@ public class CharacterDataLoader {
 			FE4Data.Character fe4Character = FE4Data.Character.valueOf(staticChar.getCharacterID());
 			if (fe4Character != null) {
 				staticPlayableCharacters.put(fe4Character, staticChar);
-				DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded Character: " + fe4Character.toString());
+				LOGGER.log( "Loaded Character: " + fe4Character.toString());
 			} else {
 				System.err.println("Invalid character found in static playable characters. ID = 0x" + Integer.toHexString(staticChar.getCharacterID()));
 			}
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Finished Loading Gen2 Playable Characters!");
+		LOGGER.log( "Finished Loading Gen2 Playable Characters!");
 		
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Finished loading Static Playable Characters!");
+		LOGGER.log( "Finished loading Static Playable Characters!");
 	}
 	
 	private void initializeChildCharacters(FileHandler handler) {
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loading Child Playable Characters...");
+		LOGGER.log( "Loading Child Playable Characters...");
 		
 		childCharacters = new HashMap<FE4Data.Character, FE4ChildCharacter>();
 		
@@ -293,7 +293,7 @@ public class CharacterDataLoader {
 			FE4Data.Character fe4Character = FE4Data.Character.valueOf(child.getCharacterID());
 			if (fe4Character != null) {
 				childCharacters.put(fe4Character, child);
-				DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded Child: " + fe4Character.toString());
+				LOGGER.log( "Loaded Child: " + fe4Character.toString());
 			} else {
 				System.err.println("Invalid child found. ID = 0x" + Integer.toHexString(child.getCharacterID()));
 			}
@@ -310,7 +310,7 @@ public class CharacterDataLoader {
 			FE4Data.Character fe4Character = FE4Data.Character.valueOf(child.getCharacterID());
 			if (fe4Character != null) {
 				childCharacters.put(fe4Character, child);
-				DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded Child: " + fe4Character.toString());
+				LOGGER.log( "Loaded Child: " + fe4Character.toString());
 			} else {
 				System.err.println("Invalid child found. ID = 0x" + Integer.toHexString(child.getCharacterID()));
 			}
@@ -327,24 +327,24 @@ public class CharacterDataLoader {
 			FE4Data.Character fe4Character = FE4Data.Character.valueOf(child.getCharacterID());
 			if (fe4Character != null) {
 				childCharacters.put(fe4Character, child);
-				DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded Child: " + fe4Character.toString());
+				LOGGER.log( "Loaded Child: " + fe4Character.toString());
 			} else {
 				System.err.println("Invalid child found. ID = 0x" + Integer.toHexString(child.getCharacterID()));
 			}
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Finished loading Child Playable Characters!");
+		LOGGER.log( "Finished loading Child Playable Characters!");
 	}
 	
 	private void initializeEnemyAndArenaCharacters(FileHandler handler) {
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loading Minions and Arena Characters...");
+		LOGGER.log( "Loading Minions and Arena Characters...");
 		
 		enemyCharacters = new HashMap<FE4Data.Character, FE4EnemyCharacter>();
 		arenaCharacters = new HashMap<FE4Data.Character, FE4EnemyCharacter>();
 		bossCharacters = new HashMap<FE4Data.Character, FE4EnemyCharacter>();
 		
 		for (EnemyTable table : EnemyTable.values()) {
-			DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loading from " + table.toString());
+			LOGGER.log( "Loading from " + table.toString());
 			long baseOffset = table.offset;
 			int count = table.count;
 			for (int i = 0; i < count; i++) {
@@ -358,31 +358,31 @@ public class CharacterDataLoader {
 				if (fe4Character != null) {
 					if (fe4Character.isMinion()) {
 						enemyCharacters.put(fe4Character, enemy);
-						DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded " + fe4Character.toString() + " as minion.");
+						LOGGER.log( "Loaded " + fe4Character.toString() + " as minion.");
 					} else if (fe4Character.isArena()) {
 						arenaCharacters.put(fe4Character, enemy);
-						DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded " + fe4Character.toString() + " as arena.");
+						LOGGER.log( "Loaded " + fe4Character.toString() + " as arena.");
 					} else {
 						bossCharacters.put(fe4Character, enemy);
-						DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded " + fe4Character.toString() + " as boss.");
+						LOGGER.log( "Loaded " + fe4Character.toString() + " as boss.");
 					}
 				} else {
 					System.err.println("Invalid enemy found. Dropping... (Enemy ID: 0x" + Integer.toHexString(enemy.getCharacterID()) + ")");
 				}
 			}
-			DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Finished loading from " + table.toString());
+			LOGGER.log( "Finished loading from " + table.toString());
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Finished loading Minions and Arena Characters!");
+		LOGGER.log( "Finished loading Minions and Arena Characters!");
 	}
 	
 	private void initializeHolyBossCharacters(FileHandler handler) {
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loading Bosses with Holy Blood...");
+		LOGGER.log( "Loading Bosses with Holy Blood...");
 		
 		holyBloodBossCharacters = new HashMap<FE4Data.Character, FE4StaticCharacter>();
 		
 		for (FE4Data.HolyEnemyTable table : FE4Data.HolyEnemyTable.values()) {
-			DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loading from " + table.toString());
+			LOGGER.log( "Loading from " + table.toString());
 			long baseOffset = table.offset;
 			int count = table.count;
 			for (int i = 0; i < count; i++) {
@@ -395,15 +395,15 @@ public class CharacterDataLoader {
 				FE4Data.Character fe4Character = FE4Data.Character.valueOf(holyChar.getCharacterID());
 				if (fe4Character != null) {
 					holyBloodBossCharacters.put(fe4Character, holyChar);
-					DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Loaded " + fe4Character.toString() + " as a holy character.");
+					LOGGER.log( "Loaded " + fe4Character.toString() + " as a holy character.");
 				} else {
 					System.err.println("Invalid holy character found. ID = 0x" + Integer.toHexString(holyChar.getCharacterID()));
 				}
 			}
-			DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Finished loading from " + table.toString());
+			LOGGER.log( "Finished loading from " + table.toString());
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.FE4_CHARACTER_LOADER, "Finished loading bosses with holy blood!");
+		LOGGER.log( "Finished loading bosses with holy blood!");
 	}
 	
 	public void registerInventories(ItemMapper itemMap) {

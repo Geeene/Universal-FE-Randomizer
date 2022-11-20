@@ -39,7 +39,7 @@ import util.recordkeeper.ChangelogText;
 import util.recordkeeper.ChangelogText.Style;
 
 public class FE9CharacterDataLoader {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_CHARACTER_LOADER);
 	List<FE9Character> allCharacters;
 	
 	List<FE9Character> playableCharacters;
@@ -440,7 +440,7 @@ public class FE9CharacterDataLoader {
 	
 	public void compileDiffs(GCNISOHandler isoHandler) {
 		for (FE9Character character : allCharacters) {
-			DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Writing character: " + getDisplayName(character));
+			LOGGER.log( "Writing character: " + getDisplayName(character));
 			character.commitChanges();
 			if (character.hasCommittedChanges()) {
 				fe8databin.writeDataToSection(characterDataSection, character.getAddressOffset(), character.getData());
@@ -449,56 +449,56 @@ public class FE9CharacterDataLoader {
 	}
 	
 	private void debugPrintCharacter(FE9Character character, GCNFileHandler handler, FE9CommonTextLoader commonTextLoader) {
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "===== Printing Character =====");
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( "===== Printing Character =====");
+		LOGGER.log( 
 				"PID: " + stringForPointer(character.getCharacterIDPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"MPID: " + stringForPointer(character.getCharacterNamePointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"FID: " + stringForPointer(character.getPortraitPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"JID: " + stringForPointer(character.getClassPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"Affinity: " + stringForPointer(character.getAffinityPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"Weapon Levels: " + stringForPointer(character.getWeaponLevelsPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"SID: " + stringForPointer(character.getSkill1Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"SID 2: " + stringForPointer(character.getSkill2Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"SID 3: " + stringForPointer(character.getSkill3Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"Unpromoted AID: " + stringForPointer(character.getUnpromotedAnimationPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, 
+		LOGGER.log( 
 				"Promoted AID: " + stringForPointer(character.getPromotedAnimationPointer(), handler, commonTextLoader));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Level: " + character.getLevel());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Build: " + character.getBuild());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Weight: " + character.getWeight());
+		LOGGER.log( "Level: " + character.getLevel());
+		LOGGER.log( "Build: " + character.getBuild());
+		LOGGER.log( "Weight: " + character.getWeight());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Base HP: " + character.getBaseHP());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Base STR: " + character.getBaseSTR());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Base MAG: " + character.getBaseMAG());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Base SKL: " + character.getBaseSKL());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Base SPD: " + character.getBaseSPD());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Base LCK: " + character.getBaseLCK());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Base DEF: " + character.getBaseDEF());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Base RES: " + character.getBaseRES());
+		LOGGER.log( "Base HP: " + character.getBaseHP());
+		LOGGER.log( "Base STR: " + character.getBaseSTR());
+		LOGGER.log( "Base MAG: " + character.getBaseMAG());
+		LOGGER.log( "Base SKL: " + character.getBaseSKL());
+		LOGGER.log( "Base SPD: " + character.getBaseSPD());
+		LOGGER.log( "Base LCK: " + character.getBaseLCK());
+		LOGGER.log( "Base DEF: " + character.getBaseDEF());
+		LOGGER.log( "Base RES: " + character.getBaseRES());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "HP Growth: " + character.getHPGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "STR Growth: " + character.getSTRGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "MAG Growth: " + character.getMAGGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "SKL Growth: " + character.getSKLGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "SPD Growth: " + character.getSPDGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "LCK Growth: " + character.getLCKGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "DEF Growth: " + character.getDEFGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "RES Growth: " + character.getRESGrowth());
+		LOGGER.log( "HP Growth: " + character.getHPGrowth());
+		LOGGER.log( "STR Growth: " + character.getSTRGrowth());
+		LOGGER.log( "MAG Growth: " + character.getMAGGrowth());
+		LOGGER.log( "SKL Growth: " + character.getSKLGrowth());
+		LOGGER.log( "SPD Growth: " + character.getSPDGrowth());
+		LOGGER.log( "LCK Growth: " + character.getLCKGrowth());
+		LOGGER.log( "DEF Growth: " + character.getDEFGrowth());
+		LOGGER.log( "RES Growth: " + character.getRESGrowth());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Unknown 6: " + WhyDoesJavaNotHaveThese.displayStringForBytes(character.getUnknown6Bytes()));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Unknown 8: " + WhyDoesJavaNotHaveThese.displayStringForBytes(character.getUnknown13Bytes()));
+		LOGGER.log( "Unknown 6: " + WhyDoesJavaNotHaveThese.displayStringForBytes(character.getUnknown6Bytes()));
+		LOGGER.log( "Unknown 8: " + WhyDoesJavaNotHaveThese.displayStringForBytes(character.getUnknown13Bytes()));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "===== End Printing Character =====");
+		LOGGER.log( "===== End Printing Character =====");
 	}
 	
 	private String stringForPointer(long pointer, GCNFileHandler handler, FE9CommonTextLoader commonTextLoader) {

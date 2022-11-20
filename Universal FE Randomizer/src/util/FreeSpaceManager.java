@@ -10,6 +10,8 @@ import fedata.general.FEBase;
 import io.FileHandler;
 
 public class FreeSpaceManager {
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FREESPACE);
+	
 	
 	private class AssignedSpace {
 		long offset;
@@ -47,7 +49,7 @@ public class FreeSpaceManager {
 		}
 		long offset = freeAddress;
 		freeAddress += length;
-		DebugPrinter.log(DebugPrinter.Key.FREESPACE, "Reserving Space for " + key + " (" + Integer.toString(length) + " bytes) to offset 0x" + Long.toHexString(freeAddress));
+		LOGGER.log( "Reserving Space for " + key + " (" + Integer.toString(length) + " bytes) to offset 0x" + Long.toHexString(freeAddress));
 		return offset;
 	}
 	
@@ -102,7 +104,7 @@ public class FreeSpaceManager {
 			assignment.value = value.clone();
 			changes.put(key, assignment);
 			
-			DebugPrinter.log(DebugPrinter.Key.FREESPACE, "Assigning internal bytes with key " + key + " to offset 0x" + Long.toHexString(internalAddress));
+			LOGGER.log( "Assigning internal bytes with key " + key + " to offset 0x" + Long.toHexString(internalAddress));
 			
 			internalFreeAddress.remove(i);
 			internalAddress += value.length;
@@ -143,7 +145,7 @@ public class FreeSpaceManager {
 		assignment.value = value.clone();
 		changes.put(key, assignment);
 		
-		DebugPrinter.log(DebugPrinter.Key.FREESPACE, "Assigning bytes with key " + key + " to offset 0x" + Long.toHexString(freeAddress));
+		LOGGER.log( "Assigning bytes with key " + key + " to offset 0x" + Long.toHexString(freeAddress));
 		
 		freeAddress += value.length;
 		
@@ -169,7 +171,7 @@ public class FreeSpaceManager {
 	public void commitChanges(DiffCompiler compiler) {
 		for (String key : changes.keySet()) {
 			AssignedSpace assignment = changes.get(key);
-			DebugPrinter.log(DebugPrinter.Key.FREESPACE, "Commiting values " + WhyDoesJavaNotHaveThese.displayStringForBytes(assignment.value) + " to offset 0x" + Long.toHexString(assignment.offset) + " Key = " + key);
+			LOGGER.log( "Commiting values " + WhyDoesJavaNotHaveThese.displayStringForBytes(assignment.value) + " to offset 0x" + Long.toHexString(assignment.offset) + " Key = " + key);
 			compiler.addDiff(new Diff(assignment.offset, assignment.value.length, assignment.value, null));
 		}
 	}

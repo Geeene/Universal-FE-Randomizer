@@ -12,7 +12,7 @@ import util.FileReadHelper;
 import util.WhyDoesJavaNotHaveThese;
 
 public class UPSPatcher {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.UPS);
 	public static Boolean applyUPSPatch(String patchFile, String sourceFile, String targetFile, UPSPatcherStatusListener listener) {
 		try {
 			InputStream stream = UPSPatcher.class.getClassLoader().getResourceAsStream(patchFile);
@@ -56,9 +56,9 @@ public class UPSPatcher {
 			
 			long totalBytesWritten = 0;
 			
-			DebugPrinter.log(DebugPrinter.Key.UPS, "Patching UPS file: " + patchFile);
-			DebugPrinter.log(DebugPrinter.Key.UPS, "Input Length:  " + inputLength);
-			DebugPrinter.log(DebugPrinter.Key.UPS, "Expected Result Length: " + outputLength);
+			LOGGER.log( "Patching UPS file: " + patchFile);
+			LOGGER.log( "Input Length:  " + inputLength);
+			LOGGER.log( "Expected Result Length: " + outputLength);
 			
 			long bytesToSkip = 0;
 			long lastWrittenOffset = 0;

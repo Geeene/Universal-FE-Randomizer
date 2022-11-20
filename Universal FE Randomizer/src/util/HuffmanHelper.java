@@ -10,6 +10,7 @@ import fedata.general.FEBase;
 import io.FileHandler;
 
 public class HuffmanHelper {
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.HUFFMAN);
 	
 	private class Bitstream {
 		private List<Integer> stream;
@@ -185,7 +186,7 @@ public class HuffmanHelper {
 					} else {
 						entry = new EncoderEntry(root.value.stream);
 						encoder[index] = entry;
-						DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Writing stream " + root.value.stream.toString() + " to encoder index " + index);
+						LOGGER.log( "Writing stream " + root.value.stream.toString() + " to encoder index " + index);
 					}
 				} else {
 					if (root.value.hasValue2) {
@@ -193,7 +194,7 @@ public class HuffmanHelper {
 					} else {
 						if (entry.stream == null) {
 							entry.stream = new Bitstream(root.value.stream);
-							DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Writing stream " + root.value.stream.toString() + " to encoder index " + index);
+							LOGGER.log( "Writing stream " + root.value.stream.toString() + " to encoder index " + index);
 						}
 					}
 				}
@@ -204,14 +205,14 @@ public class HuffmanHelper {
 			}
 		} else {
 			if (root.hasValue1 || root.hasValue2) {
-				DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Null Root has Value!");
+				LOGGER.log( "Null Root has Value!");
 			}
 		}
 		buildEncoderHelper(root.right);
 	}
 	
 	public void printCache() {
-		DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Printing Bitstream Cache:");
+		LOGGER.log( "Printing Bitstream Cache:");
 		printCacheHelper(cacheRoot);
 	}
 	
@@ -219,7 +220,7 @@ public class HuffmanHelper {
 		if (root == null) { return; }
 		printCacheHelper(root.left);
 		if (root.value != null && root.value.getValueString() != null) {
-			DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Bitstream: " + root.stream.toString() + "\t\tValue: " + root.value.getValueString());
+			LOGGER.log( "Bitstream: " + root.stream.toString() + "\t\tValue: " + root.value.getValueString());
 		}
 		printCacheHelper(root.right);
 	}
@@ -256,12 +257,12 @@ public class HuffmanHelper {
 				Boolean nextBitIsZero = (currentByte & 0x1) == 0;
 				if (currentEntry.value != null) {
 					result[i++] = currentEntry.value.value1;
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] Wrote Byte 0x" + Integer.toHexString(currentEntry.value.value1));
+					//LOGGER.log( "[cache] Wrote Byte 0x" + Integer.toHexString(currentEntry.value.value1));
 					if (currentEntry.value.hasValue2) {
 						result[i++] = currentEntry.value.value2;
-						//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] Wrote Byte 0x" + Integer.toHexString(currentEntry.value.value2));
+						//LOGGER.log( "[cache] Wrote Byte 0x" + Integer.toHexString(currentEntry.value.value2));
 					} else if (currentEntry.value.isTerminal) {
-						//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] Terminal");
+						//LOGGER.log( "[cache] Terminal");
 						break;
 					}
 					node = rootAddress;
@@ -270,19 +271,19 @@ public class HuffmanHelper {
 				}
 				
 				if (nextBitIsZero && leftEntry != null) {
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] 0 - left");
+					//LOGGER.log( "[cache] 0 - left");
 					currentEntry = leftEntry;
 					node = leftEntry.nodeValue;
 					currentByte >>= 1;
 					bit += 1;
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] node = 0x" + Long.toHexString(node));
+					//LOGGER.log( "[cache] node = 0x" + Long.toHexString(node));
 				} else if (!nextBitIsZero && rightEntry != null) {
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] 1 - right");
+					//LOGGER.log( "[cache] 1 - right");
 					currentEntry = rightEntry;
 					node = rightEntry.nodeValue;
 					currentByte >>= 1;
 					bit += 1;
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] node = 0x" + Long.toHexString(node));
+					//LOGGER.log( "[cache] node = 0x" + Long.toHexString(node));
 				} else {
 					long currentTreeAddress = node;
 					int left = FileReadHelper.readSignedHalfWord(handler, currentTreeAddress);
@@ -298,7 +299,7 @@ public class HuffmanHelper {
 							currentEntry = new CacheEntry(previousEntry);
 							previousEntry.left = currentEntry;
 							currentEntry.stream.pushZero();
-							//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "0 - left");
+							//LOGGER.log( "0 - left");
 						}
 						else {
 							offset = right;
@@ -306,11 +307,11 @@ public class HuffmanHelper {
 							currentEntry = new CacheEntry(previousEntry);
 							previousEntry.right = currentEntry;
 							currentEntry.stream.pushOne();
-							//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "1 - right");
+							//LOGGER.log( "1 - right");
 						}
 						
 						node = treeAddress + (4 * offset);
-						//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "node = 0x" + Long.toHexString(node));
+						//LOGGER.log( "node = 0x" + Long.toHexString(node));
 						currentEntry.nodeValue = node;
 						currentByte >>= 1;
 						bit += 1;
@@ -323,19 +324,19 @@ public class HuffmanHelper {
 						
 						valueEntry.hasValue1 = true;
 						valueEntry.value1 = (byte) (left & 0xFF);
-						//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Wrote Byte 0x" + Integer.toHexString(valueEntry.value1));
+						//LOGGER.log( "Wrote Byte 0x" + Integer.toHexString(valueEntry.value1));
 						i += 1;
 						if ((left & 0xFF00) != 0) {
 							if (i != 0x1000) {
 								result[i] = (byte) ((left >> 8) & 0xFF);
 								valueEntry.hasValue2 = true;
 								valueEntry.value2 = (byte) ((left >> 8) & 0xFF);
-								//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Wrote Byte 0x" + Integer.toHexString(valueEntry.value2));
+								//LOGGER.log( "Wrote Byte 0x" + Integer.toHexString(valueEntry.value2));
 								i += 1;
 							}
 						} else if (left == 0) {
 							valueEntry.isTerminal = true;
-							//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Terminal");
+							//LOGGER.log( "Terminal");
 							break;
 						}
 						currentEntry = cacheRoot;
@@ -384,12 +385,12 @@ public class HuffmanHelper {
 				Boolean nextBitIsZero = (currentByte & 0x1) == 0;
 				if (currentEntry.value != null) {
 					result.appendByte(currentEntry.value.value1);
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] Wrote Byte 0x" + Integer.toHexString(currentEntry.value.value1));
+					//LOGGER.log( "[cache] Wrote Byte 0x" + Integer.toHexString(currentEntry.value.value1));
 					if (currentEntry.value.hasValue2) {
 						result.appendByte(currentEntry.value.value2);
-						//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] Wrote Byte 0x" + Integer.toHexString(currentEntry.value.value2));
+						//LOGGER.log( "[cache] Wrote Byte 0x" + Integer.toHexString(currentEntry.value.value2));
 					} else if (currentEntry.value.isTerminal) {
-						//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] Terminal");
+						//LOGGER.log( "[cache] Terminal");
 						break;
 					}
 					node = rootAddress;
@@ -398,19 +399,19 @@ public class HuffmanHelper {
 				}
 				
 				if (nextBitIsZero && leftEntry != null) {
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] 0 - left");
+					//LOGGER.log( "[cache] 0 - left");
 					currentEntry = leftEntry;
 					node = leftEntry.nodeValue;
 					currentByte >>= 1;
 					bit += 1;
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] node = 0x" + Long.toHexString(node));
+					//LOGGER.log( "[cache] node = 0x" + Long.toHexString(node));
 				} else if (!nextBitIsZero && rightEntry != null) {
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] 1 - right");
+					//LOGGER.log( "[cache] 1 - right");
 					currentEntry = rightEntry;
 					node = rightEntry.nodeValue;
 					currentByte >>= 1;
 					bit += 1;
-					//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "[cache] node = 0x" + Long.toHexString(node));
+					//LOGGER.log( "[cache] node = 0x" + Long.toHexString(node));
 				} else {
 					long currentTreeAddress = node;
 					int left = FileReadHelper.readSignedHalfWord(handler, currentTreeAddress);
@@ -426,7 +427,7 @@ public class HuffmanHelper {
 							currentEntry = new CacheEntry(previousEntry);
 							previousEntry.left = currentEntry;
 							currentEntry.stream.pushZero();
-							//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "0 - left");
+							//LOGGER.log( "0 - left");
 						}
 						else {
 							offset = right;
@@ -434,11 +435,11 @@ public class HuffmanHelper {
 							currentEntry = new CacheEntry(previousEntry);
 							previousEntry.right = currentEntry;
 							currentEntry.stream.pushOne();
-							//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "1 - right");
+							//LOGGER.log( "1 - right");
 						}
 						
 						node = treeAddress + (4 * offset);
-						//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "node = 0x" + Long.toHexString(node));
+						//LOGGER.log( "node = 0x" + Long.toHexString(node));
 						currentEntry.nodeValue = node;
 						currentByte >>= 1;
 						bit += 1;
@@ -451,15 +452,15 @@ public class HuffmanHelper {
 						
 						valueEntry.hasValue1 = true;
 						valueEntry.value1 = (byte) (left & 0xFF);
-						//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Wrote Byte 0x" + Integer.toHexString(valueEntry.value1));
+						//LOGGER.log( "Wrote Byte 0x" + Integer.toHexString(valueEntry.value1));
 						if ((left & 0xFF00) != 0) {
 							result.appendByte((byte)((left >> 8) & 0xFF));
 								valueEntry.hasValue2 = true;
 								valueEntry.value2 = (byte) ((left >> 8) & 0xFF);
-								//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Wrote Byte 0x" + Integer.toHexString(valueEntry.value2));
+								//LOGGER.log( "Wrote Byte 0x" + Integer.toHexString(valueEntry.value2));
 						} else if (left == 0) {
 							valueEntry.isTerminal = true;
-							//DebugPrinter.log(DebugPrinter.Key.HUFFMAN, "Terminal");
+							//LOGGER.log( "Terminal");
 							break;
 						}
 						currentEntry = cacheRoot;

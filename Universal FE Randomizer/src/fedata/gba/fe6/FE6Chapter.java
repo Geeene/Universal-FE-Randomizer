@@ -15,7 +15,7 @@ import util.FileReadHelper;
 import util.WhyDoesJavaNotHaveThese;
 
 public class FE6Chapter implements GBAFEChapterData {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.CHAPTER_LOADER);
 	private String friendlyName;
 	
 	@SuppressWarnings("unused")
@@ -157,7 +157,7 @@ public class FE6Chapter implements GBAFEChapterData {
 		for (CharacterNudge nudge : nudges) {
 			for (GBAFEChapterUnitData unit : allUnits()) {
 				if (unit.getCharacterNumber() == nudge.getCharacterID() && unit.getStartingX() == nudge.getOldX() && unit.getStartingY() == nudge.getOldY()) {
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Nudging character 0x" + Integer.toHexString(unit.getCharacterNumber()) + " from (" + unit.getStartingX() + ", " + unit.getStartingY() + ") to (" + nudge.getNewX() + ", " + nudge.getNewY() + ")");
+					LOGGER.log( "Nudging character 0x" + Integer.toHexString(unit.getCharacterNumber()) + " from (" + unit.getStartingX() + ", " + unit.getStartingY() + ") to (" + nudge.getNewX() + ", " + nudge.getNewY() + ")");
 					if (unit.getStartingX() == unit.getLoadingX() && unit.getStartingY() == unit.getLoadingY()) { 
 						unit.setLoadingX(nudge.getNewX());
 						unit.setLoadingY(nudge.getNewY());
@@ -299,7 +299,7 @@ public class FE6Chapter implements GBAFEChapterData {
 	private void recordFightAddressesFromEventBlob(FileHandler handler, long eventAddress) {
 		if (eventAddress >= 0x1000000) { return; }
 		
-		DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Searching for fights beginning at 0x" + Long.toHexString(eventAddress));
+		LOGGER.log( "Searching for fights beginning at 0x" + Long.toHexString(eventAddress));
 		
 		byte[] commandWord;
 		long currentAddress = eventAddress;
@@ -310,7 +310,7 @@ public class FE6Chapter implements GBAFEChapterData {
 				// They vary after that, but those aren't important.
 				long address = FileReadHelper.readAddress(handler, currentAddress + 12);
 				if (address != -1) {
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Found FIGH at 0x" + Long.toHexString(currentAddress));
+					LOGGER.log( "Found FIGH at 0x" + Long.toHexString(currentAddress));
 					fightEventOffsets.add(currentAddress);
 				}
 				currentAddress += 16;
@@ -334,14 +334,14 @@ public class FE6Chapter implements GBAFEChapterData {
 			commandWord = handler.readBytesAtOffset(currentAddress, 4);
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Finished searching for fights at 0x" + Long.toHexString(currentAddress));
+		LOGGER.log( "Finished searching for fights at 0x" + Long.toHexString(currentAddress));
 	}
 	
 	private Set<Long> unitAddressesFromEventBlob(FileHandler handler, long eventAddress) {
 		Set<Long> addressesLoaded = new HashSet<Long>();
 		if (eventAddress >= 0x1000000) { return addressesLoaded; }
 		
-		DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Searching for unit addresses beginning at 0x" + Long.toHexString(eventAddress));
+		LOGGER.log( "Searching for unit addresses beginning at 0x" + Long.toHexString(eventAddress));
 		
 		byte[] commandWord;
 		long currentAddress = eventAddress;
@@ -353,13 +353,13 @@ public class FE6Chapter implements GBAFEChapterData {
 					// LOU2 - 0x13 key. Same as LOU1.
 					long address = FileReadHelper.readAddress(handler, currentAddress + 4);
 					if (address != -1) {
-						DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Found LOU1 or LOU2 at 0x" + Long.toHexString(currentAddress) + ". Unit Address: " + Long.toHexString(address));
+						LOGGER.log( "Found LOU1 or LOU2 at 0x" + Long.toHexString(currentAddress) + ". Unit Address: " + Long.toHexString(address));
 						addressesLoaded.add(address);
 					}
 					currentAddress += 4;
 				}
 				
-				DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Processed command 0x" + Integer.toHexString(commandWord[0] & 0xFF));
+				LOGGER.log( "Processed command 0x" + Integer.toHexString(commandWord[0] & 0xFF));
 			
 				// BACG (0x03), LABEL (0x1B), MUSC (0x36), MUSS (0x37), DISA (0x30), ENUT (0x34), ENUF (0x35), STAL (0x02), CAM1(0xB, 0xC), CURF(0x2C, 0x2D), TEX1(0x7), MORETEXT(0x8), MNCH(0x3D), GOTO(0x1C) - 8 bytes
 				if (commandWord[0] == 0x03 || commandWord[0] == 0x1B || commandWord[0] == 0x36 || commandWord[0] == 0x37 || commandWord[0] == 0x30 ||
@@ -378,18 +378,18 @@ public class FE6Chapter implements GBAFEChapterData {
 			commandWord = handler.readBytesAtOffset(currentAddress, 4);
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Finished searching for loading units at address 0x" + Long.toHexString(currentAddress));
+		LOGGER.log( "Finished searching for loading units at address 0x" + Long.toHexString(currentAddress));
 		
 		return addressesLoaded;
 	}
 	
 	private void loadUnitsFromAddress(FileHandler handler, long unitAddress) {
 		if (unitAddress >= 0x1000000) { return; }
-		DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading units from 0x" + Long.toHexString(unitAddress));
+		LOGGER.log( "Loading units from 0x" + Long.toHexString(unitAddress));
 		long currentOffset = unitAddress;
 		byte[] unitData = handler.readBytesAtOffset(currentOffset, FE6Data.BytesPerChapterUnit);
 		while (unitData[0] != 0x00) {
-			DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loaded unit with data " + WhyDoesJavaNotHaveThese.displayStringForBytes(unitData));
+			LOGGER.log( "Loaded unit with data " + WhyDoesJavaNotHaveThese.displayStringForBytes(unitData));
 			FE6ChapterUnit unit = new FE6ChapterUnit(unitData, currentOffset); 
 			if (!blacklistedClassIDs.contains(unit.getStartingClass())) { // Remove any characters starting as a blacklisted class from consideration.
 				allChapterUnits.add(unit);
@@ -441,7 +441,7 @@ public class FE6Chapter implements GBAFEChapterData {
 	}
 	
 	private void loadRewardsFromEventBlob(FileHandler handler, long eventOffset) {
-		DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Searching for rewards beginning at 0x" + Long.toHexString(eventOffset));
+		LOGGER.log( "Searching for rewards beginning at 0x" + Long.toHexString(eventOffset));
 		byte[] commandWord;
 		long currentAddress = eventOffset;
 		commandWord = handler.readBytesAtOffset(currentAddress, 4);
@@ -450,7 +450,7 @@ public class FE6Chapter implements GBAFEChapterData {
 			if (commandWord[0] == 0x26) {
 				FE6ChapterItem chapterItem = new FE6ChapterItem(handler.readBytesAtOffset(currentAddress, 8), currentAddress);
 				allChapterRewards.add(chapterItem);
-				DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Found reward at offset 0x" + Long.toHexString(currentAddress) + " Item ID: 0x" + Integer.toHexString(chapterItem.getItemID()));
+				LOGGER.log( "Found reward at offset 0x" + Long.toHexString(currentAddress) + " Item ID: 0x" + Integer.toHexString(chapterItem.getItemID()));
 				currentAddress += 4;
 			}
 			
@@ -472,7 +472,7 @@ public class FE6Chapter implements GBAFEChapterData {
 			commandWord = handler.readBytesAtOffset(currentAddress, 4);
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Finished searching for rewards at 0x" + Long.toHexString(currentAddress));
+		LOGGER.log( "Finished searching for rewards at 0x" + Long.toHexString(currentAddress));
 	}
 
 	public GBAFEChapterItemData chapterItemGivenToCharacter(int characterID) { return null; }

@@ -15,43 +15,47 @@ import random.gcnwii.fe9.loader.FE9ItemDataLoader;
 import util.DebugPrinter;
 
 public class FE9RewardsRandomizer {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_CHAPTER_SCRIPT);
 	static final int rngSalt = 42069;
-	
-	public static void randomizeSimilarRewards(FE9ItemDataLoader itemData, FE9ChapterDataLoader chapterData, Random rng) {
+
+	public static void randomizeSimilarRewards(FE9ItemDataLoader itemData, FE9ChapterDataLoader chapterData,
+			Random rng) {
 		for (FE9ChapterRewards rewards : chapterData.getAllChapterRewards()) {
 			rewards.replaceRewards(new FE9ChapterRewardsProcessor() {
 				@Override
 				public String replaceItem(String iid) {
 					String newIID = similarIID(iid, itemData, rng);
-					DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "Replacing item " + iid + " with " + newIID);
+					LOGGER.log("Replacing item " + iid + " with " + newIID);
 					return newIID;
 				}
 			});
-			
+
 			rewards.commitChanges();
 		}
 	}
-	
+
 	public static void randomizeRewards(FE9ItemDataLoader itemData, FE9ChapterDataLoader chapterData, Random rng) {
 		for (FE9ChapterRewards rewards : chapterData.getAllChapterRewards()) {
 			rewards.replaceRewards(new FE9ChapterRewardsProcessor() {
 				@Override
 				public String replaceItem(String iid) {
 					String newIID = randomIID(iid, itemData, rng);
-					DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "Replacing item " + iid + " with " + newIID);
+					LOGGER.log("Replacing item " + iid + " with " + newIID);
 					return newIID;
 				}
 			});
-			
+
 			rewards.commitChanges();
 		}
 	}
-	
-	public static void addEnemyDrops(FE9CharacterDataLoader charData, FE9ItemDataLoader itemData, FE9ChapterDataLoader chapterData, int dropChance, Random rng) {
+
+	public static void addEnemyDrops(FE9CharacterDataLoader charData, FE9ItemDataLoader itemData,
+			FE9ChapterDataLoader chapterData, int dropChance, Random rng) {
 		List<FE9Item> potentialItemRewards = itemData.getPossibleRewards();
-		potentialItemRewards.removeIf(item -> { return itemData.isWeapon(item); });
-		
+		potentialItemRewards.removeIf(item -> {
+			return itemData.isWeapon(item);
+		});
+
 		for (FE9Data.Chapter chapter : FE9Data.Chapter.allChapters()) {
 			List<FE9ChapterArmy> armies = chapterData.armiesForChapter(chapter);
 			for (FE9ChapterArmy army : armies) {
@@ -65,20 +69,31 @@ public class FE9RewardsRandomizer {
 								// Drop the weapon.
 								unit.setWillDropWeapon1(true);
 							} else {
-								if (potentialItemRewards.isEmpty()) { continue; }
-								FE9Item droppedItem = potentialItemRewards.get(rng.nextInt(potentialItemRewards.size()));
+								if (potentialItemRewards.isEmpty()) {
+									continue;
+								}
+								FE9Item droppedItem = potentialItemRewards
+										.get(rng.nextInt(potentialItemRewards.size()));
 								// Drop an item.
 								if (unit.willDropItem1()) {
-									if (army.getItem1ForUnit(unit).equals(FE9Data.Item.CHEST_KEY.getIID())) { continue; } // Do not replace chest keys.
+									if (army.getItem1ForUnit(unit).equals(FE9Data.Item.CHEST_KEY.getIID())) {
+										continue;
+									} // Do not replace chest keys.
 									army.setItem1ForUnit(unit, itemData.iidOfItem(droppedItem));
 								} else if (unit.willDropItem2()) {
-									if (army.getItem2ForUnit(unit).equals(FE9Data.Item.CHEST_KEY.getIID())) { continue; }
+									if (army.getItem2ForUnit(unit).equals(FE9Data.Item.CHEST_KEY.getIID())) {
+										continue;
+									}
 									army.setItem2ForUnit(unit, itemData.iidOfItem(droppedItem));
 								} else if (unit.willDropItem3()) {
-									if (army.getItem3ForUnit(unit).equals(FE9Data.Item.CHEST_KEY.getIID())) { continue; }
+									if (army.getItem3ForUnit(unit).equals(FE9Data.Item.CHEST_KEY.getIID())) {
+										continue;
+									}
 									army.setItem3ForUnit(unit, itemData.iidOfItem(droppedItem));
 								} else if (unit.willDropItem4()) {
-									if (army.getItem4ForUnit(unit).equals(FE9Data.Item.CHEST_KEY.getIID())) { continue; }
+									if (army.getItem4ForUnit(unit).equals(FE9Data.Item.CHEST_KEY.getIID())) {
+										continue;
+									}
 									army.setItem4ForUnit(unit, itemData.iidOfItem(droppedItem));
 								} else {
 									if (army.getItem1ForUnit(unit) == null) {
@@ -106,14 +121,18 @@ public class FE9RewardsRandomizer {
 
 	private static String similarIID(String originalIID, FE9ItemDataLoader itemData, Random rng) {
 		List<FE9Item> potentialItems = itemData.getSimilarItemsTo(itemData.itemWithIID(originalIID));
-		if (potentialItems.isEmpty()) { return null; }
+		if (potentialItems.isEmpty()) {
+			return null;
+		}
 		FE9Item replacement = potentialItems.get(rng.nextInt(potentialItems.size()));
 		return itemData.iidOfItem(replacement);
 	}
-	
+
 	private static String randomIID(String originalIID, FE9ItemDataLoader itemData, Random rng) {
 		List<FE9Item> potentialItems = itemData.getPossibleRewards();
-		if (potentialItems.isEmpty()) { return null; }
+		if (potentialItems.isEmpty()) {
+			return null;
+		}
 		FE9Item replacement = potentialItems.get(rng.nextInt(potentialItems.size()));
 		return itemData.iidOfItem(replacement);
 	}

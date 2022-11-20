@@ -4,7 +4,7 @@ import io.gcn.GCNMessageFileHandler;
 import util.DebugPrinter;
 
 public class FE9ChapterStrings {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_CHAPTER_STRINGS);
 	private GCNMessageFileHandler messageHandler;
 	
 	public FE9ChapterStrings(GCNMessageFileHandler handler) {
@@ -21,10 +21,10 @@ public class FE9ChapterStrings {
 	
 	public void debugPrintStrings() {
 		for (String identifier : messageHandler.allIdentifiers()) {
-			DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_STRINGS, identifier);
-			DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_STRINGS, "-----------------------");
-			DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_STRINGS, textStringForIdentifier(identifier));
-			DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_STRINGS, "");
+			LOGGER.log( identifier);
+			LOGGER.log( "-----------------------");
+			LOGGER.log( textStringForIdentifier(identifier));
+			LOGGER.log( "");
 		}
 	}
 }

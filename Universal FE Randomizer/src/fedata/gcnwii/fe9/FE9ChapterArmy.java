@@ -17,7 +17,7 @@ import util.Diff;
 import util.WhyDoesJavaNotHaveThese;
 
 public class FE9ChapterArmy {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_ARMY_LOADER);
 	private GCNDataFileHandlerV2 disposHandler;
 	public static class FE9ChapterArmySection {
 		public final byte[] prefixBytes;
@@ -71,7 +71,7 @@ public class FE9ChapterArmy {
 		armySectionNameByUnits = new HashMap<FE9ChapterUnit, String>();
 		
 		int counter = 0;
-		DebugPrinter.log(DebugPrinter.Key.FE9_ARMY_LOADER, "===Starting Army Data for " + chapterID + "===");
+		LOGGER.log( "===Starting Army Data for " + chapterID + "===");
 		for (GCNDataFileDataSection section : handler.getSections()) {
 			if (section.identifier.contains("_date_")) { continue; }
 			byte[] sectionHeader = section.getRawData(0, 4);
@@ -97,11 +97,11 @@ public class FE9ChapterArmy {
 				
 				String jid = disposHandler.stringForPointer(unit.getClassIDPointer());
 				
-				DebugPrinter.log(DebugPrinter.Key.FE9_ARMY_LOADER, "Loaded " + pid + " (" + jid + ") in chapter " + chapterID);
+				LOGGER.log( "Loaded " + pid + " (" + jid + ") in chapter " + chapterID);
 			}
 		}
 
-		DebugPrinter.log(DebugPrinter.Key.FE9_ARMY_LOADER, "===End Army Data===");
+		LOGGER.log( "===End Army Data===");
 	}
 	
 	public String getID() {

@@ -49,7 +49,7 @@ public class FE9ChapterRewards {
 				if (oldIID != null) {
 					String newIID = processor.replaceItem(oldIID);
 					if (newIID == null) {
-						DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "No replacement returned for " + oldIID + ". Skipping...");
+						DebugPrinter.forKey(DebugPrinter.Key.FE9_CHAPTER_SCRIPT).log("No replacement returned for " + oldIID + ". Skipping...");
 						continue;
 					}
 					instructions.remove(index.intValue());

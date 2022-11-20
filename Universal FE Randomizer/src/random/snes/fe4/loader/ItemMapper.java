@@ -14,7 +14,7 @@ import util.DiffCompiler;
 import util.recordkeeper.RecordKeeper;
 
 public class ItemMapper {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE4_ITEM_MAPPER);
 	private Map<Integer, FE4Data.Item> playerEquipmentIDToItem;
 	private Map<Integer, List<String>> registrationMap;
 	
@@ -66,7 +66,7 @@ public class ItemMapper {
 			System.err.println("Attempting to set item to invalid index.");
 		} else {
 			playerEquipmentIDToItem.put(indexToReplace, newItem);
-			DebugPrinter.log(DebugPrinter.Key.FE4_ITEM_MAPPER, "Setting item at index 0x" + Integer.toHexString(indexToReplace).toUpperCase() + " to " + newItem.toString());
+			LOGGER.log( "Setting item at index 0x" + Integer.toHexString(indexToReplace).toUpperCase() + " to " + newItem.toString());
 		}
 	}
 	
@@ -77,7 +77,7 @@ public class ItemMapper {
 	}
 	
 	private void initializeMap(FileHandler handler) {
-		DebugPrinter.log(DebugPrinter.Key.FE4_ITEM_MAPPER, "Reading item map...");
+		LOGGER.log( "Reading item map...");
 		
 		playerEquipmentIDToItem = new HashMap<Integer, FE4Data.Item>();
 		registrationMap = new HashMap<Integer, List<String>>();
@@ -95,7 +95,7 @@ public class ItemMapper {
 				int itemID = data[0] & 0xFF;
 				FE4Data.Item item = FE4Data.Item.valueOf(itemID);
 				if (item != null) {
-					DebugPrinter.log(DebugPrinter.Key.FE4_ITEM_MAPPER, "Loaded Item " + item.toString() + " into index 0x" + Integer.toHexString(i).toUpperCase());
+					LOGGER.log( "Loaded Item " + item.toString() + " into index 0x" + Integer.toHexString(i).toUpperCase());
 					playerEquipmentIDToItem.put(i, item);
 				} else {
 					System.err.println("Unknown item encountered. Item ID = 0x" + Integer.toHexString(itemID));
@@ -103,7 +103,7 @@ public class ItemMapper {
 			}	
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.FE4_ITEM_MAPPER, "Finished reading item map!");
+		LOGGER.log( "Finished reading item map!");
 	}
 	
 	public void registerInventoryID(int inventoryID, String key) {

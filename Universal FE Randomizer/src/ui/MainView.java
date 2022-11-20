@@ -904,7 +904,7 @@ public class MainView implements FileFlowDelegate {
 					romName.setText("ROM Name: " + gcnHandler.getGameName());
 					romCode.setText("ROM Code: " + gcnHandler.getGameCode());
 				} catch (GCNISOException e) {
-					DebugPrinter.log(DebugPrinter.Key.MAIN, e.getMessage());
+					DebugPrinter.forKey(DebugPrinter.Key.MAIN).log(e.getMessage());
 					romName.setText("ROM Name: Read Failed");
 					romCode.setText("ROM Code: Read Failed");
 					type = GameType.UNKNOWN;

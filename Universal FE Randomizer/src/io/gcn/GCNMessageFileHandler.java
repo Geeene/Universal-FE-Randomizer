@@ -15,7 +15,7 @@ import util.DebugPrinter;
 import util.WhyDoesJavaNotHaveThese;
 
 public class GCNMessageFileHandler extends GCNFileHandler {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_TEXT_LOADER);
 	private static class StringEntry {
 		String identifier;
 		int valueOffset;
@@ -99,7 +99,7 @@ public class GCNMessageFileHandler extends GCNFileHandler {
 			String result = WhyDoesJavaNotHaveThese.stringFromShiftJIS(stringData);
 			idToDisplayString.put(identifier, result);
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_TEXT_LOADER, "Loaded text entry: " + identifier + " (" + result + ")");
+			LOGGER.log("Loaded text entry: " + identifier + " (" + result + ")");
 		}
 	}
 	
@@ -133,7 +133,7 @@ public class GCNMessageFileHandler extends GCNFileHandler {
 			String result = WhyDoesJavaNotHaveThese.stringFromShiftJIS(stringData);
 			idToDisplayString.put(identifier, result);
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_TEXT_LOADER, "Loaded text entry: " + identifier + " (" + result + ")");
+			LOGGER.log("Loaded text entry: " + identifier + " (" + result + ")");
 		}
 		
 		ByteArrayBuilder rawData = new ByteArrayBuilder();

@@ -34,7 +34,7 @@ import util.WhyDoesJavaNotHaveThese;
 import util.recordkeeper.RecordKeeper;
 
 public class ChapterLoader {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.CHAPTER_LOADER);
 	private FEBase.GameType gameType;
 	
 	private GBAFEChapterData[] chapters;
@@ -65,18 +65,18 @@ public class ChapterLoader {
 					
 					CharacterNudge[] nudges = chapter.nudgesRequired();
 					long chapterOffset = baseAddress + (4 * chapter.chapterID);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading " + chapter.toString());
+					LOGGER.log( "Loading " + chapter.toString());
 					FE6Chapter fe6Chapter = new FE6Chapter(handler, chapterOffset, chapter.isClassSafe(), chapter.shouldRemoveFightScenes(), classBlacklist, chapter.getMetadata().getFriendlyName(), chapter.shouldBeEasy(), nudges); 
 					chapters[i++] = fe6Chapter;
 					mappedChapters.put(chapterID, fe6Chapter);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Chapter " + chapter.toString() + " loaded " + fe6Chapter.allUnits().length + " characters and " + fe6Chapter.allRewards().length + " rewards");
+					LOGGER.log( "Chapter " + chapter.toString() + " loaded " + fe6Chapter.allUnits().length + " characters and " + fe6Chapter.allRewards().length + " rewards");
 					
 					if (chapter.hasWorldMapEvents()) {
 						long worldMapOffset = baseAddress + (4 * chapter.worldMapEvents);
-						DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading World Map Events for " + chapter.toString());
+						LOGGER.log( "Loading World Map Events for " + chapter.toString());
 						FE6WorldMapEvent fe6WorldMapEvent = new FE6WorldMapEvent(handler, worldMapOffset);
 						worldMapEventsByChapterID.put(chapterID, fe6WorldMapEvent);
-						DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Chapter " + chapter.toString() + " loaded " + fe6WorldMapEvent.allPortraits().length + " world map portraits.");
+						LOGGER.log( "Chapter " + chapter.toString() + " loaded " + fe6WorldMapEvent.allPortraits().length + " world map portraits.");
 					}
 				}
 				
@@ -104,21 +104,21 @@ public class ChapterLoader {
 						trackedRewardRecipients[index] = chapter.targetedRewardRecipientsToTrack()[index].ID;
 					}
 					long chapterOffset = baseAddress + (4 * chapter.chapterID);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading " + chapter.toString());
+					LOGGER.log( "Loading " + chapter.toString());
 					FE7Chapter fe7Chapter = new FE7Chapter(handler, chapterOffset, chapter.isClassSafe(), chapter.shouldRemoveFightScenes(), trackedRewardRecipients, classBlacklist, chapter.getMetadata().getFriendlyName(), chapter.shouldBeEasy()); 
 					chapters[i++] = fe7Chapter;
 					mappedChapters.put(chapterID, fe7Chapter);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Chapter " + chapter.toString() + " loaded " + fe7Chapter.allUnits().length + " characters and " + fe7Chapter.allRewards().length + " rewards");
+					LOGGER.log( "Chapter " + chapter.toString() + " loaded " + fe7Chapter.allUnits().length + " characters and " + fe7Chapter.allRewards().length + " rewards");
 				}
 				
 				for (int j = 0; j < FE7Data.WorldMapEventCount; j++) {
 					long offset = FE7Data.WorldMapEventTableOffset + (j * FE7Data.WorldMapEventItemSize);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading World Map Events from offset 0x" + Long.toHexString(offset));
+					LOGGER.log( "Loading World Map Events from offset 0x" + Long.toHexString(offset));
 					FE7WorldMapEvent fe7WorldMapEvent = new FE7WorldMapEvent(handler, offset);
 					long dereferencedAddress = FileReadHelper.readAddress(handler, offset);
 					FE7Data.ChapterPointer chapter = FE7Data.ChapterPointer.chapterForWorldMapEventOffset(dereferencedAddress);
 					worldMapEventsByChapterID.put(chapter.chapterID, fe7WorldMapEvent);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loaded " + fe7WorldMapEvent.allPortraits().length + " world map portraits.");
+					LOGGER.log( "Loaded " + fe7WorldMapEvent.allPortraits().length + " world map portraits.");
 				}
 				
 				baseAddress = FileReadHelper.readAddress(handler, FE7Data.ChapterMetadataTablePointer);
@@ -152,23 +152,23 @@ public class ChapterLoader {
 					
 					CharacterNudge[] nudges = chapter.nudgesRequired();
 					long chapterOffset = baseAddress + (4 * chapter.chapterID);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading " + chapter.toString());
+					LOGGER.log( "Loading " + chapter.toString());
 					FE8Chapter fe8Chapter = new FE8Chapter(handler, chapterOffset, chapter.isClassSafe(), chapter.shouldRemoveFightScenes(), classBlacklist, chapter.getMetadata().getFriendlyName(), chapter.shouldBeEasy(), trackedRewardRecipients, unarmedCharacterIDs, chapter.additionalUnitOffsets(), nudges);
 					fe8Chapter.setMaxEnemyClassLimit(chapter.enemyClassLimit());
 					chapters[i++] = fe8Chapter;
 					mappedChapters.put(chapterID, fe8Chapter);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Chapter " + chapter.toString() + " loaded " + fe8Chapter.allUnits().length + " characters and " + fe8Chapter.allRewards().length + " rewards");
+					LOGGER.log( "Chapter " + chapter.toString() + " loaded " + fe8Chapter.allUnits().length + " characters and " + fe8Chapter.allRewards().length + " rewards");
 				}
 				
 				for (int j = 0; j < FE8Data.WorldMapEventCount; j++) {
 					long offset = FE8Data.WorldMapEventTableOffset + (j * FE8Data.WorldMapEventItemSize);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading World Map Events from offset 0x" + Long.toHexString(offset));
+					LOGGER.log( "Loading World Map Events from offset 0x" + Long.toHexString(offset));
 					FE8WorldMapEvent fe8WorldMapEvent = new FE8WorldMapEvent(handler, offset);
 					long dereferencedAddress = FileReadHelper.readAddress(handler, offset);
 					FE8Data.ChapterPointer chapter = FE8Data.ChapterPointer.chapterForWorldMapEventOffset(dereferencedAddress);
 					if (chapter == null) { continue; }
 					worldMapEventsByChapterID.put(chapter.chapterID, fe8WorldMapEvent);
-					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loaded " + fe8WorldMapEvent.allPortraits().length + " world map portraits.");
+					LOGGER.log( "Loaded " + fe8WorldMapEvent.allPortraits().length + " world map portraits.");
 				}
 				baseAddress = FileReadHelper.readAddress(handler, FE8Data.ChapterMetadataTablePointer);
 				for (FE8Data.ChapterMetadata chapterMetadata : FE8Data.ChapterMetadata.orderedChapters()) {

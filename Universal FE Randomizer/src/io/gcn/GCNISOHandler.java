@@ -23,7 +23,7 @@ enum GCNFSTEntryType {
 }
 
 public class GCNISOHandler {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.GCN_HANDLER);
 	private FileHandler handler;
 	
 	private String gameCode;
@@ -95,7 +95,7 @@ public class GCNISOHandler {
 			while (currentOffset == currentDirectory.nextOffset * 0xC + fstOffset) {
 				currentDirectory = currentDirectory.parentEntry;
 				if (currentDirectory == null) {
-					DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "Early exit when parsing FST.");
+					LOGGER.log( "Early exit when parsing FST.");
 					break;
 				}
 			}
@@ -125,8 +125,8 @@ public class GCNISOHandler {
 				currentDirectory.childEntries.add(fileEntry);
 				fileEntry.parentEntry = currentDirectory;
 				
-				DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "Loaded File " + fstNameOfEntry(fileEntry) + " at FST offset 0x" + Long.toHexString(currentOffset).toUpperCase()+ ".");
-				DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "File Offset: 0x" + Long.toHexString(fileEntry.fileOffset).toUpperCase() + ". File Size: " + fileEntry.fileSize + " bytes.");
+				LOGGER.log( "Loaded File " + fstNameOfEntry(fileEntry) + " at FST offset 0x" + Long.toHexString(currentOffset).toUpperCase()+ ".");
+				LOGGER.log( "File Offset: 0x" + Long.toHexString(fileEntry.fileOffset).toUpperCase() + ". File Size: " + fileEntry.fileSize + " bytes.");
 				
 				entryList.add(fileEntry);
 			} else if (flags == 0x01) { // This is a directory entry.
@@ -142,8 +142,8 @@ public class GCNISOHandler {
 				currentDirectory.childEntries.add(dirEntry);
 				dirEntry.parentEntry = currentDirectory;
 				
-				DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "Loaded Directory " + fstNameOfEntry(dirEntry) + " at FST offset 0x" + Long.toHexString(currentOffset).toUpperCase()+ ".");
-				DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "Parent: " + fstNameOfEntry(currentDirectory) + " at offset: 0x" + Long.toHexString(currentDirectory.entryOffset).toUpperCase() + ". Next entry offset: 0x" + Long.toHexString(dirEntry.nextOffset).toUpperCase() + ".");
+				LOGGER.log( "Loaded Directory " + fstNameOfEntry(dirEntry) + " at FST offset 0x" + Long.toHexString(currentOffset).toUpperCase()+ ".");
+				LOGGER.log( "Parent: " + fstNameOfEntry(currentDirectory) + " at offset: 0x" + Long.toHexString(currentDirectory.entryOffset).toUpperCase() + ". Next entry offset: 0x" + Long.toHexString(dirEntry.nextOffset).toUpperCase() + ".");
 				
 				// Entries directly after a directory entry are files that belong in that directory.
 				currentDirectory = dirEntry;
@@ -153,7 +153,7 @@ public class GCNISOHandler {
 		}
 		
 		for (int i = 0; i < entryList.size(); i++) {
-			DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "[" + i + "] Entry: " + fstNameOfEntry(entryList.get(i)));
+			LOGGER.log( "[" + i + "] Entry: " + fstNameOfEntry(entryList.get(i)));
 		}
 		
 		// Build the FST map.
@@ -342,7 +342,7 @@ public class GCNISOHandler {
 				
 				long beginningOffset = writer.getBytesWritten();
 				String name = fstNameOfEntry(fileEntry);
-				DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "Writing " + name + " data at offset 0x" + Long.toHexString(beginningOffset));
+				LOGGER.log( "Writing " + name + " data at offset 0x" + Long.toHexString(beginningOffset));
 				
 				GCNFileHandler fileHandler = handlerForFileWithName(fstNameOfEntry(fileEntry));
 				if (fileHandler instanceof GCNCMPFileHandler) {
@@ -366,7 +366,7 @@ public class GCNISOHandler {
 					fileHandler.endBatchRead();
 				}
 				long bytesWritten = writer.getBytesWritten() - beginningOffset;
-				DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "Wrote " + bytesWritten + " btyes");
+				LOGGER.log( "Wrote " + bytesWritten + " btyes");
 			}
 			
 			writer.finish();
@@ -456,7 +456,7 @@ public class GCNISOHandler {
 			else { file.updatedOffset = currentDataOffset; }
 			file.updatedSize = handler.getFileLength();
 			
-			DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, "Entry " + fstNameOfEntry(entry) + " at offset 0x" + Long.toHexString(currentDataOffset) + " length: " + handler.getFileLength());
+			LOGGER.log( "Entry " + fstNameOfEntry(entry) + " at offset 0x" + Long.toHexString(currentDataOffset) + " length: " + handler.getFileLength());
 			
 			currentDataOffset += handler.getFileLength();
 			
@@ -525,7 +525,7 @@ public class GCNISOHandler {
 			sb.append("  ");
 		}
 		sb.append(fstNameFromNameOffset(node.nameOffset));
-		DebugPrinter.log(DebugPrinter.Key.GCN_HANDLER, sb.toString());
+		LOGGER.log( sb.toString());
 		
 		if (node.type == GCNFSTEntryType.DIRECTORY || node.type == GCNFSTEntryType.ROOT) {
 			GCNFSTDirectoryEntry dirEntry = (GCNFSTDirectoryEntry) node;

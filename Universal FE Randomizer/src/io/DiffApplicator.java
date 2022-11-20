@@ -60,7 +60,7 @@ public class DiffApplicator {
 			byte[] oldValue = currentDiff.requiredOldValues;
 			byte[] newValue = currentDiff.changes;
 			
-			DebugPrinter.log(DebugPrinter.Key.DIFF, "Address: 0x" + Long.toHexString(nextAddress).toUpperCase() + " - Length: " + length + ", Old Value: " + 
+			DebugPrinter.forKey(DebugPrinter.Key.DIFF).log("Address: 0x" + Long.toHexString(nextAddress).toUpperCase() + " - Length: " + length + ", Old Value: " + 
 					WhyDoesJavaNotHaveThese.displayStringForBytes(oldValue) + ", New Value: " + WhyDoesJavaNotHaveThese.displayStringForBytes(newValue));
 			
 			try {

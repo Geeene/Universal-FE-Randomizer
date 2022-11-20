@@ -29,7 +29,7 @@ import util.recordkeeper.ChangelogTable;
 import util.recordkeeper.ChangelogHeader.HeaderLevel;
 
 public class FE9ClassDataLoader {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_CLASS_LOADER);
 	List<FE9Class> allClasses;
 	
 	List<FE9Class> allUnpromotedClasses;
@@ -468,63 +468,63 @@ public class FE9ClassDataLoader {
 	}
 
 	private void debugPrintClass(FE9Class charClass, GCNFileHandler handler, FE9CommonTextLoader commonTextLoader) {
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "===== Printing Class =====");
+		LOGGER.log( "===== Printing Class =====");
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"JID: " + stringForPointer(charClass.getClassIDPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"MJID: " + stringForPointer(charClass.getClassNamePointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"MH_J: " + stringForPointer(charClass.getClassDescriptionPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"Promoted JID: " + stringForPointer(charClass.getPromotionIDPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"Default IID: " + stringForPointer(charClass.getDefaultWeaponPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"Weapon Levels: " + stringForPointer(charClass.getWeaponLevelPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"SID: " + stringForPointer(charClass.getSkill1Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"SID 2: " + stringForPointer(charClass.getSkill2Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"SID 3: " + stringForPointer(charClass.getSkill3Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"Race: " + stringForPointer(charClass.getRacePointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, 
+		LOGGER.log( 
 				"Unknown: " + stringForPointer(charClass.getMiscPointer(), handler, commonTextLoader));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Unknown 3: " + WhyDoesJavaNotHaveThese.displayStringForBytes(charClass.getUnknown3Bytes()));
+		LOGGER.log( "Unknown 3: " + WhyDoesJavaNotHaveThese.displayStringForBytes(charClass.getUnknown3Bytes()));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Base HP: " + charClass.getBaseHP());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Base STR: " + charClass.getBaseSTR());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Base MAG: " + charClass.getBaseMAG());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Base SKL: " + charClass.getBaseSKL());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Base SPD: " + charClass.getBaseSPD());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Base LCK: " + charClass.getBaseLCK());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Base DEF: " + charClass.getBaseDEF());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Base RES: " + charClass.getBaseRES());
+		LOGGER.log( "Base HP: " + charClass.getBaseHP());
+		LOGGER.log( "Base STR: " + charClass.getBaseSTR());
+		LOGGER.log( "Base MAG: " + charClass.getBaseMAG());
+		LOGGER.log( "Base SKL: " + charClass.getBaseSKL());
+		LOGGER.log( "Base SPD: " + charClass.getBaseSPD());
+		LOGGER.log( "Base LCK: " + charClass.getBaseLCK());
+		LOGGER.log( "Base DEF: " + charClass.getBaseDEF());
+		LOGGER.log( "Base RES: " + charClass.getBaseRES());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Max HP: " + charClass.getMaxHP());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Max STR: " + charClass.getMaxSTR());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Max MAG: " + charClass.getMaxMAG());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Max SKL: " + charClass.getMaxSKL());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Max SPD: " + charClass.getMaxSPD());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Max LCK: " + charClass.getMaxLCK());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Max DEF: " + charClass.getMaxDEF());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Max RES: " + charClass.getMaxRES());
+		LOGGER.log( "Max HP: " + charClass.getMaxHP());
+		LOGGER.log( "Max STR: " + charClass.getMaxSTR());
+		LOGGER.log( "Max MAG: " + charClass.getMaxMAG());
+		LOGGER.log( "Max SKL: " + charClass.getMaxSKL());
+		LOGGER.log( "Max SPD: " + charClass.getMaxSPD());
+		LOGGER.log( "Max LCK: " + charClass.getMaxLCK());
+		LOGGER.log( "Max DEF: " + charClass.getMaxDEF());
+		LOGGER.log( "Max RES: " + charClass.getMaxRES());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "HP Growth: " + charClass.getHPGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "STR Growth: " + charClass.getSTRGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "MAG Growth: " + charClass.getMAGGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "SKL Growth: " + charClass.getSKLGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "SPD Growth: " + charClass.getSPDGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "LCK Growth: " + charClass.getLCKGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "DEF Growth: " + charClass.getDEFGrowth());
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "RES Growth: " + charClass.getRESGrowth());
+		LOGGER.log( "HP Growth: " + charClass.getHPGrowth());
+		LOGGER.log( "STR Growth: " + charClass.getSTRGrowth());
+		LOGGER.log( "MAG Growth: " + charClass.getMAGGrowth());
+		LOGGER.log( "SKL Growth: " + charClass.getSKLGrowth());
+		LOGGER.log( "SPD Growth: " + charClass.getSPDGrowth());
+		LOGGER.log( "LCK Growth: " + charClass.getLCKGrowth());
+		LOGGER.log( "DEF Growth: " + charClass.getDEFGrowth());
+		LOGGER.log( "RES Growth: " + charClass.getRESGrowth());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "Unknown 8-2: " + WhyDoesJavaNotHaveThese.displayStringForBytes(charClass.getLaguzData()));
+		LOGGER.log( "Unknown 8-2: " + WhyDoesJavaNotHaveThese.displayStringForBytes(charClass.getLaguzData()));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_CLASS_LOADER, "===== End Printing Class =====");
+		LOGGER.log( "===== End Printing Class =====");
 	}
 	
 	private String stringForPointer(long pointer, GCNFileHandler handler, FE9CommonTextLoader commonTextLoader) {

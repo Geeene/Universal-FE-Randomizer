@@ -51,7 +51,7 @@ import util.WhyDoesJavaNotHaveThese;
  */
 
 public class GCNDataFileHandlerV2 extends GCNByteArrayHandler {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2);
 	public static class GCNDataFileDataSection {
 		public final String identifier;
 		private byte[] rawData;
@@ -202,7 +202,7 @@ public class GCNDataFileHandlerV2 extends GCNByteArrayHandler {
 			stringsByPointers.put(pointer, dereferenced);
 			pointersByStrings.put(dereferenced, pointer);
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Registered string \"" + dereferenced + "\" for pointer 0x" + Long.toHexString(pointer));
+			LOGGER.log( "Registered string \"" + dereferenced + "\" for pointer 0x" + Long.toHexString(pointer));
 		}
 		
 		setNextReadOffset(lastStringOffset);
@@ -220,7 +220,7 @@ public class GCNDataFileHandlerV2 extends GCNByteArrayHandler {
 			GCNDataFileDataSection section = new GCNDataFileDataSection(name, WhyDoesJavaNotHaveThese.subArray(byteArray, (int)pointerToData, (int)endOffset - (int)pointerToData), pointerToData, validPointers);
 			dataSections.add(section);
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Processed section \"" + name + "\" starting at file offset 0x" + Long.toHexString(pointerToData) + " up to file offset 0x" + Long.toHexString(endOffset));
+			LOGGER.log( "Processed section \"" + name + "\" starting at file offset 0x" + Long.toHexString(pointerToData) + " up to file offset 0x" + Long.toHexString(endOffset));
 		}
 	}
 	
@@ -305,7 +305,7 @@ public class GCNDataFileHandlerV2 extends GCNByteArrayHandler {
 		if (needsRebuild) {
 			hasChanges = true;
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Building data file...");
+			LOGGER.log( "Building data file...");
 			
 			ByteArrayBuilder builder = new ByteArrayBuilder();
 			// Build the header first.
@@ -331,20 +331,20 @@ public class GCNDataFileHandlerV2 extends GCNByteArrayHandler {
 			// Sections should already be in the order their data shows up, so we can start writing data.
 			Map<GCNDataFileDataSection, Long> writtenOffsets = new HashMap<GCNDataFileDataSection, Long>();
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Writing section data...");
+			LOGGER.log( "Writing section data...");
 			for (GCNDataFileDataSection section : dataSections) {
 				while (builder.getBytesWritten() % 4 != 0) {
 					builder.appendByte((byte)0);
 				}
 				assert (long)builder.getBytesWritten() == section.originalOffset;
-				DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Writing section " + section.identifier + " at file offset 0x" + Long.toHexString(builder.getBytesWritten()));
+				LOGGER.log( "Writing section " + section.identifier + " at file offset 0x" + Long.toHexString(builder.getBytesWritten()));
 				writtenOffsets.put(section, (long)builder.getBytesWritten());
 				builder.appendBytes(section.getRawData(0, (int)section.getLength()));
-				DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Finished writing section " + section.identifier + " at file offset 0x" + Long.toHexString(builder.getBytesWritten()));
+				LOGGER.log( "Finished writing section " + section.identifier + " at file offset 0x" + Long.toHexString(builder.getBytesWritten()));
 			}
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Finished writing section data.");
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Writing text strings...");
+			LOGGER.log( "Finished writing section data.");
+			LOGGER.log( "Writing text strings...");
 			
 			pointers.sort(new Comparator<Long>() {
 				@Override
@@ -357,14 +357,14 @@ public class GCNDataFileHandlerV2 extends GCNByteArrayHandler {
 					builder.appendByte((byte)0);
 				}
 				
-				DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Writing string " + stringForPointer(pointers.get(i)) + " at offset 0x" + Long.toHexString(builder.getBytesWritten()));
+				LOGGER.log( "Writing string " + stringForPointer(pointers.get(i)) + " at offset 0x" + Long.toHexString(builder.getBytesWritten()));
 				builder.appendBytes(WhyDoesJavaNotHaveThese.shiftJISBytesFromString(stringForPointer(pointers.get(i))));
 				if (builder.getLastByteWritten() != 0) {
 					builder.appendByte((byte)0);
 				}
 			}
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Finished writing strings.");
+			LOGGER.log( "Finished writing strings.");
 			
 			builder.appendBytes(new byte[] {0, 0, 0, 0}); // Seems to be a 4 byte divider for this.
 			
@@ -372,7 +372,7 @@ public class GCNDataFileHandlerV2 extends GCNByteArrayHandler {
 				builder.appendByte((byte)0);
 			}
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Writing pointer table...");
+			LOGGER.log( "Writing pointer table...");
 			int pointerTableOffset = builder.getBytesWritten();
 			validPointers.sort(new Comparator<Long>() {
 				@Override
@@ -386,20 +386,20 @@ public class GCNDataFileHandlerV2 extends GCNByteArrayHandler {
 			int pointersWritten = 0;
 			for (long pointer : validPointers) {
 				if (WhyDoesJavaNotHaveThese.longValueFromByteArray(WhyDoesJavaNotHaveThese.subArray(writtenBytes, (int)pointer, 4), false) == 0) {
-					DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Skipping 0 pointer at offset 0x" + Long.toHexString(pointer));
+					LOGGER.log( "Skipping 0 pointer at offset 0x" + Long.toHexString(pointer));
 					continue;
 				}
-				DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Writing pointer 0x" + Long.toHexString(pointer - 0x20) + " at offset 0x" + Long.toHexString(builder.getBytesWritten()));
+				LOGGER.log( "Writing pointer 0x" + Long.toHexString(pointer - 0x20) + " at offset 0x" + Long.toHexString(builder.getBytesWritten()));
 				builder.appendBytes(WhyDoesJavaNotHaveThese.byteArrayFromLongValue(pointer - 0x20, false, 4));
 				pointersWritten++;
 			}
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Finished writing pointer table.");
+			LOGGER.log( "Finished writing pointer table.");
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Calculating Section Name offsets...");
+			LOGGER.log( "Calculating Section Name offsets...");
 			ByteArrayBuilder sectionNames = new ByteArrayBuilder();
 			for (String name : orderedSectionNames) {
-				DebugPrinter.log(DebugPrinter.Key.FE9_DATA_FILE_HANDLER_V2, "Section name " + name + " set to offset 0x" + Long.toHexString(sectionNames.getBytesWritten()));
+				LOGGER.log( "Section name " + name + " set to offset 0x" + Long.toHexString(sectionNames.getBytesWritten()));
 				builder.appendBytes(WhyDoesJavaNotHaveThese.byteArrayFromLongValue(writtenOffsets.get(getSectionWithName(name)) - 0x20, false, 4));
 				builder.appendBytes(WhyDoesJavaNotHaveThese.byteArrayFromLongValue(sectionNames.getBytesWritten(), false, 4));
 				sectionNames.appendBytes(WhyDoesJavaNotHaveThese.shiftJISBytesFromString(name));

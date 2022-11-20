@@ -5,7 +5,7 @@ import java.util.Arrays;
 import io.FileHandler;
 
 public class LZ77 {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.LZ77);
 	public static byte[] decompress(FileHandler handler, long offset) {
 		// Read the first 4 bytes. Byte 0 should be 1 for LZ77 compression.
 		// Bytes 1-3 should be the size of the decompressed data.
@@ -141,7 +141,7 @@ public class LZ77 {
 	public static byte[] compress(byte[] decompressed, int windowSize) {
 		if (decompressed == null) { return null; }
 		
-		DebugPrinter.log(DebugPrinter.Key.LZ77, "Compressing " + decompressed.length + " bytes...");
+		LOGGER.log( "Compressing " + decompressed.length + " bytes...");
 		
 		byte[] header = new byte[4];
 		header[0] = (byte)0x10; // Header to mark an LZ77 compressed block of data.

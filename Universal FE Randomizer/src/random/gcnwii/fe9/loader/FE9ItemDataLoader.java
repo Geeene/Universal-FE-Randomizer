@@ -37,7 +37,7 @@ import util.recordkeeper.ChangelogTable;
 import util.recordkeeper.ChangelogHeader.HeaderLevel;
 
 public class FE9ItemDataLoader {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_ITEM_LOADER);
 	public enum WeaponRank {
 		NONE, E, D, C, B, A, S, UNKNOWN;
 		
@@ -1269,69 +1269,69 @@ public class FE9ItemDataLoader {
 	}
 	
 	private void debugPrintItem(FE9Item item, GCNFileHandler handler, FE9CommonTextLoader commonTextLoader) {
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "===== Printing Item =====");
+		LOGGER.log( "===== Printing Item =====");
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, 
+		LOGGER.log( 
 				"IID: " + stringForPointer(item.getItemIDPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, 
+		LOGGER.log( 
 				"MIID: " + stringForPointer(item.getItemNamePointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, 
+		LOGGER.log( 
 				"MH_I: " + stringForPointer(item.getItemDescriptionPointer(), handler, commonTextLoader));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Type: " + stringForPointer(item.getItemTypePointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Subtype?: " + stringForPointer(item.getItemSubtypePointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Rank: " + stringForPointer(item.getItemRankPointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Restrictions: " + stringForPointer(item.getItemTrait1Pointer(), handler, commonTextLoader));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Unknown 1: " + stringForPointer(item.getItemTrait2Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Unknown 2: " + stringForPointer(item.getItemTrait3Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Unknown 3: " + stringForPointer(item.getItemTrait4Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Unknown 4: " + stringForPointer(item.getItemTrait5Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Unknown 5: " + stringForPointer(item.getItemTrait6Pointer(), handler, commonTextLoader));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Effectiveness: " + stringForPointer(item.getItemEffectiveness1Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Unknown 6: " + stringForPointer(item.getItemEffectiveness2Pointer(), handler, commonTextLoader));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Effect Animation: " + stringForPointer(item.getItemEffectAnimation1Pointer(), handler, commonTextLoader));
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Unknown 7: " + stringForPointer(item.getItemEffectAnimation2Pointer(), handler, commonTextLoader));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "Cost per Use: " + item.getItemCost());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "Durability: " + item.getItemDurability());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "Might: " + item.getItemMight());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "Accuracy: " + item.getItemAccuracy());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "Weight: " + item.getItemWeight());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "Critical: " + item.getItemCritical());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "Range: " + item.getMinimumRange() + " ~ " + item.getMaximumRange());
+		LOGGER.log( "Cost per Use: " + item.getItemCost());
+		LOGGER.log( "Durability: " + item.getItemDurability());
+		LOGGER.log( "Might: " + item.getItemMight());
+		LOGGER.log( "Accuracy: " + item.getItemAccuracy());
+		LOGGER.log( "Weight: " + item.getItemWeight());
+		LOGGER.log( "Critical: " + item.getItemCritical());
+		LOGGER.log( "Range: " + item.getMinimumRange() + " ~ " + item.getMaximumRange());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "Item Icon: " + item.getIconNumber());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "Weapon EXP: " + item.getWeaponExperience());
+		LOGGER.log( "Item Icon: " + item.getIconNumber());
+		LOGGER.log( "Weapon EXP: " + item.getWeaponExperience());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "HP Bonus: " + item.getHPBonus());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "STR Bonus: " + item.getSTRBonus());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "MAG Bonus: " + item.getMAGBonus());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "SKL Bonus: " + item.getSKLBonus());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "SPD Bonus: " + item.getSPDBonus());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "LCK Bonus: " + item.getLCKBonus());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "DEF Bonus: " + item.getDEFBonus());
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "RES Bonus: " + item.getRESBonus());
+		LOGGER.log( "HP Bonus: " + item.getHPBonus());
+		LOGGER.log( "STR Bonus: " + item.getSTRBonus());
+		LOGGER.log( "MAG Bonus: " + item.getMAGBonus());
+		LOGGER.log( "SKL Bonus: " + item.getSKLBonus());
+		LOGGER.log( "SPD Bonus: " + item.getSPDBonus());
+		LOGGER.log( "LCK Bonus: " + item.getLCKBonus());
+		LOGGER.log( "DEF Bonus: " + item.getDEFBonus());
+		LOGGER.log( "RES Bonus: " + item.getRESBonus());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER,
+		LOGGER.log(
 				"Remaining Bytes: " + WhyDoesJavaNotHaveThese.displayStringForBytes(item.getRemainingBytes()));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_ITEM_LOADER, "===== End Printing Item =====");
+		LOGGER.log( "===== End Printing Item =====");
 	}
 
 	private String stringForPointer(long pointer, GCNFileHandler handler, FE9CommonTextLoader commonTextLoader) {

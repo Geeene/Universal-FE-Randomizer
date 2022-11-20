@@ -10,7 +10,7 @@ import io.gcn.GCNMessageFileHandler;
 import util.DebugPrinter;
 
 public class FE9CommonTextLoader {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_TEXT_LOADER);
 	GCNMessageFileHandler messageFile;
 	
 	public FE9CommonTextLoader(GCNISOHandler isoHandler) throws GCNISOException {
@@ -22,8 +22,8 @@ public class FE9CommonTextLoader {
 		List<String> identifiers = messageFile.allIdentifiers();
 		
 		for (String id : identifiers) {
-			DebugPrinter.log(DebugPrinter.Key.FE9_TEXT_LOADER, "Loaded text entry: " + id);
-			DebugPrinter.log(DebugPrinter.Key.FE9_TEXT_LOADER, messageFile.getStringWithIdentifier(id));
+			LOGGER.log( "Loaded text entry: " + id);
+			LOGGER.log( messageFile.getStringWithIdentifier(id));
 		}
 	}
 	

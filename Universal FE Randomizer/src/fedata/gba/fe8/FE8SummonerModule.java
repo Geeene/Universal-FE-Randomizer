@@ -20,7 +20,7 @@ import util.FreeSpaceManager;
 import util.WhyDoesJavaNotHaveThese;
 
 public class FE8SummonerModule {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE8_SUMMONER_MODULE);
 	public enum SummonType {
 		LYON(0x3B), KNOLL(0x3E), EWAN(0x3F);
 		
@@ -182,7 +182,7 @@ public class FE8SummonerModule {
 	}
 	
 	public void validateSummoners(CharacterDataLoader charData, Random rng) {
-		DebugPrinter.log(DebugPrinter.Key.FE8_SUMMONER_MODULE, "Validating summoners...");
+		LOGGER.log( "Validating summoners...");
 		Set<Integer> oldSummonerCharacterIDSet = new HashSet<Integer>(getAllSummonerIDs());
 		for (int characterID : oldSummonerCharacterIDSet) {
 			GBAFECharacterData character = charData.characterWithID(characterID);
@@ -192,7 +192,7 @@ public class FE8SummonerModule {
 					charClass == FE8Data.CharacterClass.NECROMANCER)) {
 				unregisterSummoner(characterID);
 				FE8Data.Character fe8Character = FE8Data.Character.valueOf(characterID);
-				DebugPrinter.log(DebugPrinter.Key.FE8_SUMMONER_MODULE, "Unregistered old summoner " + fe8Character.toString() + "...");		
+				LOGGER.log( "Unregistered old summoner " + fe8Character.toString() + "...");		
 			}
 		}
 		
@@ -203,7 +203,7 @@ public class FE8SummonerModule {
 					charClass == FE8Data.CharacterClass.NECROMANCER)) {
 				registerSummoner(character.getID(), rng);
 				FE8Data.Character fe8Character = FE8Data.Character.valueOf(character.getID());
-				DebugPrinter.log(DebugPrinter.Key.FE8_SUMMONER_MODULE, "Registering new summoner " + fe8Character.toString() + "...");
+				LOGGER.log( "Registering new summoner " + fe8Character.toString() + "...");
 			}
 		}
 	}
@@ -237,12 +237,12 @@ public class FE8SummonerModule {
 			compiler.addDiff(repointDiff2);
 			compiler.addDiff(repointDiff3);
 			
-			DebugPrinter.log(DebugPrinter.Key.FE8_SUMMONER_MODULE, "Repointing data to 0x" + Long.toHexString(newTableOffset) + "...");
+			LOGGER.log( "Repointing data to 0x" + Long.toHexString(newTableOffset) + "...");
 		} else {
 			// These all have original offsets, just write them in place.
 			for (SummonerEntry entry : entriesByCharacterID.values()) {
 				Diff newDiff = new Diff(entry.getAddressOffset(), entry.getData().length, entry.getData(), null);
-				DebugPrinter.log(DebugPrinter.Key.FE8_SUMMONER_MODULE, "Overwrite summoner data at offset 0x" + Long.toHexString(entry.getAddressOffset()));
+				LOGGER.log( "Overwrite summoner data at offset 0x" + Long.toHexString(entry.getAddressOffset()));
 				compiler.addDiff(newDiff);
 			}
 		}

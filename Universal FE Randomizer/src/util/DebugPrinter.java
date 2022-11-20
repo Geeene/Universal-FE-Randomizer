@@ -6,9 +6,8 @@ import java.util.Map;
 import org.eclipse.swt.widgets.Display;
 
 public class DebugPrinter {
-	
 	private static Map<String, DebugListener> listeners = new HashMap<String, DebugListener>();
-	
+	private final Key label;
 	public enum Key {
 		MAIN("Main"),
 		
@@ -31,41 +30,28 @@ public class DebugPrinter {
 		}
 	}
 	
-	public static void log(Key label, String output) {
-		if (shouldPrintLabel(label)) {
-			System.out.println("[" + label.label + "] " + output);
-		}
-		
-		Display.getDefault().asyncExec(new Runnable() {
-			@Override
-			public void run() {
-				for (DebugListener listener : listeners.values()) {
-					listener.logMessage(label.label, output);
-				}	
-			}
-		});
+	private DebugPrinter(Key label) {
+		this.label = label;
 	}
 	
-	public static void error(Key label, String output) {
-		System.err.println("[" + label.label + "] " + output);
+	public static DebugPrinter forKey(Key label) {
+		return new DebugPrinter(label);
+	}
+	
+	public void log(String output) {
+		DebugPrinterSingleton.get().log(this.label, output);
+	}
+	
+	public void error(String output) {
+		DebugPrinterSingleton.get().log(this.label, output);
 	}
 	
 	public static void registerListener(DebugListener listener, String key) {
-		listeners.put(key, listener);
-		listener.logMessage("DebugPrinter", "Registered Listener. Ready to send messages.");
+		DebugPrinterSingleton.get().registerListener(listener, key);
 	}
 	
 	public static void unregisterListener(String key) {
-		listeners.remove(key);
+		DebugPrinterSingleton.get().unregisterListener(key);
 	}
 	
-	private static Boolean shouldPrintLabel(Key label) {
-		switch (label) {
-//		case MAIN:
-//		case FE9_DATA_FILE_HANDLER_V2:
-//			return true;
-		default:
-			return false;
-		}
-	}
 }

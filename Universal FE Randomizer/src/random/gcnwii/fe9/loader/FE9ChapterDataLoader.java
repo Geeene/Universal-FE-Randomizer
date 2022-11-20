@@ -38,7 +38,7 @@ import util.recordkeeper.ChangelogTable;
 import util.recordkeeper.ChangelogText;
 
 public class FE9ChapterDataLoader {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_CHAPTER_LOADER);
 	List<FE9ChapterArmy> allChapterArmies;
 	Map<FE9Data.Chapter, List<FE9ChapterArmy>> armiesByChapter;
 	
@@ -122,39 +122,39 @@ public class FE9ChapterDataLoader {
 
 	public void debugPrintAllChapterArmies() {
 		for (FE9ChapterArmy army : allChapterArmies) {
-			DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "===== Printing Chapter Army: " + army.getID() + " ======");
+			LOGGER.log( "===== Printing Chapter Army: " + army.getID() + " ======");
 			for (String unitID : army.getAllUnitIDs()) {
 				FE9ChapterUnit unit = army.getUnitForUnitID(unitID);
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "--- Starting Character " + unitID + " ---");
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "PID: " + army.getPIDForUnit(unit));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "JID: " + army.getJIDForUnit(unit));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Weapon 1: " + army.getWeapon1ForUnit(unit) + (unit.willDropWeapon1() ? " (Drop)" : ""));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Weapon 2: " + army.getWeapon2ForUnit(unit) + (unit.willDropWeapon2() ? " (Drop)" : ""));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Weapon 3: " + army.getWeapon3ForUnit(unit) + (unit.willDropWeapon3() ? " (Drop)" : ""));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Weapon 4: " + army.getWeapon4ForUnit(unit) + (unit.willDropWeapon4() ? " (Drop)" : ""));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Item 1: " + army.getItem1ForUnit(unit) + (unit.willDropItem1() ? " (Drop)" : ""));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Item 2: " + army.getItem2ForUnit(unit) + (unit.willDropItem2() ? " (Drop)" : ""));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Item 3: " + army.getItem3ForUnit(unit) + (unit.willDropItem3() ? " (Drop)" : ""));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Item 4: " + army.getItem4ForUnit(unit) + (unit.willDropItem4() ? " (Drop)" : ""));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Skill 1: " + army.getSkill1ForUnit(unit));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Skill 2: " + army.getSkill2ForUnit(unit));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Skill 3: " + army.getSkill3ForUnit(unit));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Unknown Data (0x3C ~ 0x42): " + WhyDoesJavaNotHaveThese.displayStringForBytes(unit.getPostSkillData()));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "HP Adjustment: " + unit.getHPAdjustment());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "STR Adjustment: " + unit.getSTRAdjustment());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "MAG Adjustment: " + unit.getMAGAdjustment());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "SKL Adjustment: " + unit.getSKLAdjustment());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "SPD Adjustment: " + unit.getSPDAdjustment());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "LCK Adjustment: " + unit.getLCKAdjustment());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "DEF Adjustment: " + unit.getDEFAdjustment());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "RES Adjustment: " + unit.getRESAdjustment());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Unknown Data (0x4B ~ 0x5B): " + WhyDoesJavaNotHaveThese.displayStringForBytes(unit.getPostAdjustmentData()));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Starting Coordinates: (" + army.getStartingXForUnit(unit) + ", " + army.getStartingYForUnit(unit) + ")");
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Ending Coordinates: (" + army.getEndingXForUnit(unit) + ", " + army.getEndingYForUnit(unit) + ")");
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "Unknown Data (0x61 ~ 0x63): " + WhyDoesJavaNotHaveThese.displayStringForBytes(unit.getPreDropData()));
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "--- Ending Character " + unitID + " ---");
+				LOGGER.log( "--- Starting Character " + unitID + " ---");
+				LOGGER.log( "PID: " + army.getPIDForUnit(unit));
+				LOGGER.log( "JID: " + army.getJIDForUnit(unit));
+				LOGGER.log( "Weapon 1: " + army.getWeapon1ForUnit(unit) + (unit.willDropWeapon1() ? " (Drop)" : ""));
+				LOGGER.log( "Weapon 2: " + army.getWeapon2ForUnit(unit) + (unit.willDropWeapon2() ? " (Drop)" : ""));
+				LOGGER.log( "Weapon 3: " + army.getWeapon3ForUnit(unit) + (unit.willDropWeapon3() ? " (Drop)" : ""));
+				LOGGER.log( "Weapon 4: " + army.getWeapon4ForUnit(unit) + (unit.willDropWeapon4() ? " (Drop)" : ""));
+				LOGGER.log( "Item 1: " + army.getItem1ForUnit(unit) + (unit.willDropItem1() ? " (Drop)" : ""));
+				LOGGER.log( "Item 2: " + army.getItem2ForUnit(unit) + (unit.willDropItem2() ? " (Drop)" : ""));
+				LOGGER.log( "Item 3: " + army.getItem3ForUnit(unit) + (unit.willDropItem3() ? " (Drop)" : ""));
+				LOGGER.log( "Item 4: " + army.getItem4ForUnit(unit) + (unit.willDropItem4() ? " (Drop)" : ""));
+				LOGGER.log( "Skill 1: " + army.getSkill1ForUnit(unit));
+				LOGGER.log( "Skill 2: " + army.getSkill2ForUnit(unit));
+				LOGGER.log( "Skill 3: " + army.getSkill3ForUnit(unit));
+				LOGGER.log( "Unknown Data (0x3C ~ 0x42): " + WhyDoesJavaNotHaveThese.displayStringForBytes(unit.getPostSkillData()));
+				LOGGER.log( "HP Adjustment: " + unit.getHPAdjustment());
+				LOGGER.log( "STR Adjustment: " + unit.getSTRAdjustment());
+				LOGGER.log( "MAG Adjustment: " + unit.getMAGAdjustment());
+				LOGGER.log( "SKL Adjustment: " + unit.getSKLAdjustment());
+				LOGGER.log( "SPD Adjustment: " + unit.getSPDAdjustment());
+				LOGGER.log( "LCK Adjustment: " + unit.getLCKAdjustment());
+				LOGGER.log( "DEF Adjustment: " + unit.getDEFAdjustment());
+				LOGGER.log( "RES Adjustment: " + unit.getRESAdjustment());
+				LOGGER.log( "Unknown Data (0x4B ~ 0x5B): " + WhyDoesJavaNotHaveThese.displayStringForBytes(unit.getPostAdjustmentData()));
+				LOGGER.log( "Starting Coordinates: (" + army.getStartingXForUnit(unit) + ", " + army.getStartingYForUnit(unit) + ")");
+				LOGGER.log( "Ending Coordinates: (" + army.getEndingXForUnit(unit) + ", " + army.getEndingYForUnit(unit) + ")");
+				LOGGER.log( "Unknown Data (0x61 ~ 0x63): " + WhyDoesJavaNotHaveThese.displayStringForBytes(unit.getPreDropData()));
+				LOGGER.log( "--- Ending Character " + unitID + " ---");
 			}
-			DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_LOADER, "===== End Chapter Army: " + army.getID() + " =====");
+			LOGGER.log( "===== End Chapter Army: " + army.getID() + " =====");
 		}
 	}
 	

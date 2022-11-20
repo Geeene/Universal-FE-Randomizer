@@ -24,7 +24,7 @@ import util.Diff;
 import util.WhyDoesJavaNotHaveThese;
 
 public class FE9SkillDataLoader {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_SKILL_LOADER);
 	List<FE9Skill> allSkills;
 	
 	Map<String, FE9Skill> skillBySID;
@@ -58,35 +58,35 @@ public class FE9SkillDataLoader {
 	}
 
 	private void debugPrintSkill(FE9Skill skill, GCNFileHandler handler) {
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "===== Printing Skill =====");
+		LOGGER.log( "===== Printing Skill =====");
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "SID: " + getSID(skill));
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, 
+		LOGGER.log( "SID: " + getSID(skill));
+		LOGGER.log( 
 				"Unknown Pointer: 0x" + Long.toHexString(skill.getUnknownPointer()) + 
 				" (" + rawBytesStringForPointer(skill.getUnknownPointer(), handler) + ")");
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "MSID: " + stringForPointer(skill.getSkillNamePointer(), handler));
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Mess_Help: " + stringForPointer(skill.getHelpText1Pointer(), handler));
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Mess_Help2: " + stringForPointer(skill.getHelpText2Pointer(), handler));
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "EID: " + stringForPointer(skill.getEffectIDPointer(), handler));
+		LOGGER.log( "MSID: " + stringForPointer(skill.getSkillNamePointer(), handler));
+		LOGGER.log( "Mess_Help: " + stringForPointer(skill.getHelpText1Pointer(), handler));
+		LOGGER.log( "Mess_Help2: " + stringForPointer(skill.getHelpText2Pointer(), handler));
+		LOGGER.log( "EID: " + stringForPointer(skill.getEffectIDPointer(), handler));
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Skill Number?: " + skill.getSkillNumber());
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Unknown Value 1: " + skill.getUnknownValue1());
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Skill Cost: " + skill.getSkillCost());
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Unknown Value 2: " + skill.getUnknownValue2());
+		LOGGER.log( "Skill Number?: " + skill.getSkillNumber());
+		LOGGER.log( "Unknown Value 1: " + skill.getUnknownValue1());
+		LOGGER.log( "Skill Cost: " + skill.getSkillCost());
+		LOGGER.log( "Unknown Value 2: " + skill.getUnknownValue2());
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Number of Restrictions: " + skill.getRestrictionCount());
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Item granting skill: " + stringForPointer(pointerAtPointer(skill.getItemIDPointer(), handler), handler));
+		LOGGER.log( "Number of Restrictions: " + skill.getRestrictionCount());
+		LOGGER.log( "Item granting skill: " + stringForPointer(pointerAtPointer(skill.getItemIDPointer(), handler), handler));
 		if (skill.getRestrictionCount() > 0) {
 			List<String> restrictions = new ArrayList<String>();
 			for (int i = 0; i < skill.getRestrictionCount(); i++) {
 				restrictions.add(stringForPointer(pointerAtPointer(skill.getRestrictionPointer() + (i * 4), handler), handler));
 			}
-			DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Restrictions: " + String.join(", ", restrictions));
+			LOGGER.log( "Restrictions: " + String.join(", ", restrictions));
 		} else {
-			DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "Restrictions: None");
+			LOGGER.log( "Restrictions: None");
 		}
 		
-		DebugPrinter.log(DebugPrinter.Key.FE9_SKILL_LOADER, "===== End Printing Skill =====");
+		LOGGER.log( "===== End Printing Skill =====");
 	}
 	
 	public FE9Skill getSkillWithSID(String sid) {
@@ -218,7 +218,7 @@ public class FE9SkillDataLoader {
 	
 	public void compileDiffs(GCNISOHandler isoHandler) {
 		for (FE9Skill skill : allSkills) {
-			DebugPrinter.log(DebugPrinter.Key.FE9_CHARACTER_LOADER, "Writing skill: " + getSID(skill));
+			LOGGER.log( "Writing skill: " + getSID(skill));
 			skill.commitChanges();
 			if (skill.hasCommittedChanges()) {
 				GCNDataFileDataSection section = fe8databin.getSectionWithName(getSID(skill));

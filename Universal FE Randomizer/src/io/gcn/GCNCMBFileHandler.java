@@ -14,7 +14,7 @@ import util.DebugPrinter;
 import util.WhyDoesJavaNotHaveThese;
 
 public class GCNCMBFileHandler extends GCNFileHandler {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.FE9_CHAPTER_SCRIPT);
 	private Map<Long, String> stringsByAddress; // These are the exact locations in the file. When accessing, remember to offset by start of strings table.
 	private Map<String, Long> addressesByString;
 
@@ -84,35 +84,35 @@ public class GCNCMBFileHandler extends GCNFileHandler {
 			int next = (int)WhyDoesJavaNotHaveThese.longValueFromByteArray(nextHeaderOffset, true);
 			
 			while (next != 0) {
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "Loading script " + currentSceneIndex);
+				LOGGER.log( "Loading script " + currentSceneIndex);
 				FE9ScriptScene currentScene = new FE9ScriptScene(this, scriptTableOffset + (currentSceneIndex * 4));
 				scenes.add(currentScene);
 				
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tPointer Offset: 0x" + Integer.toHexString(currentScene.getPointerOffset()).toUpperCase());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tHeader Offset: 0x" + Integer.toHexString(currentScene.getSceneHeaderOffset()).toUpperCase());
+				LOGGER.log( "\tPointer Offset: 0x" + Integer.toHexString(currentScene.getPointerOffset()).toUpperCase());
+				LOGGER.log( "\tHeader Offset: 0x" + Integer.toHexString(currentScene.getSceneHeaderOffset()).toUpperCase());
 				
 				if (currentScene.getIdentifierOffset() == 0) {
-					DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tIdentifier Offset: 0x" + Integer.toHexString(currentScene.getIdentifierOffset()).toUpperCase());
+					LOGGER.log( "\tIdentifier Offset: 0x" + Integer.toHexString(currentScene.getIdentifierOffset()).toUpperCase());
 				} else {
-					DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tIdentifier offset: 0x" + Integer.toHexString(currentScene.getIdentifierOffset()).toUpperCase() + " (" + currentScene.getIdentifierName() + ")");
+					LOGGER.log( "\tIdentifier offset: 0x" + Integer.toHexString(currentScene.getIdentifierOffset()).toUpperCase() + " (" + currentScene.getIdentifierName() + ")");
 				}
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tScript Offset: 0x" + Integer.toHexString(currentScene.getScriptOffset()).toUpperCase());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tParent Offset: 0x" + Integer.toHexString(currentScene.getParentOffset()).toUpperCase());
+				LOGGER.log( "\tScript Offset: 0x" + Integer.toHexString(currentScene.getScriptOffset()).toUpperCase());
+				LOGGER.log( "\tParent Offset: 0x" + Integer.toHexString(currentScene.getParentOffset()).toUpperCase());
 				
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tScene Kind: 0x" + Integer.toHexString(currentScene.getSceneKind()).toUpperCase());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tNumber of Arguments: " + currentScene.getNumberOfArgs());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tNumber of Parameters: " + currentScene.getParameterCount());
+				LOGGER.log( "\tScene Kind: 0x" + Integer.toHexString(currentScene.getSceneKind()).toUpperCase());
+				LOGGER.log( "\tNumber of Arguments: " + currentScene.getNumberOfArgs());
+				LOGGER.log( "\tNumber of Parameters: " + currentScene.getParameterCount());
 				
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tScene Index: 0x" + Integer.toHexString(currentScene.getSceneIndex()).toUpperCase());
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tVariable Count: " + currentScene.getVarCount());
+				LOGGER.log( "\tScene Index: 0x" + Integer.toHexString(currentScene.getSceneIndex()).toUpperCase());
+				LOGGER.log( "\tVariable Count: " + currentScene.getVarCount());
 				
 				for (int i = 0; i < currentScene.getParams().length; i++) {
-					DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\t\tParameter: 0x" + Integer.toHexString(currentScene.getParams()[i]).toUpperCase());
+					LOGGER.log( "\t\tParameter: 0x" + Integer.toHexString(currentScene.getParams()[i]).toUpperCase());
 				}
 				
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tRaw script: " + WhyDoesJavaNotHaveThese.displayStringForBytes(currentScene.getScriptBytes()));
+				LOGGER.log( "\tRaw script: " + WhyDoesJavaNotHaveThese.displayStringForBytes(currentScene.getScriptBytes()));
 			
-				DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "\tDisassembled:\n" + String.join("", currentScene.getInstructions().stream().map( instruction -> {
+				LOGGER.log( "\tDisassembled:\n" + String.join("", currentScene.getInstructions().stream().map( instruction -> {
 					return instruction.displayString() + "\n";
 				}).collect(Collectors.toList())));
 				
@@ -121,7 +121,7 @@ public class GCNCMBFileHandler extends GCNFileHandler {
 				next = (int)WhyDoesJavaNotHaveThese.longValueFromByteArray(nextHeaderOffset, true);
 			}
 			
-			DebugPrinter.log(DebugPrinter.Key.FE9_CHAPTER_SCRIPT, "Finished loading scripts for " + getName());
+			LOGGER.log( "Finished loading scripts for " + getName());
 			
 		} else {
 			throw new GCNISOException("Invalid CMB file header.");

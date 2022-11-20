@@ -6,7 +6,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import fedata.general.FEBase.GameType;
 
 public class SeedGenerator {
-	
+	private static final DebugPrinter LOGGER = DebugPrinter.forKey(DebugPrinter.Key.RANDOM);
 	static String[] fe4Quotes = new String[] {
 			"Those Pegasus Knights won't pose a problem in the face of the Beige Ritter. Now watch 'em fall!",
 			"Hrmph. I can live with the strong and reliable part, but leave the slow bit out of it, ok?",
@@ -189,9 +189,9 @@ public class SeedGenerator {
 		
 		long counter = sb.toString().hashCode() + seedString.length() + seedSalt;
 		
-		DebugPrinter.log(DebugPrinter.Key.RANDOM, "Previewing Seed \"" + seedString + "\" with salt " + seedSalt);
+		LOGGER.log("Previewing Seed \"" + seedString + "\" with salt " + seedSalt);
 		Random rng = new Random(counter);
-		DebugPrinter.log(DebugPrinter.Key.RANDOM, "" + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + "" );
+		LOGGER.log( "" + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + ", " + rng.nextInt(100) + "" );
 		
 		return counter;
 	}

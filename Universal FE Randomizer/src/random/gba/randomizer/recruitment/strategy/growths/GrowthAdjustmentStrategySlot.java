@@ -6,6 +6,6 @@ import random.general.GBAStatDAO;
 public class GrowthAdjustmentStrategySlot implements GrowthAdjustmentStrategy{
     @Override
     public GBAStatDAO adjustGrowths(GBAFECharacterData slot, GBAFECharacterData fill) {
-        return new GBAStatDAO(slot);
+        return slot.getGrowths();
     }
 }

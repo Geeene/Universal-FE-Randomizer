@@ -10,6 +10,6 @@ import random.general.RelativeStatValueMapper;
 public class GrowthAdjustmentStrategyRelative implements GrowthAdjustmentStrategy{
     @Override
     public GBAStatDAO adjustGrowths(GBAFECharacterData slot, GBAFECharacterData fill) {
-        return RelativeStatValueMapper.mappedValues(slot.getAllGrowths(), fill.getAllGrowths());
+        return RelativeStatValueMapper.mappedValues(slot.getGrowths().getAll(), fill.getGrowths().getAll());
     }
 }

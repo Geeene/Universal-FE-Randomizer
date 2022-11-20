@@ -39,6 +39,7 @@ public class BasesView extends AbstractYuneView {
 
 		enableButton = createButton(container, SWT.CHECK, "Enable Bases Randomization", "Enable Bases Randomization",
 				true, false);
+		enableButton.addListener(SWT.Selection, event -> setEnableBases(enableButton.getSelection()));
 
 		/////////////////////////////////////////////////////////////
 

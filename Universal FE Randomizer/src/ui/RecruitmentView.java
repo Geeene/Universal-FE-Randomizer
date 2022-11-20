@@ -332,7 +332,7 @@ public class RecruitmentView extends AbstractYuneView {
 		}
 
 		if (isEnabled && basesMode != null && growthMode != null) {
-			return new RecruitmentOptions(growthMode, basesMode, autolevel, classMode, Arrays.asList(GameType.FE6),
+			return new RecruitmentOptions(growthMode, basesMode, autolevel, classMode,
 					lordsButton.getSelection(), createPrfsButton.getSelection(), unbreakablePrfsButton.getSelection(),
 					thievesButton.getSelection(), specialButton.getSelection(), crossGenderButton.getSelection(),
 					extras, seedEnableButton.getSelection(), recSeedField.getText());

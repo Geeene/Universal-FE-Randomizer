@@ -18,6 +18,7 @@ import fedata.gba.GBAFEWorldMapData;
 import fedata.gba.GBAFEWorldMapSpriteData;
 import fedata.gba.fe7.FE7Data;
 import fedata.gba.fe7.FE7SpellAnimationCollection;
+import fedata.gba.fe8.FE8Data;
 import fedata.gba.general.WeaponType;
 import fedata.general.FEBase;
 import fedata.general.FEBase.GameType;
@@ -28,8 +29,10 @@ import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.PaletteLoader;
+import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.TextLoader;
 import ui.model.BaseOptions;
+import ui.model.CharacterShufflingOptions;
 import ui.model.ClassOptions;
 import ui.model.EnemyOptions;
 import ui.model.GrowthOptions;
@@ -55,9 +58,10 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 	public FE7Randomizer(String sourcePath, String targetPath, GameType gameType, DiffCompiler diffs,
 			GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
-			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, String seed) {
+			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, 
+			CharacterShufflingOptions charShufflingOptions, String seed) {
 		super(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other, enemies, otherOptions,
-				recruit, itemAssign, seed, FE7Data.FriendlyName);
+				recruit, itemAssign, charShufflingOptions, seed, FE7Data.FriendlyName);
 	}
 
 	@Override
@@ -69,9 +73,13 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 		freeSpace = new FreeSpaceManager(FEBase.GameType.FE7, FE7Data.InternalFreeRange, sourceFileHandler);
 		updateStatusString("Loading Text...");
 		updateProgress(0.05);
-		textData = new TextLoader(FEBase.GameType.FE7, sourceFileHandler);
+		textData = new TextLoader(FEBase.GameType.FE7, FE7Data.textProvider, sourceFileHandler);
 		textData.allowTextChanges = true;
 
+		updateStatusString("Loading Portrait Data...");
+		updateProgress(0.07);
+		portraitData = new PortraitDataLoader(FE8Data.shufflingDataProvider, sourceFileHandler);
+		
 		updateStatusString("Loading Character Data...");
 		updateProgress(0.10);
 		charData = new CharacterDataLoader(FE7Data.characterProvider, sourceFileHandler);

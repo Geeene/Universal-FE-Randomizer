@@ -14,8 +14,6 @@ import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFEWorldMapSpriteData;
-import fedata.gba.fe6.FE6Data;
-import fedata.gba.fe7.FE7Data;
 import fedata.gba.general.GBAFEChapterMetadataChapter;
 import fedata.gba.general.GBAFEChapterMetadataData;
 import fedata.general.FEBase;
@@ -28,9 +26,12 @@ import random.gba.loader.CharacterDataLoader;
 import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.PaletteLoader;
+import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.TextLoader;
+import random.gba.randomizer.shuffling.CharacterShuffler;
 import random.general.Randomizer;
 import ui.model.BaseOptions;
+import ui.model.CharacterShufflingOptions;
 import ui.model.ClassOptions;
 import ui.model.EnemyOptions;
 import ui.model.EnemyOptions.BossStatMode;
@@ -41,7 +42,6 @@ import ui.model.OtherCharacterOptions;
 import ui.model.RecordableOption;
 import ui.model.RecruitmentOptions;
 import ui.model.WeaponOptions;
-import util.Diff;
 import util.DiffCompiler;
 import util.FreeSpaceManager;
 import util.SeedGenerator;
@@ -80,6 +80,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	protected MiscellaneousOptions miscOptions;
 	protected RecruitmentOptions recruitOptions;
 	protected ItemAssignmentOptions itemAssignmentOptions;
+	protected CharacterShufflingOptions charShufflingOptions;
 
 	// DATALOADERS
 	protected CharacterDataLoader charData;
@@ -88,6 +89,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	protected ItemDataLoader itemData;
 	protected PaletteLoader paletteData;
 	protected TextLoader textData;
+	protected PortraitDataLoader portraitData;
 
 	/**
 	 * Shared constructor
@@ -95,7 +97,8 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	public AbstractGBARandomizer(String sourcePath, String targetPath, FEBase.GameType gameType, DiffCompiler diffs,
 			GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
-			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, String seed, String friendlyName) {
+			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, CharacterShufflingOptions charShufflingOptions, 
+			String seed, String friendlyName) {
 		this.sourcePath = sourcePath;
 		this.targetPath = targetPath;
 		this.seedString = seed;
@@ -121,16 +124,17 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	public static AbstractGBARandomizer buildRandomizer(String sourcePath, String targetPath, FEBase.GameType gameType,
 			DiffCompiler diffs, GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
-			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, String seed) {
+			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, 
+			CharacterShufflingOptions charShufflingOptions, String seed) {
 		if (GameType.FE8.equals(gameType)) {
 			return new FE8Randomizer(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other,
-					enemies, otherOptions, recruit, itemAssign, seed);
+					enemies, otherOptions, recruit, itemAssign, charShufflingOptions, seed);
 		} else if (GameType.FE7.equals(gameType)) {
 			return new FE7Randomizer(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other,
-					enemies, otherOptions, recruit, itemAssign, seed);
+					enemies, otherOptions, recruit, itemAssign, charShufflingOptions, seed);
 		} else if (GameType.FE6.equals(gameType)) {
 			return new FE6Randomizer(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other,
-					enemies, otherOptions, recruit, itemAssign, seed);
+					enemies, otherOptions, recruit, itemAssign, charShufflingOptions, seed);
 		}
 
 		throw new RandomizationStoppedException(
@@ -436,6 +440,14 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			updateStatusString("Randomizing character affinity...");
 			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, CharacterRandomizer.rngSalt + 1));
 			CharacterRandomizer.randomizeAffinity(charData, rng);
+		}
+	}
+	
+	public void shuffleCharactersIfNecessary(String seed) {
+		if(charShufflingOptions != null && charShufflingOptions.isShuffleEnabled()) {
+			Random rng = new Random(SeedGenerator.generateSeedValue(seed, GrowthsRandomizer.rngSalt));
+			CharacterShuffler.shuffleCharacters(gameType, charData, textData, rng, sourceFileHandler, portraitData, freeSpace, 
+					chapterData, classData, charShufflingOptions, itemAssignmentOptions, itemData);
 		}
 	}
 

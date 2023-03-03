@@ -31,8 +31,10 @@ import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.PaletteLoader;
+import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.TextLoader;
 import ui.model.BaseOptions;
+import ui.model.CharacterShufflingOptions;
 import ui.model.ClassOptions;
 import ui.model.EnemyOptions;
 import ui.model.GrowthOptions;
@@ -54,9 +56,10 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 	public FE8Randomizer(String sourcePath, String targetPath, GameType gameType, DiffCompiler diffs,
 			GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
-			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign,			String seed) {
+			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, 
+			CharacterShufflingOptions charShufflingOptions, String seed) {
 		super(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other, enemies, otherOptions, recruit,
-				itemAssign, seed, FE8Data.FriendlyName);
+				itemAssign, charShufflingOptions, seed, FE8Data.FriendlyName);
 		
 	}
 	// FE8 only
@@ -75,12 +78,16 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 		freeSpace = new FreeSpaceManager(FEBase.GameType.FE8, FE8Data.InternalFreeRange, sourceFileHandler);
 		updateStatusString("Loading Text...");
 		updateProgress(0.04);
-		textData = new TextLoader(FEBase.GameType.FE8, sourceFileHandler);
+		textData = new TextLoader(FEBase.GameType.FE8, FE8Data.textProvider, sourceFileHandler);
 		textData.allowTextChanges = true;
 		
 		updateStatusString("Loading Promotion Data...");
 		updateProgress(0.06);
 		fe8_promotionManager = new FE8PromotionManager(sourceFileHandler);
+		
+		updateStatusString("Loading Portrait Data...");
+		updateProgress(0.07);
+		portraitData = new PortraitDataLoader(FE8Data.shufflingDataProvider, sourceFileHandler);
 		
 		updateStatusString("Loading Character Data...");
 		updateProgress(0.10);

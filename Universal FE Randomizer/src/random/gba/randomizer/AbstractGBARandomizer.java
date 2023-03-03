@@ -27,6 +27,7 @@ import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.PaletteLoader;
 import random.gba.loader.PortraitDataLoader;
+import random.gba.loader.StatboostLoader;
 import random.gba.loader.TextLoader;
 import random.gba.randomizer.shuffling.CharacterShuffler;
 import random.general.Randomizer;
@@ -41,6 +42,7 @@ import ui.model.MiscellaneousOptions;
 import ui.model.OtherCharacterOptions;
 import ui.model.RecordableOption;
 import ui.model.RecruitmentOptions;
+import ui.model.StatboosterOptions;
 import ui.model.WeaponOptions;
 import util.DiffCompiler;
 import util.FreeSpaceManager;
@@ -81,12 +83,14 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	protected RecruitmentOptions recruitOptions;
 	protected ItemAssignmentOptions itemAssignmentOptions;
 	protected CharacterShufflingOptions charShufflingOptions;
+	protected StatboosterOptions statboosterOptions;
 
 	// DATALOADERS
 	protected CharacterDataLoader charData;
 	protected ClassDataLoader classData;
 	protected ChapterLoader chapterData;
 	protected ItemDataLoader itemData;
+	protected StatboostLoader statboostData;
 	protected PaletteLoader paletteData;
 	protected TextLoader textData;
 	protected PortraitDataLoader portraitData;
@@ -97,7 +101,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	public AbstractGBARandomizer(String sourcePath, String targetPath, FEBase.GameType gameType, DiffCompiler diffs,
 			GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
-			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, CharacterShufflingOptions charShufflingOptions, 
+			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, CharacterShufflingOptions charShufflingOptions, StatboosterOptions statboosters, 
 			String seed, String friendlyName) {
 		this.sourcePath = sourcePath;
 		this.targetPath = targetPath;
@@ -125,16 +129,16 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			DiffCompiler diffs, GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
 			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, 
-			CharacterShufflingOptions charShufflingOptions, String seed) {
+			CharacterShufflingOptions charShufflingOptions, StatboosterOptions statboosterOptions, String seed) {
 		if (GameType.FE8.equals(gameType)) {
 			return new FE8Randomizer(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other,
-					enemies, otherOptions, recruit, itemAssign, charShufflingOptions, seed);
+					enemies, otherOptions, recruit, itemAssign, charShufflingOptions, statboosterOptions, seed);
 		} else if (GameType.FE7.equals(gameType)) {
 			return new FE7Randomizer(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other,
-					enemies, otherOptions, recruit, itemAssign, charShufflingOptions, seed);
+					enemies, otherOptions, recruit, itemAssign, charShufflingOptions, statboosterOptions, seed);
 		} else if (GameType.FE6.equals(gameType)) {
 			return new FE6Randomizer(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other,
-					enemies, otherOptions, recruit, itemAssign, charShufflingOptions, seed);
+					enemies, otherOptions, recruit, itemAssign, charShufflingOptions, statboosterOptions, seed);
 		}
 
 		throw new RandomizationStoppedException(
@@ -191,7 +195,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			sourceFileHandler = openFileAsHandler(sourcePath);
 
 			// (2) Run the dataloaders for the current game.
-			runRandomiztionStep("loading data", 1, () -> runDataloaders());
+			runRandomizationStep("loading data", 1, () -> runDataloaders());
 
 			// (3) Initialize the Record Keeper with the data from the original game
 			initializeRecordKeeper();
@@ -250,7 +254,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 * @param progress the number to update the progress to before running the step.
 	 * @param step     a runnable which is the randomization step to perform
 	 */
-	public void runRandomiztionStep(String stepDesc, int progress, Runnable step) {
+	public void runRandomizationStep(String stepDesc, int progress, Runnable step) {
 		try {
 			updateProgress(progress / 100d);
 			step.run();
@@ -328,13 +332,15 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 * Run all the Main Randomization steps
 	 */
 	public void executeRandomization() throws RandomizationStoppedException {
-		runRandomiztionStep("recruitment", 40, () -> randomizeRecruitmentIfNecessary());
-		runRandomiztionStep("classes", 45, () -> randomizeClassesIfNecessary());
-		runRandomiztionStep("bases", 50, () -> randomizeBasesIfNecessary());
-		runRandomiztionStep("weapons", 55, () -> randomizeWeaponsIfNecessary());
-		runRandomiztionStep("other character traits", 60, () -> randomizeOtherCharacterTraitsIfNecessary());
-		runRandomiztionStep("growths", 65, () -> randomizeGrowthsIfNecessary());
-		runRandomiztionStep("miscellaneous things", 70, () -> randomizeMiscellaneousThingsIfNecessary());
+		runRandomizationStep("shuffling characters", 39, () -> shuffleCharactersIfNecessary());
+		runRandomizationStep("recruitment", 40, () -> randomizeRecruitmentIfNecessary());
+		runRandomizationStep("classes", 45, () -> randomizeClassesIfNecessary());
+		runRandomizationStep("bases", 50, () -> randomizeBasesIfNecessary());
+		runRandomizationStep("weapons", 55, () -> randomizeWeaponsIfNecessary());
+		runRandomizationStep("statboosters", 57, () -> randomizeStatboostersIfNecessary());
+		runRandomizationStep("other character traits", 60, () -> randomizeOtherCharacterTraitsIfNecessary());
+		runRandomizationStep("growths", 65, () -> randomizeGrowthsIfNecessary());
+		runRandomizationStep("miscellaneous things", 70, () -> randomizeMiscellaneousThingsIfNecessary());
 	}
 
 	protected void randomizeRecruitmentIfNecessary() {
@@ -443,14 +449,6 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		}
 	}
 	
-	public void shuffleCharactersIfNecessary(String seed) {
-		if(charShufflingOptions != null && charShufflingOptions.isShuffleEnabled()) {
-			Random rng = new Random(SeedGenerator.generateSeedValue(seed, GrowthsRandomizer.rngSalt));
-			CharacterShuffler.shuffleCharacters(gameType, charData, textData, rng, sourceFileHandler, portraitData, freeSpace, 
-					chapterData, classData, charShufflingOptions, itemAssignmentOptions, itemData);
-		}
-	}
-
 	protected void randomizeMiscellaneousThingsIfNecessary() {
 		if (miscOptions == null) {
 			return;
@@ -489,7 +487,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			applySingleRN();
 		}
 	}
-
+	
 	protected void addRandomDrops() {
 		updateStatusString("Adding drops...");
 		Random rng = new Random(SeedGenerator.generateSeedValue(seedString, RandomRandomizer.rngSalt + 1));
@@ -567,6 +565,19 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			EnemyBuffer.improveBossWeapons(enemies.bossImprovementChance, charData, classData, chapterData, itemData,
 					rng);
 		}
+	}
+	
+	public void shuffleCharactersIfNecessary() {
+		if(charShufflingOptions != null && charShufflingOptions.isShuffleEnabled()) {
+			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, GrowthsRandomizer.rngSalt));
+			CharacterShuffler.shuffleCharacters(gameType, charData, textData, rng, sourceFileHandler, portraitData, freeSpace, 
+					chapterData, classData, charShufflingOptions, itemAssignmentOptions, itemData);
+		}
+	}
+	
+	protected void randomizeStatboostersIfNecessary() {
+		Random rng = new Random(SeedGenerator.generateSeedValue(seedString, StatboosterRandomizer.SALT));
+		StatboosterRandomizer.randomize(statboosterOptions, statboostData, rng);
 	}
 
 	// ------------------------------------------------------------------

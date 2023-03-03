@@ -26,6 +26,7 @@ import random.gba.loader.ItemDataLoader;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.PaletteLoader;
 import random.gba.loader.PortraitDataLoader;
+import random.gba.loader.StatboostLoader;
 import random.gba.loader.TextLoader;
 import ui.model.BaseOptions;
 import ui.model.CharacterShufflingOptions;
@@ -36,6 +37,7 @@ import ui.model.ItemAssignmentOptions;
 import ui.model.MiscellaneousOptions;
 import ui.model.OtherCharacterOptions;
 import ui.model.RecruitmentOptions;
+import ui.model.StatboosterOptions;
 import ui.model.WeaponOptions;
 import util.Diff;
 import util.DiffCompiler;
@@ -55,9 +57,9 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 			GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
 			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, 
-			CharacterShufflingOptions charShufflingOptions, String seed) {
+			CharacterShufflingOptions charShufflingOptions, StatboosterOptions statboosters, String seed) {
 		super(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other, enemies, otherOptions,
-				recruit, itemAssign, charShufflingOptions, seed, FE6Data.FriendlyName);
+				recruit, itemAssign, charShufflingOptions, statboosters, seed, FE6Data.FriendlyName);
 	}
 
 	@Override
@@ -90,6 +92,9 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 		updateStatusString("Loading Item Data...");
 		updateProgress(0.25);
 		itemData = new ItemDataLoader(FE6Data.itemProvider, sourceFileHandler, freeSpace);
+		updateStatusString("Loading Statboost Data...");
+		updateProgress(0.26);
+		statboostData = new StatboostLoader(FE6Data.statboostProvider, sourceFileHandler);
 		updateStatusString("Loading Palette Data...");
 		updateProgress(0.30);
 		paletteData = new PaletteLoader(FEBase.GameType.FE6, sourceFileHandler, charData, classData);

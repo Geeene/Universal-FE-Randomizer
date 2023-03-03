@@ -2,6 +2,7 @@ package ui.model;
 
 import fedata.general.FEBase.GameType;
 import util.recordkeeper.RecordKeeper;
+import java.util.List;
 
 public class RecruitmentOptions implements RecordableOption {
 	public enum GrowthAdjustmentMode {
@@ -31,6 +32,7 @@ public class RecruitmentOptions implements RecordableOption {
 	public final boolean includeSpecial;
 	
 	public final boolean includeExtras;
+	public List<String> gamesToShuffle;
 	
 	public RecruitmentOptions(GrowthAdjustmentMode growthMode, StatAdjustmentMode baseMode, BaseStatAutolevelType autolevel, ClassMode classMode, boolean lords, boolean prfs, boolean unbreakablePrfs, boolean thieves, boolean special, boolean crossGender, boolean includeExtras) {
 		super();

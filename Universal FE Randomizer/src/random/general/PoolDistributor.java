@@ -1,6 +1,8 @@
 package random.general;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -15,8 +17,8 @@ public class PoolDistributor<T> {
 		itemList = new ArrayList<T>();
 		itemSet = new HashSet<T>();
 	}
-	
-	public void addAll(T... items) {
+
+	public void addAll(Collection<T> items) {
 		for(T item : items) {
 			addItem(item, 1);
 		}

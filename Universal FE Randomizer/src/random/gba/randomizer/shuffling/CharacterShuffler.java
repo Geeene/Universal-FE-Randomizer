@@ -57,7 +57,7 @@ public class CharacterShuffler {
 	public static void shuffleCharacters(GameType type, CharacterDataLoader characterData, TextLoader textData, 
 			Random rng, FileHandler fileHandler, PortraitDataLoader portraitData, FreeSpaceManager freeSpace, ChapterLoader chapterData,
 			ClassDataLoader classData, CharacterShufflingOptions options, ItemAssignmentOptions inventoryOptions, ItemDataLoader itemData) {
-		// Don't include playable characters into the ones that could be replaced, 
+		// Don't include playable post game characters into the ones that could be replaced, 
 		// as most files probably won't be played enough to unlock those anyway.
 		List<GBAFECharacterData> characterPool = new ArrayList<GBAFECharacterData>(
 				characterData.canonicalPlayableCharacters(false));

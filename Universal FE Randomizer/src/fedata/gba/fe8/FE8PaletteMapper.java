@@ -13,6 +13,7 @@ import util.DiffCompiler;
 import util.FileReadHelper;
 import util.WhyDoesJavaNotHaveThese;
 import io.FileHandler;
+import random.gba.loader.PromotionDataLoader;
 
 // FE8 uses two auxiliary tables to map palettes based on class.
 // The first tells us which classes a character can be, and the second
@@ -205,9 +206,9 @@ public class FE8PaletteMapper {
 	private List<Integer> emptyPaletteIDs; // Can be used as long as the address is written after the pointer table.
 	private Map<Integer, List<Integer>> recycledPaletteIDsByLength; // Maps lengths to recycled paletteIDs of that length.
 	
-	private FE8PromotionManager promotionManager;
+	private PromotionDataLoader promotionManager;
 	
-	public FE8PaletteMapper(FileHandler handler, FE8PromotionManager promotionManager, List<Integer> emptyIDs) {
+	public FE8PaletteMapper(FileHandler handler, PromotionDataLoader promotionManager, List<Integer> emptyIDs) {
 		paletteClassMap = new HashMap<FE8Data.Character, ClassMapEntry>();
 		paletteIndexMap = new HashMap<FE8Data.Character, PaletteMapEntry>();
 		

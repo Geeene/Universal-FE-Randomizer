@@ -56,7 +56,6 @@ import random.general.RandomizerListener;
 import random.snes.fe4.randomizer.FE4Randomizer;
 import ui.fe4.FE4ClassesView;
 import ui.fe4.FE4EnemyBuffView;
-import ui.fe4.FE4PromotionView;
 import ui.fe4.HolyBloodView;
 import ui.fe4.SkillsView;
 import ui.fe9.FE9ClassesView;
@@ -128,7 +127,7 @@ public class MainView implements FileFlowDelegate {
 	private SkillsView skillsView;
 	private HolyBloodView holyBloodView;
 	private FE4ClassesView fe4ClassView;
-	private FE4PromotionView fe4PromotionView;
+	private PromotionView promotionView;
 	private FE4EnemyBuffView fe4EnemyBuffView;
 	
 	// FE9
@@ -425,7 +424,7 @@ public class MainView implements FileFlowDelegate {
 		if (skillsView != null) { skillsView.dispose(); }
 		if (holyBloodView != null) { holyBloodView.dispose(); }
 		if (fe4ClassView != null) { fe4ClassView.dispose(); }
-		if (fe4PromotionView != null) { fe4PromotionView.dispose(); }
+		if (promotionView != null) { promotionView.dispose(); }
 		if (fe4EnemyBuffView != null) { fe4EnemyBuffView.dispose(); }
 		
 		if (fe9SkillView != null) { fe9SkillView.dispose(); }
@@ -447,7 +446,7 @@ public class MainView implements FileFlowDelegate {
 			miscView.setMiscellaneousOptions(bundle.misc);
 			skillsView.setSkillOptions(bundle.skills);
 			fe4ClassView.setClassOptions(bundle.classes);
-			fe4PromotionView.setPromotionOptions(bundle.promo);
+			promotionView.setPromotionOptions(bundle.promo, type);
 			fe4EnemyBuffView.setBuffOptions(bundle.enemyBuff);
 		} else if (type.isGBA()) { 
 			GBAOptionBundle bundle = null;
@@ -466,6 +465,7 @@ public class MainView implements FileFlowDelegate {
 				characterShufflingView.setShufflingOptions(bundle.characterShufflingOptions, type);
 				itemAssignmentView.setItemAssignmentOptions(bundle.itemAssignmentOptions);
 				statboosterView.setGrowthOptions(bundle.statboosterOptions);
+				promotionView.setPromotionOptions(bundle.promo, type);
 			}
 		} else if (type == GameType.FE9 && OptionRecorder.options.fe9 != null) {
 			FE9OptionBundle bundle = OptionRecorder.options.fe9;
@@ -588,24 +588,24 @@ public class MainView implements FileFlowDelegate {
 			classData.bottom = new FormAttachment(100, -10);
 			fe4ClassView.setLayoutData(classData);
 			
-			fe4PromotionView = new FE4PromotionView(container, SWT.NONE);
-			fe4PromotionView.setSize(200, 200);
-			fe4PromotionView.setVisible(false);
+			promotionView = new PromotionView(container, SWT.NONE, type);
+			promotionView.setSize(200, 200);
+			promotionView.setVisible(false);
 			
 			FormData promoData = new FormData();
 			promoData.top = new FormAttachment(fe4ClassView, 0, SWT.TOP);
 			promoData.left = new FormAttachment(fe4ClassView, 5);
 			promoData.right = new FormAttachment(100, -5);
-			fe4PromotionView.setLayoutData(promoData);
+			promotionView.setLayoutData(promoData);
 			
 			fe4EnemyBuffView = new FE4EnemyBuffView(container, SWT.NONE);
 			fe4EnemyBuffView.setSize(200, 200);
 			fe4EnemyBuffView.setVisible(false);
 			
 			FormData buffData = new FormData();
-			buffData.top = new FormAttachment(fe4PromotionView, 5);
-			buffData.left = new FormAttachment(fe4PromotionView, 0, SWT.LEFT);
-			buffData.right = new FormAttachment(fe4PromotionView, 0, SWT.RIGHT);
+			buffData.top = new FormAttachment(promotionView, 5);
+			buffData.left = new FormAttachment(promotionView, 0, SWT.LEFT);
+			buffData.right = new FormAttachment(promotionView, 0, SWT.RIGHT);
 			fe4EnemyBuffView.setLayoutData(buffData);
 			
 			miscView = new MiscellaneousView(container, SWT.NONE, type);
@@ -767,6 +767,16 @@ public class MainView implements FileFlowDelegate {
 			itemAssignData.right = new FormAttachment(recruitView, 0, SWT.RIGHT);
 			itemAssignmentView.setLayoutData(itemAssignData);
 
+			promotionView = new PromotionView(container, SWT.NONE, type);
+			promotionView.setSize(200, 200);
+			promotionView.setVisible(false);
+			
+			FormData promoData = new FormData();
+			promoData.top = new FormAttachment(itemAssignmentView, 5);
+			promoData.left = new FormAttachment(itemAssignmentView, 0, SWT.LEFT);
+			promoData.right = new FormAttachment(itemAssignmentView, 0, SWT.RIGHT);
+			promotionView.setLayoutData(promoData);
+			
 			characterShufflingView = new CharacterShufflingView(container, SWT.NONE, type);
 			characterShufflingView.setSize(200, 200);
 			characterShufflingView.setVisible(false);
@@ -969,7 +979,7 @@ public class MainView implements FileFlowDelegate {
 			fe4ClassView.setVisible(true);
 			holyBloodView.setVisible(true);
 			skillsView.setVisible(true);
-			fe4PromotionView.setVisible(true);
+			promotionView.setVisible(true);
 			fe4EnemyBuffView.setVisible(true);
 			
 		} else if (type == GameType.FE9) {
@@ -987,6 +997,7 @@ public class MainView implements FileFlowDelegate {
 			itemAssignmentView.setVisible(true);
 			characterShufflingView.setVisible(true);
 			statboosterView.setVisible(true);
+			promotionView.setVisible(true);
 		}
 
 		
@@ -1067,6 +1078,7 @@ public class MainView implements FileFlowDelegate {
 								itemAssignmentView.getAssignmentOptions(),
 								characterShufflingView.getShufflingOptions(),
 								statboosterView.getStatboosterOptions(),
+								promotionView.getPromotionOptions(),
 								seedField.getText());
 						
 						OptionRecorder.recordGBAFEOptions(type, 
@@ -1081,6 +1093,7 @@ public class MainView implements FileFlowDelegate {
 								itemAssignmentView.getAssignmentOptions(),
 								characterShufflingView.getShufflingOptions(),
 								statboosterView.getStatboosterOptions(),
+								promotionView.getPromotionOptions(),
 								seedField.getText());
 					} else if (type.isSFC()) {
 						if (type == GameType.FE4) {
@@ -1091,7 +1104,7 @@ public class MainView implements FileFlowDelegate {
 									holyBloodView.getHolyBloodOptions(),
 									skillsView.getSkillOptions(),
 									fe4ClassView.getClassOptions(),
-									fe4PromotionView.getPromotionOptions(),
+									promotionView.getPromotionOptions(),
 									fe4EnemyBuffView.getBuffOptions(),
 									miscView.getMiscellaneousOptions(), 
 									seedField.getText());
@@ -1101,7 +1114,7 @@ public class MainView implements FileFlowDelegate {
 									holyBloodView.getHolyBloodOptions(),
 									skillsView.getSkillOptions(),
 									fe4ClassView.getClassOptions(),
-									fe4PromotionView.getPromotionOptions(),
+									promotionView.getPromotionOptions(),
 									fe4EnemyBuffView.getBuffOptions(),
 									miscView.getMiscellaneousOptions(), 
 									seedField.getText());

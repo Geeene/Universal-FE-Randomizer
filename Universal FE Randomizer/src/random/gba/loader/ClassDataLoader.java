@@ -114,6 +114,10 @@ public class ClassDataLoader {
 		return feClassesFromSet(provider.allValidClasses());
 	}
 	
+	public Map<Integer, GBAFEClassData> getClassMap(){
+		return this.classMap;
+	}
+	
 	public GBAFEClassData classForID(int classID) {
 		if (classMap.containsKey(classID)) {
 			return classMap.get(classID);

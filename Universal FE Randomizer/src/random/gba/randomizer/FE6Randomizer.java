@@ -36,6 +36,7 @@ import ui.model.GrowthOptions;
 import ui.model.ItemAssignmentOptions;
 import ui.model.MiscellaneousOptions;
 import ui.model.OtherCharacterOptions;
+import ui.model.PromotionOptions;
 import ui.model.RecruitmentOptions;
 import ui.model.StatboosterOptions;
 import ui.model.WeaponOptions;
@@ -57,9 +58,9 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 			GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
 			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, 
-			CharacterShufflingOptions charShufflingOptions, StatboosterOptions statboosters, String seed) {
+			CharacterShufflingOptions charShufflingOptions, StatboosterOptions statboosters, PromotionOptions promoOptions, String seed) {
 		super(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other, enemies, otherOptions,
-				recruit, itemAssign, charShufflingOptions, statboosters, seed, FE6Data.FriendlyName);
+				recruit, itemAssign, charShufflingOptions, statboosters, promoOptions, seed, FE6Data.FriendlyName);
 	}
 
 	@Override
@@ -340,6 +341,11 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 	protected void applySingleRN() {
 		diffCompiler.addDiff(new Diff(0xE6A, 4, new byte[] { (byte) 0xC0, (byte) 0x46, (byte) 0xC0, (byte) 0x46 },
 				new byte[] { (byte) 0xFF, (byte) 0xF7, (byte) 0xBB, (byte) 0xFF }));
+	}
+
+	@Override
+	protected void gameSpecificDiffCompilations() {
+		//N/A
 	}
 
 }

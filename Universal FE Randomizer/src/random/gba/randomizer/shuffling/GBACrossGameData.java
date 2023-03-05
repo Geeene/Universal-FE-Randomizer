@@ -379,6 +379,8 @@ public class GBACrossGameData {
 			return isFE7 ? FE7Data.CharacterClass.ARCHER_F : FE8Data.CharacterClass.ARCHER_F;
 		} else if (asList(FE6Data.CharacterClass.SHAMAN, FE6Data.CharacterClass.SHAMAN_F).contains(castedClass)) {
 			return isFE7 ? FE7Data.CharacterClass.SHAMAN : FE8Data.CharacterClass.SHAMAN;
+		} else if (asList(FE6Data.CharacterClass.DRUID, FE6Data.CharacterClass.DRUID_F).contains(castedClass)) {
+			return isFE7 ? FE7Data.CharacterClass.DRUID : FE8Data.CharacterClass.DRUID;
 		} else if (asList(FE6Data.CharacterClass.CLERIC).contains(castedClass)) {
 			return isFE7 ? FE7Data.CharacterClass.CLERIC : FE8Data.CharacterClass.CLERIC;
 		} else if (asList(FE6Data.CharacterClass.WYVERN_RIDER).contains(castedClass)) {

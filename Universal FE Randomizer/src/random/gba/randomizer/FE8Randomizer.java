@@ -18,7 +18,6 @@ import fedata.gba.GBAFEWorldMapData;
 import fedata.gba.GBAFEWorldMapSpriteData;
 import fedata.gba.fe8.FE8Data;
 import fedata.gba.fe8.FE8PaletteMapper;
-import fedata.gba.fe8.FE8PromotionManager;
 import fedata.gba.fe8.FE8SpellAnimationCollection;
 import fedata.gba.fe8.FE8SummonerModule;
 import fedata.gba.general.WeaponType;
@@ -32,6 +31,7 @@ import random.gba.loader.ItemDataLoader;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.PaletteLoader;
 import random.gba.loader.PortraitDataLoader;
+import random.gba.loader.PromotionDataLoader;
 import random.gba.loader.StatboostLoader;
 import random.gba.loader.TextLoader;
 import ui.model.BaseOptions;
@@ -42,6 +42,7 @@ import ui.model.GrowthOptions;
 import ui.model.ItemAssignmentOptions;
 import ui.model.MiscellaneousOptions;
 import ui.model.OtherCharacterOptions;
+import ui.model.PromotionOptions;
 import ui.model.RecruitmentOptions;
 import ui.model.StatboosterOptions;
 import ui.model.WeaponOptions;
@@ -53,20 +54,20 @@ import util.GBAImageCodec;
 import util.SeedGenerator;
 import util.WhyDoesJavaNotHaveThese;
 
-public class FE8Randomizer extends AbstractGBARandomizer {
 
+public class FE8Randomizer extends AbstractGBARandomizer {
 	public FE8Randomizer(String sourcePath, String targetPath, GameType gameType, DiffCompiler diffs,
 			GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
 			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
 			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, 
-			CharacterShufflingOptions charShufflingOptions, StatboosterOptions statboosters, String seed) {
+			CharacterShufflingOptions charShufflingOptions, StatboosterOptions statboosters, 
+			PromotionOptions promoOptions, String seed) {
 		super(sourcePath, targetPath, gameType, diffs, growths, bases, classes, weapons, other, enemies, otherOptions, recruit,
-				itemAssign, charShufflingOptions, statboosters, seed, FE8Data.FriendlyName);
+				itemAssign, charShufflingOptions, statboosters, promoOptions, seed, FE8Data.FriendlyName);
 		
 	}
 	// FE8 only
 	private FE8PaletteMapper fe8_paletteMapper;
-	private FE8PromotionManager fe8_promotionManager;
 	private FE8SummonerModule fe8_summonerModule;
 	private boolean fe8_walkingSoundFixApplied = false;
 	
@@ -85,7 +86,7 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 		
 		updateStatusString("Loading Promotion Data...");
 		updateProgress(0.06);
-		fe8_promotionManager = new FE8PromotionManager(sourceFileHandler);
+		promotionData = new PromotionDataLoader(sourceFileHandler);
 		
 		updateStatusString("Loading Portrait Data...");
 		updateProgress(0.07);
@@ -117,7 +118,7 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 		
 		updateStatusString("Loading Palette Mapper...");
 		updateProgress(0.40);
-		fe8_paletteMapper = paletteData.setupFE8SpecialManagers(sourceFileHandler, fe8_promotionManager);
+		fe8_paletteMapper = paletteData.setupFE8SpecialManagers(sourceFileHandler, promotionData);
 		
 		
 		sourceFileHandler.clearAppliedDiffs();		
@@ -156,40 +157,16 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 	}
 	
 	@Override
-	protected void compileDiffs() {
-		updateStatusString("Compiling changes...");
-		updateProgress(0.95);
-		charData.compileDiffs(diffCompiler);
-		chapterData.compileDiffs(diffCompiler);
-		classData.compileDiffs(diffCompiler, sourceFileHandler, freeSpace);
-		itemData.compileDiffs(diffCompiler, sourceFileHandler);
-		paletteData.compileDiffs(diffCompiler);
-		textData.commitChanges(freeSpace, diffCompiler);
-	
-		// FE8 Unique
-		fe8_paletteMapper.commitChanges(diffCompiler);
-		fe8_promotionManager.compileDiffs(diffCompiler);
-		
-		fe8_summonerModule.validateSummoners(charData, new Random(SeedGenerator.generateSeedValue(seedString, 0)));
-		fe8_summonerModule.commitChanges(diffCompiler, freeSpace);
-		// FE8 Unique
-		
-		freeSpace.commitChanges(diffCompiler);
-
-	}
-
-	
-	@Override
 	protected void applyPromotionFix() {
 		// FE8 stores this in a separate table.
 		for (GBAFEClassData charClass : classData.allClasses()) {
 			if (classData.isPromotedClass(charClass.getID())) {
-				int demotedID1 = fe8_promotionManager.getFirstPromotionOptionClassID(charClass.getID());
-				int demotedID2 = fe8_promotionManager.getSecondPromotionOptionClassID(charClass.getID());
+				int demotedID1 = promotionData.getFirstPromotionOptionClassID(charClass.getID());
+				int demotedID2 = promotionData.getSecondPromotionOptionClassID(charClass.getID());
 				if (demotedID1 == 0 && demotedID2 == 0) {
 					// If we have no promotions and we are a promoted class, then apply our fix.
 					// Promote into yourself if this happens.
-					fe8_promotionManager.setFirstPromotionOptionForClass(charClass.getID(), charClass.getID());
+					promotionData.setFirstPromotionOptionForClass(charClass.getID(), charClass.getID());
 				}
 			}
 		}
@@ -262,10 +239,10 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 		}
 		
 		// Update the promotions table, since they're technically "different" classes.
-		fe8_promotionManager.setFirstPromotionOptionForClass(newEirikaClass.getID(), fe8_promotionManager.getFirstPromotionOptionClassID(oldEirikaClass));
-		fe8_promotionManager.setSecondPromotionOptionForClass(newEirikaClass.getID(), fe8_promotionManager.getSecondPromotionOptionClassID(oldEirikaClass));
-		fe8_promotionManager.setFirstPromotionOptionForClass(newEphraimClass.getID(), fe8_promotionManager.getFirstPromotionOptionClassID(oldEphraimClass));
-		fe8_promotionManager.setSecondPromotionOptionForClass(newEphraimClass.getID(), fe8_promotionManager.getSecondPromotionOptionClassID(oldEphraimClass));
+		promotionData.setFirstPromotionOptionForClass(newEirikaClass.getID(), promotionData.getFirstPromotionOptionClassID(oldEirikaClass));
+		promotionData.setSecondPromotionOptionForClass(newEirikaClass.getID(), promotionData.getSecondPromotionOptionClassID(oldEirikaClass));
+		promotionData.setFirstPromotionOptionForClass(newEphraimClass.getID(), promotionData.getFirstPromotionOptionClassID(oldEphraimClass));
+		promotionData.setSecondPromotionOptionForClass(newEphraimClass.getID(), promotionData.getSecondPromotionOptionClassID(oldEphraimClass));
 		
 		// Palettes are also tied to class.
 		FE8PaletteMapper.ClassMapEntry eirikaPalette = fe8_paletteMapper.getEntryForCharacter(FE8Data.Character.EIRIKA);
@@ -573,6 +550,14 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 	protected void applySingleRN() {
 		diffCompiler.addDiff(new Diff(0xCC2, 4, new byte[] { (byte) 0xC0, (byte) 0x46, (byte) 0xC0, (byte) 0x46 },
 				new byte[] { (byte) 0xFF, (byte) 0xF7, (byte) 0xCF, (byte) 0xFF }));
+	}
+
+	@Override
+	protected void gameSpecificDiffCompilations() {
+		fe8_paletteMapper.commitChanges(diffCompiler);
+		fe8_summonerModule.validateSummoners(charData, new Random(SeedGenerator.generateSeedValue(seedString, 0)));
+		fe8_summonerModule.commitChanges(diffCompiler, freeSpace);
+		promotionData.compileDiffs(diffCompiler, sourceFileHandler);
 	}
 
 }

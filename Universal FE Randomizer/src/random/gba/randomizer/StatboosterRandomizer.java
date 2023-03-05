@@ -17,10 +17,6 @@ public class StatboosterRandomizer {
 	public static int SALT = 4831789;
 	
 	public static void randomize(StatboosterOptions options, StatboostLoader loader, Random rng) {
-		if (!options.enabled) {
-			return;
-		}
-
 		switch (options.mode) {
 		case SAME_STAT:
 			randomizeSameStat(options, loader, rng);

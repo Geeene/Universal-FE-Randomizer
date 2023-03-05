@@ -1,8 +1,9 @@
 package ui.model;
 
+import fedata.general.FEBase.GameType;
 import util.recordkeeper.RecordKeeper;
 
-public class StatboosterOptions {
+public class StatboosterOptions implements RecordableOption {
 	public enum StatboosterRandomizationModes {
 		SAME_STAT, SHUFFLE, MULTIPLE_STATS;
 	}
@@ -38,11 +39,8 @@ public class StatboosterOptions {
 		this.hpModifier = hpModifier;
 	}
 	
-	public void record(RecordKeeper rk) {
-		if(!enabled) {
-			rk.addHeaderItem("Statbooster Randomization", "NO");
-			return;
-		} 
+	@Override
+	public void record(RecordKeeper rk, GameType type) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Randomization Mode: ");
 		switch(mode) {

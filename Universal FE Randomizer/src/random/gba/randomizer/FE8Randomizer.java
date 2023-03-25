@@ -560,4 +560,9 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 		promotionData.compileDiffs(diffCompiler, sourceFileHandler);
 	}
 
+	@Override
+	protected void applyUpsPatches() {
+		// N/A
+	}
+
 }

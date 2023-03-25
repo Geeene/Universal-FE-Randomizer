@@ -1074,4 +1074,9 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 		//N/A
 	}
 
+	@Override
+	protected void applyUpsPatches() {
+		// N/A
+	}
+
 }

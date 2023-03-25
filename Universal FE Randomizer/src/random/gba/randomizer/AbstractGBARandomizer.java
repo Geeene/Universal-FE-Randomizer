@@ -192,9 +192,18 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	/**
 	 * Abstract Method.
 	 * 
-	 * The Implementation of this mode lets the subclass add more dataloader diff compilers before the free space is commited.
+	 * The Implementation of this method lets the subclass add more dataloader diff compilers before the free space is commited.
 	 */
 	protected abstract void gameSpecificDiffCompilations();
+	
+	
+	/**
+	 * Abstract Method.
+	 * 
+	 * The implementation of this method lets the subclass install 
+	 * UPS Patches before any data is loaded. Currently this is only used for the FE6 Translation patch. 
+	 */
+	protected abstract void applyUpsPatches();
 	
 	/**
 	 * The core method which executes the randomization.
@@ -204,36 +213,39 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			// (1) Create a File Handler for the Source File
 			sourceFileHandler = openFileAsHandler(sourcePath);
 
-			// (2) Run the dataloaders for the current game.
+			// (2) Apply necessary UPS Patches pre-dataloading 
+			applyUpsPatches();
+			
+			// (3) Run the dataloaders for the current game.
 			runRandomizationStep("loading data", 1, () -> runDataloaders());
 
-			// (3) Initialize the Record Keeper with the data from the original game
+			// (4) Initialize the Record Keeper with the data from the original game
 			initializeRecordKeeper();
 			recordOriginalState();
 
-			// (4) Apply some corrections needed before the Randomization.
+			// (5) Apply some corrections needed before the Randomization.
 			makePreliminaryAdjustments();
 
-			// (5) Execute the different Randomization Steps depending on the Options
+			// (6) Execute the different Randomization Steps depending on the Options
 			executeRandomization();
 
-			// (6) Apply various fixes based on the game that are necessary after the game
+			// (7) Apply various fixes based on the game that are necessary after the game
 			// is randomized.
 			makeFinalAdjustments();
 
-			// (7) Compile the diffs to they can be applied
+			// (8) Compile the diffs to they can be applied
 			compileDiffs();
 
-			// (8) Apply the diffs to the target file.
+			// (9) Apply the diffs to the target file.
 			applyDiffs();
 
-			// (9) cleanup the Source File Handler and potentially created Temporary files
+			// (10) cleanup the Source File Handler and potentially created Temporary files
 			cleanupSourceFiles();
 
-			// (10) Create a file Handler for the target File
+			// (11) Create a file Handler for the target File
 			targetFileHandler = openFileAsHandler(targetPath);
 
-			// (11) Record the State after randomization finished in the RecordKeeper.
+			// (12) Record the State after randomization finished in the RecordKeeper.
 			recordPostRandomizationState();
 
 			// Finished.

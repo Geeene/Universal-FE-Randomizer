@@ -537,8 +537,10 @@ public class ItemDataLoader {
 		return provider.rankWithValue(rankValue);
 	}
 	
-	public GBAFEItemData getRandomHealingStaff(WeaponRank maxRank, Random rng) {
-		Set<GBAFEItem> healingStaves = provider.healingStaves(maxRank);
+	public GBAFEItemData getRandomHealingStaff(int maxRankCharValue, int maxRankClassValue, Random rng) {
+		WeaponRank maxRankChar = rankForValue(maxRankCharValue);
+		WeaponRank maxRankClass = rankForValue(maxRankClassValue);
+		Set<GBAFEItem> healingStaves = provider.healingStaves(maxRankChar != WeaponRank.NONE ? maxRankChar : maxRankClass);
 		GBAFEItem[] staves = healingStaves.toArray(new GBAFEItem[healingStaves.size()]);
 		return itemMap.get(staves[rng.nextInt(staves.length)].getID());
 	}

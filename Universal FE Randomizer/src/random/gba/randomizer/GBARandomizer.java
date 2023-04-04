@@ -916,7 +916,7 @@ public class GBARandomizer extends Randomizer {
 					} else {
 						if (charData.isPlayableCharacterID(chapterUnit.getCharacterNumber())) {
 							GBAFECharacterData character = charData.characterWithID(chapterUnit.getCharacterNumber());
-							GBAFEItemData healingStaff = itemData.getRandomHealingStaff(itemData.rankForValue(character.getStaffRank()), rng);
+							GBAFEItemData healingStaff = itemData.getRandomHealingStaff(character.getStaffRank(), unitClass.getStaffRank(), rng);
 							if (healingStaff != null) {
 								chapterUnit.giveItem(healingStaff.getID());
 							}

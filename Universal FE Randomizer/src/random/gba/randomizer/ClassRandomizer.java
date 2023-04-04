@@ -1086,7 +1086,7 @@ public class ClassRandomizer {
 		}
 		
 		if (isHealerClass && !hasAtLeastOneHealingStaff) {
-			chapterUnit.giveItems(new int[] {itemData.getRandomHealingStaff(itemData.weaponRankFromValue(character.getStaffRank()), rng).getID()});
+			chapterUnit.giveItems(new int[] {itemData.getRandomHealingStaff(character.getStaffRank(), charClass.getStaffRank(), rng).getID()});
 		}
 		if (classCanAttack && !hasAtLeastOneWeapon) {
 			GBAFEItemData basicWeapon = itemData.getBasicWeaponForCharacter(character, ranged, true, rng);

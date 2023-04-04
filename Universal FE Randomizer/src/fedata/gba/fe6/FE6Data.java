@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
@@ -2483,7 +2484,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	
 	public Set<GBAFEItem> healingStaves(WeaponRank maxRank) {
 		Set<Item> staves = Item.allHealingStaves;
-		return new HashSet<GBAFEItem>(staves);
+		return staves.stream().filter(item -> item.getRank().equals(maxRank) || item.getRank().isLowerThan(maxRank)).collect(Collectors.toSet());
 	}
 	
 	public Set<GBAFEItem> prfWeaponsForClassID(int classID) {

@@ -6,17 +6,18 @@ import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
+import fedata.general.FEBase.GameType;
 
 public class FE8Class extends GBAFEClassData {
 	
 	public FE8Class(GBAFEClassData reference) {
-		super();
+		super(GameType.FE8);
 		this.originalData = Arrays.copyOf(reference.getData(), reference.getData().length);
 		this.data = Arrays.copyOf(reference.getData(), reference.getData().length);
 	}
 	
 	public FE8Class(byte[] data, long originalOffset) {
-		super();
+		super(GameType.FE8);
 		this.originalData = data;
 		this.data = data;
 		this.originalOffset = originalOffset;
@@ -62,7 +63,7 @@ public class FE8Class extends GBAFEClassData {
 		
 		if (rankValue == 0) { return WeaponRank.NONE; }
 		
-		return FE8Data.Item.FE8WeaponRank.valueOf(rankValue).toGeneralRank();
+		return WeaponRank.valueOf(rankValue);
 	}
 	
 	public GBAFEClassData createClone() {

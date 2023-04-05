@@ -68,7 +68,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return (data[0] & 0xFF) | ((data[1] & 0xFF) << 8);
 	}
 
-	public void setNameIndex(int newIndex) {
+	protected void setNameIndex(int newIndex) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[0] = (byte)(newIndex & 0xFF);
 		data[1] = (byte)((newIndex >> 8) & 0xFF);
@@ -79,7 +79,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return (data[2] & 0xFF) | ((data[3] & 0xFF) << 8);
 	}
 
-	public void setDescriptionIndex(int newIndex) {
+	protected void setDescriptionIndex(int newIndex) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[2] = (byte)(newIndex & 0xFF);
 		data[3] = (byte)((newIndex >> 8) & 0xFF);
@@ -90,7 +90,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[4] & 0xFF;
 	}
 
-	public void setID(int newID) {
+	protected void setID(int newID) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[4] = (byte)(newID & 0xFF);
 		wasModified = true;
@@ -100,7 +100,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[5] & 0xFF;
 	}
 
-	public void setClassID(int classID) {
+	protected void setClassID(int classID) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[5] = (byte)(classID & 0xFF);
 		wasModified = true;
@@ -110,7 +110,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[6] & 0xFF;
 	}
 
-	public void setFaceID(int faceID) {
+	protected void setFaceID(int faceID) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[6] = (byte)(faceID & 0xFF);
 		wasModified = true;
@@ -120,7 +120,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[11] & 0xFF;
 	}
 
-	public void setLevel(int level) {
+	protected void setLevel(int level) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[11] = (byte)(level & 0xFF);
 		wasModified = true;
@@ -130,7 +130,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[28] & 0xFF;
 	}
 
-	public void setHPGrowth(int hpGrowth) {
+	protected void setHPGrowth(int hpGrowth) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		hpGrowth = WhyDoesJavaNotHaveThese.clamp(hpGrowth, 0, 255);
 		data[28] = (byte)(hpGrowth & 0xFF);
@@ -141,7 +141,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[29] & 0xFF;
 	}
 
-	public void setSTRGrowth(int strGrowth) {
+	protected void setSTRGrowth(int strGrowth) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		strGrowth = WhyDoesJavaNotHaveThese.clamp(strGrowth, 0, 255);
 		data[29] = (byte)(strGrowth & 0xFF);
@@ -152,7 +152,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[30] & 0xFF;
 	}
 
-	public void setSKLGrowth(int sklGrowth) {
+	protected void setSKLGrowth(int sklGrowth) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		sklGrowth = WhyDoesJavaNotHaveThese.clamp(sklGrowth, 0, 255);
 		data[30] = (byte)(sklGrowth & 0xFF);
@@ -163,7 +163,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[31] & 0xFF;
 	}
 
-	public void setSPDGrowth(int spdGrowth) {
+	protected void setSPDGrowth(int spdGrowth) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		spdGrowth = WhyDoesJavaNotHaveThese.clamp(spdGrowth, 0, 255);
 		data[31] = (byte)(spdGrowth & 0xFF);
@@ -174,7 +174,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[32] & 0xFF;
 	}
 
-	public void setDEFGrowth(int defGrowth) {
+	protected void setDEFGrowth(int defGrowth) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		defGrowth = WhyDoesJavaNotHaveThese.clamp(defGrowth, 0, 255);
 		data[32] = (byte)(defGrowth & 0xFF);
@@ -185,7 +185,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[33] & 0xFF;
 	}
 
-	public void setRESGrowth(int resGrowth) {
+	protected void setRESGrowth(int resGrowth) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		resGrowth = WhyDoesJavaNotHaveThese.clamp(resGrowth, 0, 255);
 		data[33] = (byte)(resGrowth & 0xFF);
@@ -196,14 +196,14 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[34] & 0xFF;
 	}
 
-	public void setLCKGrowth(int lckGrowth) {
+	protected void setLCKGrowth(int lckGrowth) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		lckGrowth = WhyDoesJavaNotHaveThese.clamp(lckGrowth, 0, 255);
 		data[34] = (byte)(lckGrowth & 0xFF);
 		wasModified = true;
 	}
 	
-	public void setGrowths(GBAFEStatDto newGrowths) {
+	protected void setGrowths(GBAFEStatDto newGrowths) {
 		setHPGrowth(newGrowths.hp);
 		setSTRGrowth(newGrowths.str);
 		setSKLGrowth(newGrowths.skl);
@@ -227,7 +227,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return baseHP;
 	}
 
-	public void setBaseHP(int baseHP) {
+	protected void setBaseHP(int baseHP) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[12] = (byte)(baseHP & 0xFF);
 		wasModified = true;
@@ -242,7 +242,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return baseSTR;
 	}
 
-	public void setBaseSTR(int baseSTR) {
+	protected void setBaseSTR(int baseSTR) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[13] = (byte)(baseSTR & 0xFF);
 		wasModified = true;
@@ -257,7 +257,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return baseSKL;
 	}
 
-	public void setBaseSKL(int baseSKL) {
+	protected void setBaseSKL(int baseSKL) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[14] = (byte)(baseSKL & 0xFF);
 		wasModified = true;
@@ -272,7 +272,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return baseSPD;
 	}
 
-	public void setBaseSPD(int baseSPD) {
+	protected void setBaseSPD(int baseSPD) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[15] = (byte)(baseSPD & 0xFF);
 		wasModified = true;
@@ -287,7 +287,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return baseDEF;
 	}
 
-	public void setBaseDEF(int baseDEF) {
+	protected void setBaseDEF(int baseDEF) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[16] = (byte)(baseDEF & 0xFF);
 		wasModified = true;
@@ -302,7 +302,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return baseRES;
 	}
 
-	public void setBaseRES(int baseRES) {
+	protected void setBaseRES(int baseRES) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[17] = (byte)(baseRES & 0xFF);
 		wasModified = true;
@@ -317,13 +317,13 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return baseLCK;
 	}
 
-	public void setBaseLCK(int baseLCK) {
+	protected void setBaseLCK(int baseLCK) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[18] = (byte)(baseLCK & 0xFF);
 		wasModified = true;
 	}
 	
-	public void setBases(GBAFEStatDto newBases) {
+	protected void setBases(GBAFEStatDto newBases) {
 		setBaseHP(newBases.hp);
 		setBaseSTR(newBases.str);
 		setBaseSKL(newBases.skl);
@@ -341,7 +341,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[20] & 0xFF;
 	}
 
-	public void setSwordRank(int rank) {
+	protected void setSwordRank(int rank) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[20] = (byte)(rank & 0xFF);
 		wasModified = true;
@@ -351,7 +351,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[21] & 0xFF;
 	}
 
-	public void setLanceRank(int rank) {
+	protected void setLanceRank(int rank) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[21] = (byte)(rank & 0xFF);
 		wasModified = true;
@@ -361,7 +361,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[22] & 0xFF;
 	}
 
-	public void setAxeRank(int rank) {
+	protected void setAxeRank(int rank) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[22] = (byte)(rank & 0xFF);
 		wasModified = true;
@@ -371,7 +371,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[23] & 0xFF;
 	}
 
-	public void setBowRank(int rank) {
+	protected void setBowRank(int rank) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[23] = (byte)(rank & 0xFF);
 		wasModified = true;
@@ -381,7 +381,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[25] & 0xFF;
 	}
 
-	public void setAnimaRank(int rank) {
+	protected void setAnimaRank(int rank) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[25] = (byte)(rank & 0xFF);
 		wasModified = true;
@@ -391,7 +391,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[27] & 0xFF;
 	}
 
-	public void setDarkRank(int rank) {
+	protected void setDarkRank(int rank) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[27] = (byte)(rank & 0xFF);
 		wasModified = true;
@@ -401,7 +401,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[26] & 0xFF;
 	}
 
-	public void setLightRank(int rank) {
+	protected void setLightRank(int rank) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[26] = (byte)(rank & 0xFF);
 		wasModified = true;
@@ -411,14 +411,25 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[24] & 0xFF;
 	}
 
-	public void setStaffRank(int rank) {
+	protected void setStaffRank(int rank) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[24] = (byte)(rank & 0xFF);
 		wasModified = true;
 	}
 	
-	public List<Integer> getAllWeaponRanks(){
-		return Arrays.asList(getSwordRank(), getLanceRank(), getAxeRank(), getBowRank(), getStaffRank(), getAnimaRank(), getLightRank(), getDarkRank());
+	public GBAFEWeaponRankDto getWeaponRanks(){
+		return new GBAFEWeaponRankDto(gameType, getSwordRank(), getLanceRank(), getAxeRank(), getBowRank(), getStaffRank(), getAnimaRank(), getLightRank(), getDarkRank());
+	}
+	
+	protected void setWeaponRanks(GBAFEWeaponRankDto newRanks) {
+		setSwordRank(newRanks.sword.rankValue(gameType));
+		setLanceRank(newRanks.lance.rankValue(gameType));
+		setAxeRank(newRanks.axe.rankValue(gameType));
+		setBowRank(newRanks.bow.rankValue(gameType));
+		setStaffRank(newRanks.staff.rankValue(gameType));
+		setAnimaRank(newRanks.anima.rankValue(gameType));
+		setLightRank(newRanks.light.rankValue(gameType));
+		setDarkRank(newRanks.dark.rankValue(gameType));
 	}
 
 	public int getConstitution() {
@@ -430,7 +441,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return constitution;
 	}
 
-	public void setConstitution(int newCON) {
+	protected void setConstitution(int newCON) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[19] = (byte)(newCON & 0xFF);
 		wasModified = true;
@@ -440,7 +451,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[9] & 0xFF;
 	}
 
-	public void setAffinityValue(int newAffinity) {
+	protected void setAffinityValue(int newAffinity) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[9] = (byte)(newAffinity & 0xFF);
 		wasModified = true;
@@ -454,7 +465,7 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[35] & 0xFF;
 	}
 
-	public void setUnpromotedPaletteIndex(int newIndex) {
+	protected void setUnpromotedPaletteIndex(int newIndex) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[35] = (byte)(newIndex & 0xFF);
 		wasModified = true;
@@ -464,13 +475,13 @@ public abstract class GBAFECharacterData extends AbstractGBAData implements FELo
 		return data[36] & 0xFF;
 	}
 
-	public void setPromotedPaletteIndex(int newIndex) {
+	protected void setPromotedPaletteIndex(int newIndex) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		data[36] = (byte)(newIndex & 0xFF);
 		wasModified = true;
 	}
 
-	public void setIsLord(boolean isLord) {
+	protected void setIsLord(boolean isLord) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		byte oldValue = (byte)(data[41] & 0xFF);
 		byte newValue = isLord ? (byte)(oldValue | 0x20) : (byte)(oldValue & 0xDF);

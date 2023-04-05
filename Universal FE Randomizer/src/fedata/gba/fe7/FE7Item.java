@@ -10,15 +10,14 @@ import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFESpellAnimationCollection;
 import fedata.gba.fe7.FE7Data.Item.Ability1Mask;
 import fedata.gba.fe7.FE7Data.Item.Ability2Mask;
-import fedata.gba.fe7.FE7Data.Item.FE7WeaponRank;
 import fedata.gba.fe7.FE7Data.Item.FE7WeaponType;
 import fedata.gba.general.WeaponEffects;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
 import random.gba.loader.ItemDataLoader;
+import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.TextLoader;
 import random.general.WeightedDistributor;
-import random.gba.loader.ItemDataLoader.AdditionalData;
 import ui.model.MinMaxOption;
 import util.ByteArrayBuilder;
 import util.DebugPrinter;
@@ -208,9 +207,9 @@ public class FE7Item implements GBAFEItemData {
 
 	public WeaponRank getWeaponRank() {
 		int rank = data[28] & 0xFF;
-		FE7WeaponRank weaponRank = FE7Data.Item.FE7WeaponRank.valueOf(rank);
+		WeaponRank weaponRank = WeaponRank.valueOf(rank);
 		if (weaponRank != null) {
-			return weaponRank.toGeneralRank();
+			return weaponRank;
 		} else {
 			FE7Data.Item weapon = FE7Data.Item.valueOf(getID());
 			if (weapon != null && FE7Data.Item.allPrfRank.contains(weapon)) {
@@ -635,7 +634,7 @@ public class FE7Item implements GBAFEItemData {
 		newItem.data[25] = (byte)((minRange << 4) | (maxRange));
 		newItem.data[26] = 0; 
 		newItem.data[27] = 0; // Cost per use. Not useful since it's not sellable.
-		newItem.data[28] = (byte)(FE7Data.Item.FE7WeaponRank.E.value & 0xFF); // Since we're re-using weapon locks, this needs to be set.
+		newItem.data[28] = (byte)(WeaponRank.E.fe78RankValue & 0xFF); // Since we're re-using weapon locks, this needs to be set.
 		newItem.data[29] = (byte)iconIndex;
 		// Staff use effect should be 0. We don't deal with staves.
 		newItem.data[30] = 0;

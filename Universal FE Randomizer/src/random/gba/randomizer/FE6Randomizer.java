@@ -10,9 +10,11 @@ import fedata.gba.GBAFEChapterData;
 import fedata.gba.GBAFEChapterUnitData;
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.fe6.FE6Data;
 import fedata.gba.fe6.FE6SpellAnimationCollection;
+import fedata.gba.fe8.FE8Data;
 import fedata.gba.general.WeaponType;
 import fedata.general.FEBase;
 import fedata.general.FEBase.GameType;
@@ -24,6 +26,7 @@ import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.PaletteLoader;
+import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.TextLoader;
 import ui.model.BaseOptions;
 import ui.model.CharacterShufflingOptions;
@@ -86,6 +89,10 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 		paletteData = new PaletteLoader(FEBase.GameType.FE6, sourceFileHandler, charData, classData);
 		updateStatusString("Loading Statboost Data...");
 
+		updateProgress(0.32);
+		portraitData = new PortraitDataLoader(FE6Data.shufflingDataProvider, sourceFileHandler);
+		updateStatusString("Loading Potrait Data...");
+		
 		sourceFileHandler.clearAppliedDiffs();
 	}
 
@@ -152,13 +159,13 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 
 	@Override
 	protected void createSpecialLordClasses() {
-		GBAFECharacterData roy = charData.characterWithID(FE6Data.Character.ROY.ID);
+		GBAFEHolisticCharacter roy = holisticCharacterMap.get(FE6Data.Character.ROY.ID);
 
 		int oldRoyClassID = roy.getClassID();
 
 		GBAFEClassData newRoyClass = classData.createLordClassBasedOnClass(classData.classForID(oldRoyClassID));
 
-		roy.setClassID(newRoyClass.getID());
+		roy.changeClass(newRoyClass);
 
 		// Add his new class to any effectiveness tables.
 		List<AdditionalData> effectivenesses = itemData.effectivenessArraysForClassID(oldRoyClassID);
@@ -330,7 +337,7 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 	protected void gameSpecificDiffCompilations() {
 		//N/A
 	}
-	
+
 	@Override
 	protected void applyUpsPatches() {
 		applyEnglishPatch();

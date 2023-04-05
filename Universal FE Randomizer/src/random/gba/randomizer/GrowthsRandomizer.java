@@ -3,12 +3,22 @@ package random.gba.randomizer;
 import java.util.Random;
 
 import fedata.gba.GBAFECharacterData;
+import fedata.gba.GBAFEHolisticCharacter;
+import fedata.gba.GBAFEStatDto;
 import random.gba.loader.CharacterDataLoader;
-import util.WhyDoesJavaNotHaveThese;
 
 public class GrowthsRandomizer {
 	
 	static final int rngSalt = 124;
+	
+	private static int nextMultiplier(Random rng) {
+		int randomNum = rng.nextInt(2);
+		if (randomNum == 0) {
+			return 1;
+		}
+		
+		return -1;
+	}
 	
 	public static void randomizeGrowthsByRedistribution(int variance, int min, int max, boolean adjustHP, CharacterDataLoader charactersData, Random rng) {
 		GBAFECharacterData[] allPlayableCharacters = charactersData.playableCharacters();
@@ -19,110 +29,74 @@ public class GrowthsRandomizer {
 		charactersData.commit();
 		
 		for (GBAFECharacterData character : allPlayableCharacters) {
+			GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character.getID());
+			int growthTotal = holisticCharacter.getGrowths().getStatTotal();
+			growthTotal += rng.nextInt(variance + 1) * nextMultiplier(rng);
 			
-			// Do not modify anything that was already modified.
-			// This is here because some characters are linked (for example, FE7 Lyn has two variants: Tutorial and Not Tutorial).
-			// If we generate growths for one, we apply it to all linked characters at the end of this loop.
-			if (character.wasModified()) {
-				continue;
-			}
-			
-			int growthTotal = character.getHPGrowth() + character.getSTRGrowth() + character.getSKLGrowth() + character.getSPDGrowth() + 
-					character.getLCKGrowth() + character.getDEFGrowth() + character.getRESGrowth();
-			
-			int randomNum = rng.nextInt(2);
-			if (randomNum == 0) {
-				growthTotal += rng.nextInt(variance + 1);
-			} else {
-				growthTotal -= rng.nextInt(variance + 1);
-			}
-			
-			int newHPGrowth = min;
-			int newSTRGrowth = min;
-			int newSKLGrowth = min;
-			int newSPDGrowth = min;
-			int newLCKGrowth = min;
-			int newDEFGrowth = min;
-			int newRESGrowth = min;
+			GBAFEStatDto newGrowths = new GBAFEStatDto(min, min, min, min, min, min, min);
 			
 			growthTotal -= (min * 7);
-		
-			int availableGrowthRemaining = (max - newHPGrowth) + (max - newSTRGrowth) + (max - newSKLGrowth) +
-					(max - newSPDGrowth) + (max - newLCKGrowth) + (max - newDEFGrowth) + (max - newRESGrowth);
 			
-			if (availableGrowthRemaining > growthTotal) {
+			int maximumAvailableGrowthsRemaining = (max - min) * 7;
+			
+			if (maximumAvailableGrowthsRemaining > growthTotal) {
 				while (growthTotal > 0) {
-					randomNum = rng.nextInt(adjustHP ? 10 : 8);
+					int randomNum = rng.nextInt(adjustHP ? 10 : 8);
 					int amount = Math.min(5,  growthTotal);
 					int increaseAmount = 0;
 					switch (randomNum) {
 					case 0:
 					case 1:
-						increaseAmount = Math.min(amount, max - newHPGrowth);
+						increaseAmount = Math.min(amount, max - newGrowths.hp);
 						growthTotal -= increaseAmount;
-						newHPGrowth += increaseAmount;
+						newGrowths.hp += increaseAmount;
 						break;
 					case 2:
-						increaseAmount = Math.min(amount, max - newSTRGrowth);
+						increaseAmount = Math.min(amount, max - newGrowths.str);
 						growthTotal -= increaseAmount;
-						newSTRGrowth += increaseAmount;
+						newGrowths.str += increaseAmount;
 						break;
 					case 3:
-						increaseAmount = Math.min(amount, max - newSKLGrowth);
+						increaseAmount = Math.min(amount, max - newGrowths.skl);
 						growthTotal -= increaseAmount;
-						newSKLGrowth += increaseAmount;
+						newGrowths.skl += increaseAmount;
 						break;
 					case 4:
-						increaseAmount = Math.min(amount, max - newSPDGrowth);
+						increaseAmount = Math.min(amount, max - newGrowths.spd);
 						growthTotal -= increaseAmount;
-						newSPDGrowth += increaseAmount;
+						newGrowths.spd += increaseAmount;
 						break;
 					case 5:
-						increaseAmount = Math.min(amount, max - newLCKGrowth);
+						increaseAmount = Math.min(amount, max - newGrowths.lck);
 						growthTotal -= increaseAmount;
-						newLCKGrowth += increaseAmount;
+						newGrowths.lck += increaseAmount;
 						break;
 					case 6: 
-						increaseAmount = Math.min(amount, max - newDEFGrowth);
+						increaseAmount = Math.min(amount, max - newGrowths.def);
 						growthTotal -= increaseAmount;
-						newDEFGrowth += increaseAmount;
+						newGrowths.def += increaseAmount;
 						break;
 					case 7:
-						increaseAmount = Math.min(amount, max - newDEFGrowth);
+						increaseAmount = Math.min(amount, max - newGrowths.res);
 						growthTotal -= increaseAmount;
-						newRESGrowth += increaseAmount;
+						newGrowths.res += increaseAmount;
 						break;
 					default:
-						increaseAmount = Math.min(amount, max - newHPGrowth);
+						increaseAmount = Math.min(amount, max - newGrowths.hp);
 						growthTotal -= increaseAmount;
-						newHPGrowth += increaseAmount;
+						newGrowths.hp += increaseAmount;
 						break;
 					}
 				}
 			} else {
 				// We can't satisfy the max constraints.
 				// Just max out everything.
-				newHPGrowth = max;
-				newSTRGrowth = max;
-				newSKLGrowth = max;
-				newSPDGrowth = max;
-				newLCKGrowth = max;
-				newDEFGrowth = max;
-				newRESGrowth = max;
+				newGrowths = new GBAFEStatDto(max, max, max, max, max, max, max);
 			}
 			
-			for (GBAFECharacterData thisCharacter : charactersData.linkedCharactersForCharacter(character)) {
-				thisCharacter.setHPGrowth(newHPGrowth);
-				thisCharacter.setSTRGrowth(newSTRGrowth);
-				thisCharacter.setSKLGrowth(newSKLGrowth);
-				thisCharacter.setSPDGrowth(newSPDGrowth);
-				thisCharacter.setLCKGrowth(newLCKGrowth);
-				thisCharacter.setDEFGrowth(newDEFGrowth);
-				thisCharacter.setRESGrowth(newRESGrowth);
-			}
+			holisticCharacter.setGrowths(newGrowths);
 		}
 		
-		charactersData.commit();
 	}
 	
 	public static void randomizeGrowthsByRandomDelta(int maxDelta, int min, int max, boolean adjustHP, CharacterDataLoader charactersData, Random rng) {
@@ -131,74 +105,23 @@ public class GrowthsRandomizer {
 		charactersData.commit();
 		
 		for (GBAFECharacterData character : allPlayableCharacters) {
+			GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character.getID());
 			
-			if (character.wasModified()) {
-				continue;
-			}
+			GBAFEStatDto growths = holisticCharacter.getGrowths();
+			GBAFEStatDto minGrowths = new GBAFEStatDto(min, min, min, min, min, min, min);
+			GBAFEStatDto maxGrowths = new GBAFEStatDto(max, max, max, max, max, max, max);
 			
-			int newHPGrowth = character.getHPGrowth();
-			int newSTRGrowth = character.getSTRGrowth();
-			int newSKLGrowth = character.getSKLGrowth();
-			int newSPDGrowth = character.getSPDGrowth();
-			int newLCKGrowth = character.getLCKGrowth();
-			int newDEFGrowth = character.getDEFGrowth();
-			int newRESGrowth = character.getRESGrowth();
+			growths.hp += nextMultiplier(rng) * rng.nextInt(maxDelta+1);
+			growths.str += nextMultiplier(rng) * rng.nextInt(maxDelta+1);
+			growths.skl += nextMultiplier(rng) * rng.nextInt(maxDelta+1);
+			growths.spd += nextMultiplier(rng) * rng.nextInt(maxDelta+1);
+			growths.def += nextMultiplier(rng) * rng.nextInt(maxDelta+1);
+			growths.res += nextMultiplier(rng) * rng.nextInt(maxDelta+1);
+			growths.lck += nextMultiplier(rng) * rng.nextInt(maxDelta+1);
 			
-			int randomNum = rng.nextInt(2);
-			if ((randomNum == 0 && newHPGrowth < max) || adjustHP) {
-				newHPGrowth += rng.nextInt(Math.min(maxDelta + 1, max - newHPGrowth + 1));
-			} else if (newHPGrowth > min) {
-				newHPGrowth -= rng.nextInt(Math.min(maxDelta + 1, newHPGrowth - min + 1));
-			}
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0 && newSTRGrowth < max) {
-				newSTRGrowth += rng.nextInt(Math.min(maxDelta + 1, max - newSTRGrowth + 1));
-			} else if (newSTRGrowth > min) {
-				newSTRGrowth -= rng.nextInt(Math.min(maxDelta + 1, newSTRGrowth - min + 1));
-			}
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0 && newSKLGrowth < max) {
-				newSKLGrowth += rng.nextInt(Math.min(maxDelta + 1, max - newSKLGrowth + 1));
-			} else if (newSKLGrowth > min) {
-				newSKLGrowth -= rng.nextInt(Math.min(maxDelta + 1, newSKLGrowth - min + 1));
-			}
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0 && newSPDGrowth < max) {
-				newSPDGrowth += rng.nextInt(Math.min(maxDelta + 1, max - newSPDGrowth + 1));
-			} else if (newSPDGrowth > min) {
-				newSPDGrowth -= rng.nextInt(Math.min(maxDelta + 1, newSPDGrowth - min + 1));
-			}
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0 && newLCKGrowth < max) {
-				newLCKGrowth += rng.nextInt(Math.min(maxDelta + 1, max - newLCKGrowth + 1));
-			} else if (newLCKGrowth > min) {
-				newLCKGrowth -= rng.nextInt(Math.min(maxDelta + 1, newLCKGrowth - min + 1));
-			}
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0 && newDEFGrowth < max) {
-				newDEFGrowth += rng.nextInt(Math.min(maxDelta + 1, max - newDEFGrowth + 1));
-			} else if (newDEFGrowth > min) {
-				newDEFGrowth -= rng.nextInt(Math.min(maxDelta + 1, newDEFGrowth - min + 1));
-			}
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0 && newRESGrowth < max) {
-				newRESGrowth += rng.nextInt(Math.min(maxDelta + 1, max - newRESGrowth + 1));
-			} else if (newRESGrowth > min) {
-				newRESGrowth -= rng.nextInt(Math.min(maxDelta + 1, newRESGrowth - min + 1));
-			}
-			
-			for (GBAFECharacterData thisCharacter : charactersData.linkedCharactersForCharacter(character)) {
-				thisCharacter.setHPGrowth(WhyDoesJavaNotHaveThese.clamp(newHPGrowth, min, max));
-				thisCharacter.setSTRGrowth(WhyDoesJavaNotHaveThese.clamp(newSTRGrowth, min, max));
-				thisCharacter.setSKLGrowth(WhyDoesJavaNotHaveThese.clamp(newSKLGrowth, min, max));
-				thisCharacter.setSPDGrowth(WhyDoesJavaNotHaveThese.clamp(newSPDGrowth, min, max));
-				thisCharacter.setLCKGrowth(WhyDoesJavaNotHaveThese.clamp(newLCKGrowth, min, max));
-				thisCharacter.setDEFGrowth(WhyDoesJavaNotHaveThese.clamp(newDEFGrowth, min, max));
-				thisCharacter.setRESGrowth(WhyDoesJavaNotHaveThese.clamp(newRESGrowth, min, max));
-			}
+			growths.clamp(minGrowths, maxGrowths);
+			holisticCharacter.setGrowths(maxGrowths);
 		}
-		
-		charactersData.commit();
 	}
 	
 	public static void fullyRandomizeGrowthsWithRange(int minGrowth, int maxGrowth, boolean adjustHP, CharacterDataLoader charactersData, Random rng) {
@@ -207,44 +130,31 @@ public class GrowthsRandomizer {
 		charactersData.commit();
 		
 		for (GBAFECharacterData character : allPlayableCharacters) {
-			
-			if (character.wasModified()) {
-				continue;
-			}
-			
+			GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character.getID());
 			int range = maxGrowth - minGrowth + 1;
 			
-			int newHPGrowth = rng.nextInt(range) + minGrowth;
-			int newSTRGrowth = rng.nextInt(range) + minGrowth;
-			int newSKLGrowth = rng.nextInt(range) + minGrowth;
-			int newSPDGrowth = rng.nextInt(range) + minGrowth;
-			int newLCKGrowth = rng.nextInt(range) + minGrowth;
-			int newDEFGrowth = rng.nextInt(range) + minGrowth;
-			int newRESGrowth = rng.nextInt(range) + minGrowth;
+			GBAFEStatDto newGrowths = new GBAFEStatDto();
+			newGrowths.hp = rng.nextInt(range) + minGrowth;
+			newGrowths.str = rng.nextInt(range) + minGrowth;
+			newGrowths.skl = rng.nextInt(range) + minGrowth;
+			newGrowths.spd = rng.nextInt(range) + minGrowth;
+			newGrowths.def = rng.nextInt(range) + minGrowth;
+			newGrowths.res = rng.nextInt(range) + minGrowth;
+			newGrowths.lck = rng.nextInt(range) + minGrowth;
 			
 			if (adjustHP) {
 				int threshold = range / 2 + minGrowth;
-				if (newHPGrowth < threshold) {
-					if (newHPGrowth + range / 2 <= maxGrowth) {
-						newHPGrowth += range / 2;
+				if (newGrowths.hp < threshold) {
+					if (newGrowths.hp + range / 2 <= maxGrowth) {
+						newGrowths.hp += range / 2;
 					} else {
-						newHPGrowth = maxGrowth;
+						newGrowths.hp = maxGrowth;
 					}
 				}
 			}
 			
-			for (GBAFECharacterData thisCharacter : charactersData.linkedCharactersForCharacter(character)) {
-				thisCharacter.setHPGrowth(newHPGrowth);
-				thisCharacter.setSTRGrowth(newSTRGrowth);
-				thisCharacter.setSKLGrowth(newSKLGrowth);
-				thisCharacter.setSPDGrowth(newSPDGrowth);
-				thisCharacter.setLCKGrowth(newLCKGrowth);
-				thisCharacter.setDEFGrowth(newDEFGrowth);
-				thisCharacter.setRESGrowth(newRESGrowth);
-			}
+			holisticCharacter.setGrowths(newGrowths);
 		}
-		
-		charactersData.commit();
 	}
 
 }

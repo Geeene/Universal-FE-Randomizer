@@ -16,6 +16,7 @@ import fedata.gba.GBAFEChapterItemData;
 import fedata.gba.GBAFEChapterUnitData;
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFEStatDto;
 import fedata.gba.GBAFEWorldMapData;
@@ -418,34 +419,35 @@ public class RecruitmentRandomizer {
 		
 		GBAFECharacterData[] linkedSlots = characterData.linkedCharactersForCharacter(slotReference);
 		
+		// First, replace the description, and face
+		// The name is unnecessary because there's a text find/replace that we apply later.
+		GBAFEHolisticCharacter holisticFill = AbstractGBARandomizer.holisticCharacterMap.get(fill.getID());
+		GBAFEHolisticCharacter holisticSlot = AbstractGBARandomizer.holisticCharacterMap.get(slotReference.getID());
+		holisticSlot.setDescriptionIndex(fill.getDescriptionIndex());
+		holisticSlot.setFaceId(fill.getFaceID());
+		holisticSlot.setLord(characterData.isLordCharacterID(slotReference.getID()));
+		holisticSlot.setCon(holisticFill.getCon());
+		holisticSlot.setAffinity(fill.getAffinityValue());
+		
 		for (GBAFECharacterData linkedSlot : linkedSlots) {
 			// Do not modify if they happen to have a different class.
 			if (linkedSlot.getClassID() != slotReference.getClassID()) { continue; }
 			
-			// First, replace the description, and face
-			// The name is unnecessary because there's a text find/replace that we apply later.
-			linkedSlot.setDescriptionIndex(fill.getDescriptionIndex());
-			linkedSlot.setFaceID(fill.getFaceID());
-			
-			linkedSlot.setIsLord(characterData.isLordCharacterID(slotReference.getID()));
-			
+			GBAFEHolisticCharacter holisticLinkedSLot = AbstractGBARandomizer.holisticCharacterMap.get(linkedSlot.getID());
 			int targetLevel = linkedSlot.getLevel();
 			int sourceLevel = fill.getLevel();
 			
 			DebugPrinter.log(DebugPrinter.Key.GBA_RANDOM_RECRUITMENT, "Slot level: " + Integer.toString(targetLevel) + "\tFill Level: " + Integer.toString(sourceLevel));
 			
 			List<GBAFEStatDto> promoBonuses = new ArrayList<>();
-
-			
-			
 			ClassAdjustmentDto adjustmentDAO = GBASlotAdjustmentService.handleClassAdjustment(targetLevel, sourceLevel, shouldBePromoted, 
-					isPromoted, rng, classData, targetClass, fillSourceClass, fill, slotSourceClass, 
+					isPromoted, rng, classData, targetClass, fillSourceClass, holisticFill, slotSourceClass, 
 					options, textData, DebugPrinter.Key.GBA_RANDOM_RECRUITMENT);
 			targetClass = adjustmentDAO.targetClass;
 			int levelsToAdd = adjustmentDAO.levelAdjustment;
 			promoBonuses =  adjustmentDAO.promoBonuses;
 			
-			setSlotClass(inventoryOptions, linkedSlot, targetClass, characterData, classData, itemData, textData, chapterData, rng);
+			setSlotClass(inventoryOptions, holisticLinkedSLot, targetClass, characterData, classData, itemData, textData, chapterData, rng);
 			
 			GBAFEStatDto targetGrowths;
 			switch(options.growthMode) {
@@ -475,8 +477,7 @@ public class RecruitmentRandomizer {
 				DebugPrinter.log(DebugPrinter.Key.GBA_RANDOM_RECRUITMENT, String.format("== New Bases ==%n%s", newStats.toString()));
 			} else if (options.baseMode == StatAdjustmentMode.MATCH_SLOT) {
 				newStats.add(linkedSlot.getBases()) // Add the original Bases of the slot
-					    .add(targetClass.getBases()) // Add the stats from the new class
-					    .subtract(slotSourceClass.getBases()); // remove the stats from the original class
+					    .add(targetClass.getBases()); // Add the stats from the new class
 			} else if (options.baseMode == StatAdjustmentMode.RELATIVE_TO_SLOT) {
 				newStats = new GBAFEStatDto();
 				newStats.hp = linkedSlot.getBaseHP() + slotSourceClass.getBaseHP() - targetClass.getBaseHP(); // Keep HP the same logic as above.
@@ -500,139 +501,12 @@ public class RecruitmentRandomizer {
 			} else {
 				assert false : "Invalid stat adjustment mode for random recruitment.";
 			}
-			linkedSlot.setBases(newStats);
-			
-			// Transfer growths.
-			linkedSlot.setGrowths(targetGrowths);
-			
-			linkedSlot.setConstitution(fill.getConstitution());
-			linkedSlot.setAffinityValue(fill.getAffinityValue());
+			holisticLinkedSLot.setStats(newStats);
 		}
 	}
 	
-	private static void transferWeaponRanks(GBAFECharacterData target, GBAFEClassData sourceClass, GBAFEClassData targetClass, ItemDataLoader itemData, Random rng) {
-		
-		Map<WeaponType, Integer> rankMap = new HashMap<WeaponType, Integer>();
-		
-		rankMap.put(WeaponType.SWORD, sourceClass.getSwordRank());
-		rankMap.put(WeaponType.LANCE, sourceClass.getLanceRank());
-		rankMap.put(WeaponType.AXE, sourceClass.getAxeRank());
-		rankMap.put(WeaponType.BOW, sourceClass.getBowRank());
-		rankMap.put(WeaponType.ANIMA, sourceClass.getAnimaRank());
-		rankMap.put(WeaponType.LIGHT, sourceClass.getLightRank());
-		rankMap.put(WeaponType.DARK, sourceClass.getDarkRank());
-		rankMap.put(WeaponType.STAFF, sourceClass.getStaffRank());
-		
-		rankMap.put(WeaponType.SWORD, target.getSwordRank());
-		rankMap.put(WeaponType.LANCE, target.getLanceRank());
-		rankMap.put(WeaponType.AXE, target.getAxeRank());
-		rankMap.put(WeaponType.BOW, target.getBowRank());
-		rankMap.put(WeaponType.ANIMA, target.getAnimaRank());
-		rankMap.put(WeaponType.LIGHT, target.getLightRank());
-		rankMap.put(WeaponType.DARK, target.getDarkRank());
-		rankMap.put(WeaponType.STAFF, target.getStaffRank());
-		
-		List<Integer> rankValues = new ArrayList<Integer>(rankMap.values().stream().filter(rankValue -> (rankValue != 0)).sorted(new Comparator<Integer>() {
-			@Override
-			public int compare(Integer o1, Integer o2) {
-				return Integer.compare(o1, o2);
-			}
-		}).collect(Collectors.toList()));
-		
-		if (rankValues.isEmpty()) {
-			target.setSwordRank(targetClass.getSwordRank());
-			target.setLanceRank(targetClass.getLanceRank());
-			target.setAxeRank(targetClass.getAxeRank());
-			target.setBowRank(targetClass.getBowRank());
-			target.setAnimaRank(targetClass.getAnimaRank());
-			target.setLightRank(targetClass.getLightRank());
-			target.setDarkRank(targetClass.getDarkRank());
-			target.setStaffRank(targetClass.getStaffRank());
-		
-			return;
-		}
-		
-		int targetWeaponUsage = 0;
-		if (targetClass.getSwordRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getLanceRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getAxeRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getBowRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getLightRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getDarkRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getAnimaRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getStaffRank() > 0) { targetWeaponUsage++; }
-		
-		while (rankValues.size() > targetWeaponUsage) {
-			rankValues.remove(0); // Remove the lowest rank if we're filling less weapons than we have to work with.
-		}
-		
-		if (targetClass.getSwordRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setSwordRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setSwordRank(0); }
-		if (targetClass.getLanceRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setLanceRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setLanceRank(0); }
-		if (targetClass.getAxeRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setAxeRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setAxeRank(0); }
-		if (targetClass.getBowRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setBowRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setBowRank(0); }
-		if (targetClass.getAnimaRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setAnimaRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setAnimaRank(0); }
-		if (targetClass.getLightRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setLightRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setLightRank(0); }
-		if (targetClass.getDarkRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			if (itemData.weaponRankFromValue(randomRankValue) == WeaponRank.E) {
-				// Dark magic floors on D. There's no E rank dark magic.
-				randomRankValue = itemData.weaponRankValueForRank(WeaponRank.D);
-			}
-			target.setDarkRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setDarkRank(0); }
-		if (targetClass.getStaffRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setStaffRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setStaffRank(0); }
-	}
-	
-	private static void setSlotClass(ItemAssignmentOptions inventoryOptions, GBAFECharacterData slot, GBAFEClassData targetClass, CharacterDataLoader characterData, ClassDataLoader classData, ItemDataLoader itemData, TextLoader textData, ChapterLoader chapterData, Random rng) {
-		int oldClassID = slot.getClassID();
-		GBAFEClassData originalClass = classData.classForID(oldClassID);
-		slot.setClassID(targetClass.getID());
-		transferWeaponRanks(slot, originalClass, targetClass, itemData, rng);
+	private static void setSlotClass(ItemAssignmentOptions inventoryOptions, GBAFEHolisticCharacter slot, GBAFEClassData targetClass, CharacterDataLoader characterData, ClassDataLoader classData, ItemDataLoader itemData, TextLoader textData, ChapterLoader chapterData, Random rng) {
+		slot.changeClass(targetClass);
 		ItemAssignmentService.assignNewItems(characterData, slot, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
 	}
 }

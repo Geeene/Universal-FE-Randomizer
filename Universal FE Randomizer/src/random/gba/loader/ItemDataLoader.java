@@ -13,8 +13,10 @@ import java.util.stream.Collectors;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFESpellAnimationCollection;
+import fedata.gba.GBAFEWeaponRankDto;
 import fedata.gba.general.GBAFEClass;
 import fedata.gba.general.GBAFEItem;
 import fedata.gba.general.GBAFEItemProvider;
@@ -344,11 +346,11 @@ public class ItemDataLoader {
 	}
 	
 	public WeaponRank rankForValue(int value) {
-		return provider.rankWithValue(value);
+		return WeaponRank.valueOf(value);
 	}
 	
 	public WeaponRanks ranksForCharacter(GBAFECharacterData character, GBAFEClassData charClass) {
-		return new WeaponRanks(character, charClass, provider);
+		return new WeaponRanks(character, charClass);
 	}
 	
 	public WeaponRanks ranksForClass(GBAFEClassData charClass) {
@@ -466,7 +468,7 @@ public class ItemDataLoader {
 	}
 	
 	public GBAFEItemData[] itemsOfTypeAndBelowRankValue(WeaponType type, int rankValue, Boolean rangedOnly, Boolean requiresMelee) {
-		return itemsOfTypeAndBelowRank(type, provider.rankWithValue(rankValue), rangedOnly, requiresMelee);
+		return itemsOfTypeAndBelowRank(type, WeaponRank.valueOf(rankValue), rangedOnly, requiresMelee);
 	}
 	
 	public GBAFEItemData[] itemsOfTypeAndBelowRank(WeaponType type, WeaponRank rank, Boolean rangedOnly, Boolean requiresMelee) {
@@ -474,7 +476,7 @@ public class ItemDataLoader {
 	}
 	
 	public GBAFEItemData[] itemsOfTypeAndEqualRankValue(WeaponType type, int rankValue, Boolean rangedOnly, Boolean requiresMelee, Boolean allowLower) {
-		return itemsOfTypeAndEqualRank(type, provider.rankWithValue(rankValue), rangedOnly, requiresMelee, allowLower);
+		return itemsOfTypeAndEqualRank(type, WeaponRank.valueOf(rankValue), rangedOnly, requiresMelee, allowLower);
 	}
 	
 	public int weaponRankValueForRank(WeaponRank rank) {
@@ -534,7 +536,7 @@ public class ItemDataLoader {
 	}
 	
 	public WeaponRank weaponRankFromValue(int rankValue) {
-		return provider.rankWithValue(rankValue);
+		return WeaponRank.valueOf(rankValue);
 	}
 	
 	public GBAFEItemData getRandomHealingStaff(WeaponRank maxRank, Random rng) {
@@ -557,7 +559,7 @@ public class ItemDataLoader {
 			return null;
 		}
 		
-		Set<GBAFEItem> potentialItems = provider.comparableWeaponsForClass(targetClass.getID(), new WeaponRanks(targetClass, provider), originalWeapon, strict);
+		Set<GBAFEItem> potentialItems = provider.comparableWeaponsForClass(targetClass.getID(), targetClass.getWeaponRanks(), originalWeapon, strict);
 		if (!includePromo) {
 			potentialItems.removeAll(provider.promoWeapons());
 		}
@@ -585,12 +587,12 @@ public class ItemDataLoader {
 		return itemMap.get(itemList.get(rng.nextInt(itemList.size())).getID());
 	}
 	
-	public GBAFEItemData getSidegradeWeapon(GBAFECharacterData character, GBAFEClassData charClass, GBAFEItemData originalWeapon, boolean isEnemy, boolean strict, boolean includePromo, boolean includePoison, Random rng) {
+	public GBAFEItemData getSidegradeWeapon(GBAFEHolisticCharacter character, GBAFEClassData charClass, GBAFEItemData originalWeapon, boolean isEnemy, boolean strict, boolean includePromo, boolean includePoison, Random rng) {
 		if (!isWeapon(originalWeapon) && originalWeapon.getType() != WeaponType.STAFF) {
 			return null;
 		}
 		
-		Set<GBAFEItem> potentialItems = provider.comparableWeaponsForClass(character.getClassID(), new WeaponRanks(character, charClass, provider), originalWeapon, strict);
+		Set<GBAFEItem> potentialItems = provider.comparableWeaponsForClass(character.getClassID(), character.getWeaponRanks(), originalWeapon, strict);
 		if (!includePromo) {
 			potentialItems.removeAll(provider.promoWeapons());
 		}
@@ -628,7 +630,7 @@ public class ItemDataLoader {
 		return item != null ? itemWithID(item.getID()) : null;
 	}
 	
-	public GBAFEItemData getRandomWeaponForCharacter(GBAFECharacterData character, Boolean ranged, Boolean melee, boolean isEnemy, boolean includePromo, boolean includePoison, Random rng) {
+	public GBAFEItemData getRandomWeaponForCharacter(GBAFEHolisticCharacter character, Boolean ranged, Boolean melee, boolean isEnemy, boolean includePromo, boolean includePoison, Random rng) {
 		GBAFEItemData[] potentialItems = usableWeaponsForCharacter(character, ranged, melee, isEnemy, includePromo, includePoison);
 		if (potentialItems == null || potentialItems.length < 1) {
 			// Check class specific weapons (e.g. FE8 monsters)
@@ -647,17 +649,16 @@ public class ItemDataLoader {
 		return potentialItems[index];
 	}
 	
-	private GBAFEItemData[] usableWeaponsForCharacter(GBAFECharacterData character, Boolean ranged, Boolean melee, boolean isEnemy, boolean includePromo, boolean includePoison) {
+	private GBAFEItemData[] usableWeaponsForCharacter(GBAFEHolisticCharacter character, Boolean ranged, Boolean melee, boolean isEnemy, boolean includePromo, boolean includePoison) {
 		ArrayList<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
-		
-		if (character.getSwordRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.SWORD, character.getSwordRank(), ranged, melee))); }
-		if (character.getLanceRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.LANCE, character.getLanceRank(), ranged, melee))); }
-		if (character.getAxeRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.AXE, character.getAxeRank(), ranged, melee))); }
-		if (character.getBowRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.BOW, character.getBowRank(), ranged, melee))); }
-		if (character.getAnimaRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.ANIMA, character.getAnimaRank(), ranged, melee))); }
-		if (character.getLightRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.LIGHT, character.getLightRank(), ranged, melee))); }
-		if (character.getDarkRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.DARK, character.getDarkRank(), ranged, melee))); }
-		if (character.getStaffRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.STAFF, character.getStaffRank(), ranged, melee))); }
+
+		GBAFEWeaponRankDto ranks = character.getWeaponRanks();
+		for (WeaponType weaponType : WeaponType.values()) {
+			WeaponRank rankForType = ranks.rankForType(weaponType);
+			if (rankForType != WeaponRank.NONE) {
+				items.addAll(Arrays.asList(itemsOfTypeAndBelowRank(weaponType, rankForType, ranged, melee)));
+			}
+		}
 		
 		Set<GBAFEItem> prfs = provider.prfWeaponsForClassID(character.getClassID());
 		items.addAll(Arrays.asList(feItemsFromItemSet(prfs)));

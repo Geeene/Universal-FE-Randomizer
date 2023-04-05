@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -12,6 +14,7 @@ import fedata.gba.GBAFEChapterData;
 import fedata.gba.GBAFEChapterUnitData;
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFEWorldMapSpriteData;
 import fedata.gba.fe6.FE6Data;
@@ -28,6 +31,7 @@ import random.gba.loader.CharacterDataLoader;
 import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.PaletteLoader;
+import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.TextLoader;
 import random.general.Randomizer;
 import ui.model.BaseOptions;
@@ -70,6 +74,9 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	protected final String gameFriendlyName;
 	protected Map<GBAFECharacterData, GBAFECharacterData> characterMap; // valid with random recruitment. Maps slots to
 																		// reference character.
+	
+	public static Map<Integer, GBAFEHolisticCharacter> holisticCharacterMap = new HashMap<>();
+	
 	RecordKeeper recordKeeper;
 
 	// OPTION MODELS
@@ -91,6 +98,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	protected ItemDataLoader itemData;
 	protected PaletteLoader paletteData;
 	protected TextLoader textData;
+	protected PortraitDataLoader portraitData;
 
 	/**
 	 * Shared constructor
@@ -192,8 +200,10 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			applyUpsPatches();
 			
 			// (3) Run the dataloaders for the current game.
-			runRandomiztionStep("loading data", 1, () -> runDataloaders());
+			runRandomizationStep("loading data", 1, () -> runDataloaders());
 
+			buildHolisticCharacterMap();
+			
 			// (4) Initialize the Record Keeper with the data from the original game
 			initializeRecordKeeper();
 			recordOriginalState();
@@ -231,6 +241,43 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			notifyError(e.getMessage());
 		}
 	}
+	
+	private void buildHolisticCharacterMap() {
+		// Map is already filled, don't do it again
+		if (!holisticCharacterMap.isEmpty()) {
+			return;
+		}
+		
+		// Load the Playable characters
+		charData.canonicalPlayableCharacters(recruitOptions != null ? recruitOptions.includeExtras : false).forEach(chara -> {
+			GBAFEClassData charClass = classData.classForID(chara.getClassID());
+			GBAFEHolisticCharacter holisticCharacter = new GBAFEHolisticCharacter(chara, charClass, gameType);
+			holisticCharacter.setLinkedCharacters(Arrays.asList(charData.linkedCharactersForCharacter(chara)));
+			holisticCharacterMap.put(chara.getID(), holisticCharacter);
+		});
+		
+		// Load Bosses
+		for (GBAFECharacterData chara : charData.bossCharacters()) {
+			GBAFEClassData charClass = classData.classForID(chara.getClassID()); 
+			GBAFEHolisticCharacter holisticCharacter = new GBAFEHolisticCharacter(chara, charClass, gameType);
+			holisticCharacter.setLinkedCharacters(Arrays.asList(charData.linkedCharactersForCharacter(chara)));
+			holisticCharacterMap.put(chara.getID(), new GBAFEHolisticCharacter(chara, charClass, gameType));
+		}
+		
+		// Load Generic Characters with classes that we care about (Minions)
+		charData.allMinions().forEach(chara -> {
+			GBAFEClassData charClass = classData.classForID(chara.getClassID()); 
+			if (charClass != null) { 
+				// Null check because some classes used by minions aren't dataloaded such as the different Civilians. 
+				// All the classes for generic enemies (which is what we care about) are dataloaded
+				GBAFEHolisticCharacter holisticChar = new GBAFEHolisticCharacter(chara, charClass, gameType);
+				
+				// Reset all the personal weapon ranks of minions
+				holisticChar.resetPersonalWeaponRanks();
+				holisticCharacterMap.put(chara.getID(), holisticChar);
+			}
+		});
+	}
 
 	// ------------------------------------------------------------------
 	// HELPER METHODS & File Handling
@@ -251,7 +298,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 * @param progress the number to update the progress to before running the step.
 	 * @param step     a runnable which is the randomization step to perform
 	 */
-	public void runRandomiztionStep(String stepDesc, Integer progress, Runnable step) {
+	public void runRandomizationStep(String stepDesc, Integer progress, Runnable step) {
 		try {
 			if (null != progress) {
 				updateProgress(progress / 100d);
@@ -284,8 +331,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		itemData.compileDiffs(diffCompiler, sourceFileHandler);
 		paletteData.compileDiffs(diffCompiler);
 		textData.commitChanges(freeSpace, diffCompiler);
-		
-
+		portraitData.compileDiffs(diffCompiler);
 		// If the implementing game has any game specific dataloaders (such as FE8 Promotion Data), 
 		// then make sure to compile the changes before we commit the freespace.
 		// This should be the main position where such things should be necessary. 
@@ -341,13 +387,13 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 * Run all the Main Randomization steps
 	 */
 	public void executeRandomization() throws RandomizationStoppedException {
-		runRandomiztionStep("recruitment", 40, () -> randomizeRecruitmentIfNecessary());
-		runRandomiztionStep("classes", 45, () -> randomizeClassesIfNecessary());
-		runRandomiztionStep("bases", 50, () -> randomizeBasesIfNecessary());
-		runRandomiztionStep("weapons", 55, () -> randomizeWeaponsIfNecessary());
-		runRandomiztionStep("other character traits", 60, () -> randomizeOtherCharacterTraitsIfNecessary());
-		runRandomiztionStep("growths", 65, () -> randomizeGrowthsIfNecessary());
-		runRandomiztionStep("miscellaneous things", 70, () -> randomizeMiscellaneousThingsIfNecessary());
+		runRandomizationStep("recruitment", 40, () -> randomizeRecruitmentIfNecessary());
+		runRandomizationStep("classes", 45, () -> randomizeClassesIfNecessary());
+		runRandomizationStep("bases", 50, () -> randomizeBasesIfNecessary());
+		runRandomizationStep("weapons", 55, () -> randomizeWeaponsIfNecessary());
+		runRandomizationStep("other character traits", 60, () -> randomizeOtherCharacterTraitsIfNecessary());
+		runRandomizationStep("growths", 65, () -> randomizeGrowthsIfNecessary());
+		runRandomizationStep("miscellaneous things", 70, () -> randomizeMiscellaneousThingsIfNecessary());
 	}
 
 	protected void randomizeRecruitmentIfNecessary() {

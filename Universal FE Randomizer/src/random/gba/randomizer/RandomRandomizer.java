@@ -1,20 +1,14 @@
 package random.gba.randomizer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Random;
 
 import fedata.gba.GBAFEChapterData;
 import fedata.gba.GBAFEChapterItemData;
 import fedata.gba.GBAFEChapterUnitData;
 import fedata.gba.GBAFEItemData;
-import fedata.gcnwii.fe9.FE9Data.Chapter;
 import random.gba.loader.ChapterLoader;
 import random.gba.loader.CharacterDataLoader;
 import random.gba.loader.ItemDataLoader;
-import random.general.PoolDistributor;
 import random.general.WeightedDistributor;
 
 public class RandomRandomizer {

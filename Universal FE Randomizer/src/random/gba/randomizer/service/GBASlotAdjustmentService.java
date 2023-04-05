@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.GBAFEStatDto;
 import random.gba.loader.ClassDataLoader;
 import random.gba.loader.TextLoader;
@@ -40,7 +41,7 @@ public class GBASlotAdjustmentService {
 	 */
 	public static ClassAdjustmentDto handleClassAdjustment(int targetLevel, int sourceLevel,
 			boolean shouldBePromoted, boolean isPromoted, Random rng, ClassDataLoader classData, 
-			GBAFEClassData targetClass, GBAFEClassData fillSourceClass, GBAFECharacterData fill, 
+			GBAFEClassData targetClass, GBAFEClassData fillSourceClass, GBAFEHolisticCharacter fill, 
 			GBAFEClassData slotSourceClass, RecruitmentOptions options, TextLoader textData, DebugPrinter.Key key) {
 		ClassAdjustmentDto dto = new ClassAdjustmentDto();
 		if (shouldBePromoted) { targetLevel += ASSUMED_PROMOTION_LEVEL; }
@@ -130,7 +131,7 @@ public class GBASlotAdjustmentService {
 		dto.targetClass = targetClass;
 		
 		DebugPrinter.log(key, String.format("Finished Adjusting class for character %s, fill sourceClass %s, slot source class %s, new class %s, should receive %d auto levels, and Promotion bonuses: %s",
-				fill.displayString(), fillSourceClass.displayString(), slotSourceClass.displayString(), dto.targetClass.displayString(), dto.levelAdjustment, dto.promoBonuses));
+				fill.charDebugString, fillSourceClass.displayString(), slotSourceClass.displayString(), dto.targetClass.displayString(), dto.levelAdjustment, dto.promoBonuses));
 		return dto;
 	}
 	
@@ -173,10 +174,6 @@ public class GBASlotAdjustmentService {
 		GBAFEStatDto totalBases = new GBAFEStatDto(Arrays.asList(newBases, classBases));
 		totalBases = totalBases.clamp(GBAFEStatDto.MINIMUM_STATS, targetClass.getCaps()); // Clamp to prevent over or underflow
 		DebugPrinter.log(key, String.format("Theoretical final Stats after clamp: %s%n", totalBases.toString()));
-
-		// Now we remove the Class bases again and are left with proper Personal Bases
-		newBases = totalBases.subtract(classBases);
-		DebugPrinter.log(key, String.format("Proper personal bases: %s", newBases.toString()));
 		return newBases;
 	}
 

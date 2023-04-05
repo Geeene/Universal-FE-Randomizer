@@ -4,6 +4,7 @@ import java.util.Random;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import random.gba.loader.CharacterDataLoader;
 import random.gba.loader.ClassDataLoader;
 
@@ -15,33 +16,26 @@ public class CharacterRandomizer {
 		GBAFECharacterData[] playableCharacters = charactersData.playableCharacters();
 		int[] values = charactersData.validAffinityValues();
 		for (GBAFECharacterData character : playableCharacters) {
+			GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character.getID());
 			int affinity = values[rng.nextInt(values.length)];
-			character.setAffinityValue(affinity);
+			holisticCharacter.setAffinity(affinity);
 		}
 	}
 	
 	public static void randomizeConstitution(int minCON, int variance, CharacterDataLoader characterData, ClassDataLoader classData, Random rng) {
 		GBAFECharacterData[] allPlayableCharacters = characterData.playableCharacters();
 		for (GBAFECharacterData character : allPlayableCharacters) {
-			GBAFEClassData currentClass = classData.classForID(character.getClassID());
-			int classCON = currentClass.getCON();
-			int personalCON = character.getConstitution();
-			int totalCON = classCON + personalCON;
-			
-			int newCON = totalCON;
+			GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character.getID());
+			int totalCON = holisticCharacter.getCon();
 			
 			int direction = rng.nextInt(2);
 			if (direction == 0) {
-				newCON += rng.nextInt(variance);
+				totalCON += rng.nextInt(variance);
 			} else {
-				newCON -= rng.nextInt(variance);
+				totalCON -= rng.nextInt(variance);
 			}
 			
-			newCON = Math.max(minCON, newCON);
-			
-			int newPersonalCON = newCON - classCON;
-			
-			character.setConstitution(newPersonalCON);
+			holisticCharacter.setCon(totalCON);
 		}
 	}
 }

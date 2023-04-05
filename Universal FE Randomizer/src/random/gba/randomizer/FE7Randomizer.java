@@ -13,11 +13,14 @@ import fedata.gba.GBAFEChapterItemData;
 import fedata.gba.GBAFEChapterUnitData;
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.GBAFEItemData;
+import fedata.gba.GBAFEStatDto;
 import fedata.gba.GBAFEWorldMapData;
 import fedata.gba.GBAFEWorldMapSpriteData;
 import fedata.gba.fe7.FE7Data;
 import fedata.gba.fe7.FE7SpellAnimationCollection;
+import fedata.gba.fe8.FE8Data;
 import fedata.gba.general.WeaponType;
 import fedata.general.FEBase;
 import fedata.general.FEBase.GameType;
@@ -28,6 +31,7 @@ import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.PaletteLoader;
+import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.TextLoader;
 import ui.model.BaseOptions;
 import ui.model.ClassOptions;
@@ -87,6 +91,10 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 		paletteData = new PaletteLoader(FEBase.GameType.FE7, sourceFileHandler, charData, classData);
 		updateStatusString("Loading Statboost Data...");
 
+		updateProgress(0.32);
+		portraitData = new PortraitDataLoader(FE7Data.shufflingDataProvider, sourceFileHandler);
+		updateStatusString("Loading Potrait Data...");
+		
 		sourceFileHandler.clearAppliedDiffs();
 	}
 
@@ -122,11 +130,8 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 	}
 
 	public void ensureHectorBeatsWire() {
-		GBAFECharacterData wire = charData.characterWithID(FE7Data.Character.WIRE.ID);
-		GBAFECharacterData hector = charData.characterWithID(FE7Data.Character.HECTOR.ID);
-
-		GBAFEClassData wireClass = classData.classForID(wire.getClassID());
-		GBAFEClassData hectorClass = classData.classForID(hector.getClassID());
+		GBAFEHolisticCharacter wire = holisticCharacterMap.get(FE7Data.Character.WIRE.ID);
+		GBAFEHolisticCharacter hector = holisticCharacterMap.get(FE7Data.Character.HECTOR.ID);
 
 		GBAFEChapterData ch11 = chapterData.chapterWithID(FE7Data.ChapterPointer.CHAPTER_11_H.chapterID);
 		GBAFEItemData wireWeapon = null;
@@ -140,206 +145,102 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 			}
 		}
 
+		GBAFEStatDto wireStats = wire.getStats();
+		GBAFEStatDto hectorStats = hector.getStats();
+		
+		int hectorDefRes = wireWeapon.getType().isPhysical() ? hectorStats.def : hectorStats.res;
+		
+		
 		// Simulate numbers for Hector v. Wire.
-		int hectorHP = hector.getBaseHP() + hectorClass.getBaseHP();
-		int hectorSPD = hector.getBaseSPD() + hectorClass.getBaseSPD();
-		int hectorCON = hector.getConstitution() + hectorClass.getCON();
-		if (wireWeapon.getType().isPhysical()) { // Wire attacks Hector.
-			int hectorDEF = hector.getBaseDEF() + hectorClass.getBaseDEF();
-			int wireSTR = wire.getBaseSTR() + wireClass.getBaseSTR();
-			int wireSPD = wire.getBaseSPD() + wireClass.getBaseSPD();
-			int wireCON = wire.getConstitution() + wireClass.getCON();
+		// Wire attacks Hector.
+		int hectorAS = hectorStats.spd + Math.min(0, hector.getCon() - hectorWeapon.getWeight());
+		int wireATK = wireStats.str + wireWeapon.getMight()
+				+ (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
+		int wireAS = wireStats.spd + Math.min(0, wire.getCon() - wireWeapon.getWeight());
 
-			int hectorAS = hectorSPD + Math.min(0, hectorCON - hectorWeapon.getWeight());
-			int wireATK = wireSTR + wireWeapon.getMight()
-					+ (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
-			int wireAS = wireSPD + Math.min(0, wireCON - wireWeapon.getWeight());
-
-			boolean wireDoublesHector = hectorAS < wireAS - 3;
-			int damageDealtToHector = wireATK - hectorDEF;
-			int totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
-
-			// Hector should not be two-rounded (unless buffing boss weapons is on).
-			while (totalDamageDealt * (enemies.improveBossWeapons ? 2 : 3) > hectorHP) {
-				// If he doubles, get rid of that first.
-				if (wireDoublesHector && (wireCON > 1 || wireSPD > 0)) {
-					if (wireCON > 1) {
-						wire.setConstitution(wire.getConstitution() - 1);
-						wireCON = wire.getConstitution() + wireClass.getCON();
-					} else if (wireSPD > 0) {
-						wire.setBaseSPD(wire.getBaseSPD() - 1);
-						wireSPD = wire.getBaseSPD() + wireClass.getBaseSPD();
-					}
-					wireAS = wireSPD + Math.min(0, wireCON - wireWeapon.getWeight());
-					wireDoublesHector = hectorAS < wireAS - 3;
-					totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
-				} else if (wireSTR > 0) { // Nerf Wire's damage output next.
-					wire.setBaseSTR(wire.getBaseSTR() - 1);
-					wireSTR = wire.getBaseSTR() + wireClass.getBaseSTR();
-					wireATK = wireSTR + wireWeapon.getMight()
-							+ (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
-					damageDealtToHector = wireATK - hectorDEF;
-					totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
-				} else { // This is a pretty bad Hector if he can't take out a 0 AS, 0 STR Wire. Buff his
-							// DEF.
-					hector.setBaseDEF(hector.getBaseDEF() + 1);
-					hectorDEF = hector.getBaseDEF() + hectorClass.getBaseDEF();
-					damageDealtToHector = wireATK - hectorDEF;
-					totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
+		boolean wireDoublesHector = hectorAS < wireAS - 3;
+		int damageDealtToHector = wireATK - hectorDefRes;
+		int totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
+		boolean bossWeaponBuffed = enemies.improveBossWeapons;
+		
+		// Hector should not be two-rounded (unless buffing boss weapons is on).
+		while (totalDamageDealt * (bossWeaponBuffed ? 2 : 3) > hectorStats.hp) {
+			// If he doubles, get rid of that first.
+			if (wireDoublesHector && (wire.getCon() > 1 || wireStats.spd > 0)) {
+				if (wire.getCon() > 1) {
+					wire.setCon(wire.getCon() - 1);
+				} else if (wireStats.spd > 0) {
+					wireStats.spd -= 1;
 				}
-			}
-		} else {
-			int hectorRES = hector.getBaseRES() + hectorClass.getBaseRES();
-			int wireMAG = wire.getBaseSTR() + wireClass.getBaseSTR();
-			int wireSPD = wire.getBaseSPD() + wireClass.getBaseSPD();
-			int wireCON = wire.getConstitution() + wireClass.getCON();
-
-			int hectorAS = Math.max(0, hectorSPD + Math.min(0, hectorCON - hectorWeapon.getWeight()));
-			int wireATK = wireMAG + wireWeapon.getMight()
-					+ (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
-			int wireAS = Math.max(0, wireSPD + Math.min(0, wireCON - wireWeapon.getWeight()));
-
-			boolean wireDoublesHector = hectorAS < wireAS - 3;
-			int damageDealtToHector = wireATK - hectorRES;
-			int totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
-
-			// Hector should not be two-rounded.
-			while (totalDamageDealt * (enemies.improveBossWeapons ? 2 : 3) > hectorHP) {
-				// If he doubles, get rid of that first.
-				if (wireDoublesHector && (wireCON > 1 || wireSPD > 0)) {
-					if (wireCON > 1) {
-						wire.setConstitution(wire.getConstitution() - 1);
-						wireCON = wire.getConstitution() + wireClass.getCON();
-					} else if (wireSPD > 0) {
-						wire.setBaseSPD(wire.getBaseSPD() - 1);
-						wireSPD = wire.getBaseSPD() + wireClass.getBaseSPD();
-					}
-					wireAS = Math.max(0, wireSPD + Math.min(0, wireCON - wireWeapon.getWeight()));
-					wireDoublesHector = hectorAS < wireAS - 3;
-					totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
-				} else if (wireMAG > 0) { // Nerf Wire's damage output next.
-					wire.setBaseSTR(wire.getBaseSTR() - 1);
-					wireMAG = wire.getBaseSTR() + wireClass.getBaseSTR();
-					wireATK = wireMAG + wireWeapon.getMight()
-							+ (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
-					damageDealtToHector = wireATK - hectorRES;
-					totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
-				} else { // This is a pretty bad Hector if he can't take out a 0 AS, 0 STR Wire. Buff his
-							// RES.
-					hector.setBaseRES(hector.getBaseRES() + 1);
-					hectorRES = hector.getBaseRES() + hectorClass.getBaseRES();
-					damageDealtToHector = wireATK - hectorRES;
-					totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
-				}
+				wireAS = wireAS -= 1;
+				wireDoublesHector = hectorAS < wireAS - 3;
+				totalDamageDealt = damageDealtToHector * (wireDoublesHector ? 1 : 2);
+			} else if (wireStats.str > 0) { // Nerf Wire's damage output next.
+				wireStats.str -= 1;
+				
+				wireATK = wireStats.str + wireWeapon.getMight()
+						+ (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
+				damageDealtToHector = wireATK - hectorStats.def;
+				totalDamageDealt = damageDealtToHector + (wireDoublesHector ? damageDealtToHector : 0);
+			} else { // This is a pretty bad Hector if he can't take out a 0 AS, 0 STR Wire. Buff his
+						// DEF.
+				hectorDefRes += 1;
+				damageDealtToHector = wireATK - hectorDefRes;
+				totalDamageDealt = damageDealtToHector * (wireDoublesHector ? 1 : 2);
 			}
 		}
 
 		// Hector attacks Wire
-		int wireHP = wire.getBaseHP() + wireClass.getBaseHP();
-		int wireSPD = wire.getBaseSPD() + wireClass.getBaseSPD();
-		int wireCON = wire.getConstitution() + wireClass.getCON();
-		if (hectorWeapon.getType().isPhysical()) {
-			int wireDEF = wire.getBaseDEF() + wireClass.getBaseDEF();
-			int hectorSTR = hector.getBaseSTR() + hectorClass.getBaseSTR();
+		int wireDefRes = hectorWeapon.getType().isPhysical() ? wireStats.def : wireStats.res;
+		int hectorATK = hectorStats.str + hectorWeapon.getMight()
+				- (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
 
-			int hectorAS = Math.max(0, hectorSPD + Math.min(0, hectorCON - hectorWeapon.getWeight()));
-			int hectorATK = hectorSTR + hectorWeapon.getMight()
-					- (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
-			int wireAS = Math.max(0, wireSPD + Math.min(0, wireCON - wireWeapon.getWeight()));
+		boolean hectorDoublesWire = wireAS < hectorAS - 3;
+		int damageDealtToWire = hectorATK - wireDefRes;
+		totalDamageDealt = damageDealtToWire + (hectorDoublesWire ? damageDealtToWire : 0);
 
-			boolean hectorDoublesWire = wireAS < hectorAS - 3;
-			int damageDealtToWire = hectorATK - wireDEF;
-			int totalDamageDealt = damageDealtToWire + (hectorDoublesWire ? damageDealtToWire : 0);
-
-			// This fight shouldn't take more than 3 rounds.
-			int i = 0;
-			while (wireHP > totalDamageDealt * 3) {
-				// Lower his defense first.
-				if (wireDEF > 0) {
-					wire.setBaseDEF(wire.getBaseDEF() - 1);
-					wireDEF = wire.getBaseDEF() + wireClass.getBaseDEF();
-					damageDealtToWire = hectorATK - wireDEF;
-					totalDamageDealt = damageDealtToWire + (hectorDoublesWire ? damageDealtToWire : 0);
-				} else { // Alternate between increasing Hector's SPD and ATK.
-					if (i++ % 2 == 0) {
-						if (hectorWeapon.getWeight() > hectorCON) { // Try raising CON before we start raising SPD.
-							hector.setConstitution(hector.getConstitution() + 1);
-							hectorCON = hector.getConstitution() + hectorClass.getCON();
-						} else {
-							hector.setBaseSPD(hector.getBaseSPD() + 1);
-							hectorSPD = hector.getBaseSPD() + hectorClass.getBaseSPD();
-						}
+		// This fight shouldn't take more than 3 rounds.
+		int i = 0;
+		while (wireStats.hp > totalDamageDealt * 3) {
+			// Lower his defense first.
+			if (wireDefRes > 0) {
+				wireDefRes -= 1;
+				damageDealtToWire = hectorATK - wireDefRes;
+				totalDamageDealt = damageDealtToWire + (hectorDoublesWire ? damageDealtToWire : 0);
+			} else { // Alternate between increasing Hector's SPD and ATK.
+				if (i++ % 2 == 0) {
+					if (hectorWeapon.getWeight() > hector.getCon()) { // Try raising CON before we start raising SPD.
+						hector.setCon(hector.getCon() + 1);
 					} else {
-						hector.setBaseSTR(hector.getBaseSTR() + 1);
-						hectorSTR = hector.getBaseSTR() + hectorClass.getBaseSTR();
+						hectorStats.spd +=1;
 					}
-
-					hectorAS = Math.max(0, hectorSPD + Math.min(0, hectorCON - hectorWeapon.getWeight()));
-					hectorATK = hectorSTR + hectorWeapon.getMight()
-							- (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
-					hectorDoublesWire = wireAS < hectorAS - 3;
-					damageDealtToWire = hectorATK - wireDEF;
-					totalDamageDealt = damageDealtToWire + (hectorDoublesWire ? damageDealtToWire : 0);
+				} else {
+					hectorStats.str +=1;
 				}
-			}
-		} else {
-			int wireRES = wire.getBaseRES() + wireClass.getBaseRES();
-			int hectorSTR = hector.getBaseSTR() + hectorClass.getBaseSTR();
 
-			int hectorAS = Math.max(0, hectorSPD + Math.min(0, hectorCON - hectorWeapon.getWeight()));
-			int hectorATK = hectorSTR + hectorWeapon.getMight()
-					- (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
-			int wireAS = Math.max(0, wireSPD + Math.min(0, wireCON - wireWeapon.getWeight()));
-
-			boolean hectorDoublesWire = wireAS < hectorAS - 3;
-			int damageDealtToWire = hectorATK - wireRES;
-			int totalDamageDealt = damageDealtToWire + (hectorDoublesWire ? damageDealtToWire : 0);
-
-			// This fight shouldn't take more than 3 rounds.
-			int i = 0;
-			while (wireHP > totalDamageDealt * 3) {
-				// Lower his defense first.
-				if (wireRES > 0) {
-					wire.setBaseRES(wire.getBaseRES() - 1);
-					wireRES = wire.getBaseRES() + wireClass.getBaseRES();
-					damageDealtToWire = hectorATK - wireRES;
-					totalDamageDealt = damageDealtToWire + (hectorDoublesWire ? damageDealtToWire : 0);
-				} else { // Alternate between increasing Hector's SPD and ATK.
-					if (i++ % 2 == 0) {
-						if (hectorWeapon.getWeight() > hectorCON) { // Try raising CON before we start raising SPD.
-							hector.setConstitution(hector.getConstitution() + 1);
-							hectorCON = hector.getConstitution() + hectorClass.getCON();
-						} else {
-							hector.setBaseSPD(hector.getBaseSPD() + 1);
-							hectorSPD = hector.getBaseSPD() + hectorClass.getBaseSPD();
-						}
-					} else {
-						hector.setBaseSTR(hector.getBaseSTR() + 1);
-						hectorSTR = hector.getBaseSTR() + hectorClass.getBaseSTR();
-					}
-
-					hectorAS = Math.max(0, hectorSPD + Math.min(0, hectorCON - hectorWeapon.getWeight()));
-					hectorATK = hectorSTR + hectorWeapon.getMight()
-							- (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
-					hectorDoublesWire = wireAS < hectorAS - 3;
-					damageDealtToWire = hectorATK - wireRES;
-					totalDamageDealt = damageDealtToWire + (hectorDoublesWire ? damageDealtToWire : 0);
-				}
+				hectorAS = Math.max(0, hectorStats.spd + Math.min(0, hector.getCon() - hectorWeapon.getWeight()));
+				hectorATK = hectorStats.str + hectorWeapon.getMight()
+						- (wireWeapon.getType().typeAdvantage() == hectorWeapon.getType() ? 1 : 0);
+				hectorDoublesWire = wireAS < hectorAS - 3;
+				damageDealtToWire = hectorATK - wireDefRes;
+				totalDamageDealt = damageDealtToWire + (hectorDoublesWire ? damageDealtToWire : 0);
 			}
 		}
 
 		// Make sure Hector has at least 5 (assuming boss weapons are buffed, as this
 		// gives them S rank) + Wire's SKL/2 Luck to prevent crits.
-		hector.setBaseLCK(Math.max(hector.getBaseLCK(),
-				(enemies.improveBossWeapons ? 5 : 0) + (wire.getBaseSKL() + wireClass.getBaseSKL()) / 2));
+		hectorStats.lck = Math.max(hectorStats.lck, (enemies.improveBossWeapons ? 5 : 0) + wireStats.skl / 2);
+		
+		wire.setStats(wireStats);
+		hector.setStats(hectorStats);
 	}
 
 	@Override
 	protected void createSpecialLordClasses() {
-		GBAFECharacterData lyn = charData.characterWithID(FE7Data.Character.LYN.ID);
-		GBAFECharacterData tutorialLyn = charData.characterWithID(FE7Data.Character.LYN_TUTORIAL.ID);
-		GBAFECharacterData eliwood = charData.characterWithID(FE7Data.Character.ELIWOOD.ID);
-		GBAFECharacterData hector = charData.characterWithID(FE7Data.Character.HECTOR.ID);
+		GBAFEHolisticCharacter lyn = holisticCharacterMap.get(FE7Data.Character.LYN.ID);
+		GBAFEHolisticCharacter tutorialLyn = holisticCharacterMap.get(FE7Data.Character.LYN_TUTORIAL.ID);
+		GBAFEHolisticCharacter eliwood = holisticCharacterMap.get(FE7Data.Character.ELIWOOD.ID);
+		GBAFEHolisticCharacter hector = holisticCharacterMap.get(FE7Data.Character.HECTOR.ID);
 
 		int oldLynClassID = lyn.getClassID();
 		int oldEliwoodClassID = eliwood.getClassID();
@@ -351,10 +252,10 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 		GBAFEClassData newHectorClass = classData
 				.createLordClassBasedOnClass(classData.classForID(hector.getClassID()));
 
-		lyn.setClassID(newLynClass.getID());
-		tutorialLyn.setClassID(newLynClass.getID());
-		eliwood.setClassID(newEliwoodClass.getID());
-		hector.setClassID(newHectorClass.getID());
+		lyn.changeClass(newLynClass);
+		tutorialLyn.changeClass(newLynClass);
+		eliwood.changeClass(newEliwoodClass);
+		hector.changeClass(newHectorClass);
 
 		// Add new classes to any effectiveness tables.
 		List<AdditionalData> effectivenesses = itemData.effectivenessArraysForClassID(oldLynClassID);
@@ -1056,7 +957,7 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 	protected void gameSpecificDiffCompilations() {
 		//N/A
 	}
-	
+
 	@Override
 	protected void applyUpsPatches() {
 		// N/A

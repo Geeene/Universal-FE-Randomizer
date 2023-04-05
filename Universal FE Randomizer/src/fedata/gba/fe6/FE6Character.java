@@ -22,7 +22,7 @@ public class FE6Character extends GBAFECharacterData {
 	}
 	
 	@Override
-	public void setIsLord(boolean isLord) {
+	protected void setIsLord(boolean isLord) {
 		assert !isReadOnly : "Attempted to modify a locked character.";
 		// Mark as Lord (Ability 2)
 		byte oldValue = (byte)(data[41] & 0xFF);

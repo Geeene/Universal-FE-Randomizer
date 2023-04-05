@@ -10,15 +10,14 @@ import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFESpellAnimationCollection;
 import fedata.gba.fe8.FE8Data.Item.Ability1Mask;
 import fedata.gba.fe8.FE8Data.Item.Ability2Mask;
-import fedata.gba.fe8.FE8Data.Item.FE8WeaponRank;
 import fedata.gba.fe8.FE8Data.Item.FE8WeaponType;
 import fedata.gba.general.WeaponEffects;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
 import random.gba.loader.ItemDataLoader;
+import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.TextLoader;
 import random.general.WeightedDistributor;
-import random.gba.loader.ItemDataLoader.AdditionalData;
 import ui.model.MinMaxOption;
 import util.ByteArrayBuilder;
 import util.DebugPrinter;
@@ -206,9 +205,9 @@ public class FE8Item implements GBAFEItemData {
 
 	public WeaponRank getWeaponRank() {
 		int rank = data[28] & 0xFF;
-		FE8WeaponRank weaponRank = FE8Data.Item.FE8WeaponRank.valueOf(rank);
+		WeaponRank weaponRank = WeaponRank.valueOf(rank);
 		if (weaponRank != null) {
-			return weaponRank.toGeneralRank();
+			return weaponRank;
 		} else {
 			FE8Data.Item weapon = FE8Data.Item.valueOf(getID());
 			if (weapon != null && FE8Data.Item.allPrfRank.contains(weapon)) {
@@ -607,7 +606,7 @@ public class FE8Item implements GBAFEItemData {
 		data[25] = (byte)((minRange << 4) | (maxRange));
 		data[26] = 0;
 		data[27] = 0; // Cost per use. Not useful since it's not sellable.
-		data[28] = (byte)(FE8Data.Item.FE8WeaponRank.E.value & 0xFF); // Not really necessary, but to be safe.
+		data[28] = (byte)(WeaponRank.E.fe78RankValue & 0xFF); // Not really necessary, but to be safe.
 		// Weapon icon is unchanged. We'll be replacing the icon.
 		// Staff use effect should be 0. We don't deal with staves.
 		data[30] = 0;

@@ -12,9 +12,11 @@ import java.util.stream.Collectors;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.general.GBAFECharacter;
 import fedata.gba.general.GBAFECharacterProvider;
 import io.FileHandler;
+import random.gba.randomizer.AbstractGBARandomizer;
 import util.Diff;
 import util.DiffCompiler;
 import util.FileReadHelper;
@@ -62,17 +64,17 @@ public class CharacterDataLoader {
 	
 	public void applyLevelCorrectionsIfNecessary() {
 		for (GBAFECharacter character : provider.allPlayableCharacters()) {
-			Integer canonicalLevel = provider.canonicalLevelForCharacter(character);
-			if (canonicalLevel != null) {
-				GBAFECharacterData characterData = characterWithID(character.getID());
-				characterData.setLevel(canonicalLevel);
-				characterData.commitChanges();
-			}
+			GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character.getID());
+			holisticCharacter.setLevel(provider.canonicalLevelForCharacter(character));
 		}
 	}
 	
 	public String debugStringForCharacter(int characterID) {
 		return provider.characterWithID(characterID).toString();
+	}
+	
+	public void updateCharacterWithId(int characterId, GBAFECharacterData charData) {
+		this.characterMap.put(characterId, charData);
 	}
 	
 	public GBAFECharacterData characterWithID(int characterID) {
@@ -90,6 +92,10 @@ public class CharacterDataLoader {
 	
 	public GBAFECharacterData[] playableCharacters() {
 		return feCharactersFromSet(provider.allPlayableCharacters());
+	}
+	
+	public List<GBAFECharacterData> allMinions(){
+		return new ArrayList<>(minionData.values());
 	}
 	
 	public List<GBAFECharacterData> canonicalPlayableCharacters(boolean includeExtras) {

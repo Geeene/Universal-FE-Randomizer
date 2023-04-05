@@ -1,6 +1,7 @@
 package fedata.gba;
 
 import fedata.general.FEModifiableData;
+import fedata.general.FEBase.GameType;
 
 public abstract class AbstractGBAData implements FEModifiableData {
 	protected byte[] originalData;
@@ -11,7 +12,15 @@ public abstract class AbstractGBAData implements FEModifiableData {
 
 	protected Boolean wasModified = false;
 	protected Boolean hasChanges = false;
+	protected GameType gameType;
 
+	public AbstractGBAData() {
+	}
+	
+	public AbstractGBAData(GameType type) {
+		this.gameType = type;
+	}
+	
 	public void resetData() {
 		data = originalData;
 		wasModified = false;

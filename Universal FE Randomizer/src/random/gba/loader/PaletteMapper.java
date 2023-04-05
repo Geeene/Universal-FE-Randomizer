@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import fedata.gba.GBAFECharacterData;
+import fedata.gba.GBAFEHolisticCharacter;
+import random.gba.randomizer.AbstractGBARandomizer;
 import util.DebugPrinter;
 import util.WhyDoesJavaNotHaveThese;
 
@@ -83,15 +85,13 @@ public class PaletteMapper {
 				System.err.println("No palettes available to fulfill palette.");
 			}
 			
-			GBAFECharacterData[] linked = charData.linkedCharactersForCharacter(queuedItem.character);
-			for (GBAFECharacterData linkedChar : linked) {
-				if (queuedItem.requiredType == ClassType.PROMOTED) {
-					linkedChar.setPromotedPaletteIndex(paletteID);
-				} else if (queuedItem.requiredType == ClassType.UNPROMOTED) {
-					linkedChar.setUnpromotedPaletteIndex(paletteID);
-				} else {
-					assert false : "Unpromoted-only is not a valid type to wait on.";
-				}
+			GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(queuedItem.character.getID());
+			if (queuedItem.requiredType == ClassType.PROMOTED) {
+				holisticCharacter.setPromotedPaletteIndex(paletteID);
+			} else if (queuedItem.requiredType == ClassType.UNPROMOTED) {
+				holisticCharacter.setUnpromotedPaletteIndex(paletteID);
+			} else {
+				assert false : "Unpromoted-only is not a valid type to wait on.";
 			}
 		}
 	}
@@ -119,7 +119,7 @@ public class PaletteMapper {
 	}
 	
 	private void freePaletteFromCharacter(GBAFECharacterData character, ClassType type) {		
-		GBAFECharacterData[] linked = charData.linkedCharactersForCharacter(character);
+		GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character);
 		
 		boolean didRecycle = false;
 		
@@ -133,9 +133,7 @@ public class PaletteMapper {
 			} else {
 				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinked unpromoted palette 0x" + Integer.toHexString(paletteID) + " since it's shared with the promoted palette.");
 			}
-			for (GBAFECharacterData linkedChar : linked) {
-				linkedChar.setUnpromotedPaletteIndex(0);
-			}
+			holisticCharacter.setUnpromotedPaletteIndex(0);
 			break;
 		case PROMOTED:
 			paletteID = character.getPromotedPaletteIndex();
@@ -146,9 +144,7 @@ public class PaletteMapper {
 			} else {
 				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinked promoted palette 0x" + Integer.toHexString(paletteID) + " since it's shared with the unpromoted palette.");
 			}
-			for (GBAFECharacterData linkedChar : linked) {
-				linkedChar.setPromotedPaletteIndex(0);
-			}
+			holisticCharacter.setPromotedPaletteIndex(0);
 			break;
 		case UNPROMOTED_ONLY:
 			assert false : "Palettes must be freed from either Unpromoted or Promoted type.";
@@ -166,7 +162,8 @@ public class PaletteMapper {
 		if (character == null || type == null) { return; }
 		
 		DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Allocating palette for character 0x" + Integer.toHexString(character.getID()) + " (" + charData.debugStringForCharacter(character.getID()) + "). Type: " + type.toString() + "\tSize: " + size);
-		
+		GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character);
+
 		int unpromotedPaletteID = character.getUnpromotedPaletteIndex();
 		Integer unpromotedLength = getPaletteLength(unpromotedPaletteID);
 		int promotedPaletteID = character.getPromotedPaletteIndex();
@@ -180,11 +177,11 @@ public class PaletteMapper {
 				if (unpromotedLength >= size) {
 					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unpromoted Palette OK! ID = 0x" + Integer.toHexString(unpromotedPaletteID) + " Available Length: " + unpromotedLength + "\tRequested Length: " + size);
 					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinking shared promoted palette 0x" + Integer.toHexString(promotedPaletteID));
-					character.setPromotedPaletteIndex(0);
+					holisticCharacter.setPromotedPaletteIndex(0);
 					return;
 				} else {
 					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinking shared unpromoted palette 0x" + Integer.toHexString(unpromotedPaletteID) + " due to insufficient space.");
-					character.setUnpromotedPaletteIndex(0);
+					holisticCharacter.setUnpromotedPaletteIndex(0);
 				}
 			} else if (unpromotedLength >= size) {
 				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unpromoted Palette OK! ID = 0x" + Integer.toHexString(unpromotedPaletteID) + " Available Length: " + unpromotedLength + "\tRequested Length: " + size);
@@ -200,11 +197,11 @@ public class PaletteMapper {
 				if (promotedLength >= size) {
 					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Promoted Palette OK! ID = 0x" + Integer.toHexString(promotedPaletteID) + " Available Length: " + promotedLength + "\tRequested Length: " + size);
 					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinking shared unpromoted palette 0x" + Integer.toHexString(unpromotedPaletteID));
-					character.setUnpromotedPaletteIndex(0);
+					holisticCharacter.setUnpromotedPaletteIndex(0);
 					return;
 				} else {
 					DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Unlinking shared promoted palette 0x" + Integer.toHexString(promotedPaletteID) + " due to insufficient space.");
-					character.setPromotedPaletteIndex(0);
+					holisticCharacter.setPromotedPaletteIndex(0);
 				}
 			} else if (promotedLength >= size) {
 				DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Promoted Palette OK! ID = 0x" + Integer.toHexString(promotedPaletteID) + " Available Length: " + promotedLength + "\tRequested Length: " + size);
@@ -235,20 +232,16 @@ public class PaletteMapper {
 		
 		DebugPrinter.log(DebugPrinter.Key.PALETTE_RECYCLER, "Assigning palette ID 0x" + Integer.toHexString(paletteID) + " to " + charData.debugStringForCharacter(character.getID()));
 
-		GBAFECharacterData[] linked = charData.linkedCharactersForCharacter(character);
-		
-		for (GBAFECharacterData linkedChar : linked) {
-			switch (type) {
-			case PROMOTED:
-				linkedChar.setPromotedPaletteIndex(paletteID);
-				break;
-			case UNPROMOTED:
-				linkedChar.setUnpromotedPaletteIndex(paletteID);
-				break;
-			case UNPROMOTED_ONLY:
-				assert false : "Palettes can only be allocated to either Unpromoted or Promoted type.";
-				break;
-			}
+		switch (type) {
+		case PROMOTED:
+			holisticCharacter.setPromotedPaletteIndex(paletteID);
+			break;
+		case UNPROMOTED:
+			holisticCharacter.setUnpromotedPaletteIndex(paletteID);
+			break;
+		case UNPROMOTED_ONLY:
+			assert false : "Palettes can only be allocated to either Unpromoted or Promoted type.";
+			break;
 		}
 	}
 	

@@ -15,7 +15,7 @@ import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFESpellAnimationCollection;
-import fedata.gba.fe8.FE8Data.CharacterClass;
+import fedata.gba.GBAFEWeaponRankDto;
 import fedata.gba.general.CharacterNudge;
 import fedata.gba.general.GBAFEChapterMetadataChapter;
 import fedata.gba.general.GBAFECharacter;
@@ -30,6 +30,7 @@ import fedata.gba.general.PaletteColor;
 import fedata.gba.general.PaletteInfo;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
+import fedata.general.FEBase.GameType;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.randomizer.shuffling.GBAFEShufflingDataProvider;
 import random.gba.randomizer.shuffling.data.FE6PortraitData;
@@ -716,78 +717,6 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			return new Comparator<Item>() { public int compare(Item o1, Item o2) { return Integer.compare(o1.ID, o2.ID); } };
 		}
 		
-		public enum FE6WeaponRank {
-			E(0x01), D(0x33), C(0x65), B(0x097), A(0x0C9), S(0x0FB);
-			
-			public int value;
-			
-			private static Map<Integer, FE6WeaponRank> map = new HashMap<Integer, FE6WeaponRank>();
-			
-			static {
-				for (FE6WeaponRank rank : FE6WeaponRank.values()) {
-					map.put(rank.value, rank);
-				}
-			}
-			
-			private FE6WeaponRank(final int value) { this.value = value; }
-			
-			public static FE6WeaponRank valueOf(int rankVal) {
-				return map.get(rankVal);
-			}
-			
-			public static FE6WeaponRank rankFromGeneralRank(WeaponRank generalRank) {
-				switch (generalRank) {
-				case A:
-					return A;
-				case B:
-					return B;
-				case C:
-					return C;
-				case D:
-					return D;
-				case E:
-					return E;
-				case NONE:
-					return null;
-				case S:
-					return S;
-				default:
-					return null;
-				}
-			}
-			
-			public WeaponRank toGeneralRank() {
-				switch (this) {
-				case A:
-					return WeaponRank.A;
-				case B:
-					return WeaponRank.B;
-				case C:
-					return WeaponRank.C;
-				case D:
-					return WeaponRank.D;
-				case E:
-					return WeaponRank.E;
-				case S:
-					return WeaponRank.S;
-				default:
-					return WeaponRank.NONE;
-				}
-			}
-			
-			public Boolean isHigherThanRank(FE6WeaponRank otherRank) {
-				return (value & 0xFF) > (otherRank.value & 0xFF);
-			}
-			
-			public Boolean isLowerThanRank(FE6WeaponRank otherRank) {
-				return (value & 0xFF) < (otherRank.value & 0xFF);
-			}
-			
-			public Boolean isSameRank(FE6WeaponRank otherRank) {
-				return value == otherRank.value;
-			}
-		}
-		
 		public enum FE6WeaponType {
 			SWORD(0x00), LANCE(0x01), AXE(0x02), BOW(0x03), STAFF(0x04), ANIMA(0x05), LIGHT(0x06), DARK(0x07), 
 			
@@ -1144,17 +1073,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				return null;
 			}
 			
-			FE6WeaponRank minRank = FE6WeaponRank.E;
-			if (min != WeaponRank.NONE) {
-				minRank = FE6WeaponRank.rankFromGeneralRank(min);
-			}
-			
-			FE6WeaponRank maxRank = FE6WeaponRank.S;
-			if (max != WeaponRank.NONE) {
-				maxRank = FE6WeaponRank.rankFromGeneralRank(max);
-			}
-			
-			if (minRank.isHigherThanRank(maxRank)) {
+			if (min.isHigherThan(max, GameType.FE6)) {
 				return null;
 			}
 			
@@ -1162,38 +1081,38 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			
 			list.addAll(weaponsOfType(type));
 			
-			if (FE6WeaponRank.E.isLowerThanRank(minRank)) {
+			if (WeaponRank.E.isLowerThan(min, GameType.FE6)) {
 				list.removeAll(allERank);
 			}
-			if (FE6WeaponRank.D.isLowerThanRank(minRank)) {
+			if (WeaponRank.D.isLowerThan(min, GameType.FE6)) {
 				list.removeAll(allDRank);
 			}
-			if (FE6WeaponRank.C.isLowerThanRank(minRank)) {
+			if (WeaponRank.C.isLowerThan(min, GameType.FE6)) {
 				list.removeAll(allCRank);
 			}
-			if (FE6WeaponRank.B.isLowerThanRank(minRank)) {
+			if (WeaponRank.B.isLowerThan(min, GameType.FE6)) {
 				list.removeAll(allBRank);
 			}
-			if (FE6WeaponRank.A.isLowerThanRank(minRank)) {
+			if (WeaponRank.A.isLowerThan(min, GameType.FE6)) {
 				list.removeAll(allARank);
 			}
 			
 			list.removeAll(allPrfRank);
 			list.remove(WO_DAO); // This one is special. It must be added in only if we're certain the class asking for the item can use it.
 			
-			if (FE6WeaponRank.S.isHigherThanRank(maxRank)) {
+			if (WeaponRank.S.isHigherThan(max, GameType.FE6)) {
 				list.removeAll(allSRank);
 			}
-			if (FE6WeaponRank.A.isHigherThanRank(maxRank)) {
+			if (WeaponRank.A.isHigherThan(max, GameType.FE6)) {
 				list.removeAll(allARank);
 			}
-			if (FE6WeaponRank.B.isHigherThanRank(maxRank)) {
+			if (WeaponRank.B.isHigherThan(max, GameType.FE6)) {
 				list.removeAll(allBRank);
 			}
-			if (FE6WeaponRank.C.isHigherThanRank(maxRank)) {
+			if (WeaponRank.C.isHigherThan(max, GameType.FE6)) {
 				list.removeAll(allCRank);
 			}
-			if (FE6WeaponRank.D.isHigherThanRank(maxRank)) {
+			if (WeaponRank.D.isHigherThan(max, GameType.FE6)) {
 				list.removeAll(allDRank);
 			}
 			
@@ -2417,21 +2336,14 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		return Collections.min(basicWeapons, Item.itemIDComparator());
 	}
 	
-	public WeaponRank rankWithValue(int value) {
-		Item.FE6WeaponRank weaponRank = Item.FE6WeaponRank.valueOf(value);
-		if (weaponRank != null) { return weaponRank.toGeneralRank(); }
-		
-		return WeaponRank.NONE;
-	}
-	
-	public int rankValueForRank(WeaponRank rank) {
-		Item.FE6WeaponRank fe6Rank = Item.FE6WeaponRank.rankFromGeneralRank(rank);
-		if (fe6Rank != null) { return fe6Rank.value; }
-		return 0;
-	}
-	
+	@Override
 	public int getHighestWeaponRankValue() {
-		return Item.FE6WeaponRank.S.value;
+		return WeaponRank.S.fe6RankValue;
+	}
+	
+	@Override
+	public int rankValueForRank(WeaponRank rank) {
+		return rank.fe6RankValue;
 	}
 	
 	public Set<GBAFEItem> allWeapons() {
@@ -2462,14 +2374,14 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	}
 	
 	public Set<GBAFEItem> weaponsOfTypeUpToRank(WeaponType type, WeaponRank rank, Boolean rangedOnly, Boolean requiresMelee) {
-		if (type == Item.FE6WeaponType.DARK.toGeneralType() && rank == Item.FE6WeaponRank.E.toGeneralRank()) {
+		if (type == Item.FE6WeaponType.DARK.toGeneralType() && rank == WeaponRank.E) {
 			rank = WeaponRank.D;
 		}
 		return new HashSet<GBAFEItem>(Item.weaponsOfTypeAndRank(type, WeaponRank.E, rank, rangedOnly));
 	}
 	
 	public Set<GBAFEItem> weaponsOfTypeAndEqualRank(WeaponType type, WeaponRank rank, Boolean rangedOnly, Boolean requiresMelee, Boolean allowLower) {
-		if (type == Item.FE6WeaponType.DARK.toGeneralType() && rank == Item.FE6WeaponRank.E.toGeneralRank()) {
+		if (type == Item.FE6WeaponType.DARK.toGeneralType() && rank == WeaponRank.E) {
 			rank = WeaponRank.D;
 		}
 		
@@ -2650,25 +2562,25 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		return itemsUsableByClass;
 	}
 
-	public Set<GBAFEItem> comparableWeaponsForClass(int classID, WeaponRanks ranks, GBAFEItemData originalItem, boolean strict) {
+	public Set<GBAFEItem> comparableWeaponsForClass(int classID, GBAFEWeaponRankDto ranks, GBAFEItemData originalItem, boolean strict) {
 		if (originalItem == null) { return new HashSet<GBAFEItem>(); }
 		Item item = Item.valueOf(originalItem.getID());
 		if (item == null) { return new HashSet<GBAFEItem>(); }
 		
 		Set<GBAFEItem> itemsUsableByClass = new HashSet<GBAFEItem>(weaponsForClass(classID));
 		
-		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.SWORD && ranks.swordRank.isLowerThan(weapon.getRank())));
-		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.LANCE && ranks.lanceRank.isLowerThan(weapon.getRank())));
-		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.AXE && ranks.axeRank.isLowerThan(weapon.getRank())));
-		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.BOW && ranks.bowRank.isLowerThan(weapon.getRank())));
-		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.ANIMA && ranks.animaRank.isLowerThan(weapon.getRank())));
-		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.LIGHT && ranks.lightRank.isLowerThan(weapon.getRank())));
-		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.DARK && ranks.darkRank.isLowerThan(weapon.getRank())));
-		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.STAFF && ranks.staffRank.isLowerThan(weapon.getRank())));
+		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.SWORD && ranks.sword.isLowerThan(weapon.getRank(), GameType.FE6)));
+		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.LANCE && ranks.lance.isLowerThan(weapon.getRank(), GameType.FE6)));
+		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.AXE && ranks.axe.isLowerThan(weapon.getRank(), GameType.FE6)));
+		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.BOW && ranks.bow.isLowerThan(weapon.getRank(), GameType.FE6)));
+		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.ANIMA && ranks.anima.isLowerThan(weapon.getRank(), GameType.FE6)));
+		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.LIGHT && ranks.light.isLowerThan(weapon.getRank(), GameType.FE6)));
+		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.DARK && ranks.dark.isLowerThan(weapon.getRank(), GameType.FE6)));
+		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.STAFF && ranks.staff.isLowerThan(weapon.getRank(), GameType.FE6)));
 		
 		Set<GBAFEItem> usableSet = new HashSet<GBAFEItem>(itemsUsableByClass);
 		
-		itemsUsableByClass.removeIf(weapon -> (item.getRank().isLowerThan(weapon.getRank())));
+		itemsUsableByClass.removeIf(weapon -> (item.getRank().isLowerThan(weapon.getRank(), GameType.FE6)));
 		
 		if (strict) {
 			Set<GBAFEItem> usableByRank = new HashSet<GBAFEItem>(itemsUsableByClass);

@@ -7,12 +7,14 @@ import fedata.gba.GBAFEChapterItemData;
 import fedata.gba.GBAFEChapterUnitData;
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.GBAFEItemData;
 import random.gba.loader.ChapterLoader;
 import random.gba.loader.CharacterDataLoader;
 import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.TextLoader;
+import random.gba.randomizer.AbstractGBARandomizer;
 import random.gba.randomizer.ClassRandomizer;
 import ui.model.ItemAssignmentOptions;
 /**
@@ -20,7 +22,7 @@ import ui.model.ItemAssignmentOptions;
  */
 public class ItemAssignmentService {
 	
-	public static void assignNewItems(CharacterDataLoader characterData, GBAFECharacterData slot,
+	public static void assignNewItems(CharacterDataLoader characterData, GBAFEHolisticCharacter slot,
 			GBAFEClassData targetClass, ChapterLoader chapterData, ItemAssignmentOptions inventoryOptions, Random rng,
 			TextLoader textData, ClassDataLoader classData, ItemDataLoader itemData) {
 		for (GBAFEChapterData chapter : chapterData.allChapters()) {
@@ -46,7 +48,7 @@ public class ItemAssignmentService {
 					unit.setStartingClass(targetClass.getID());
 
 					// Set Inventory.
-					ClassRandomizer.validateCharacterInventory(inventoryOptions, slot, targetClass, unit,
+					ClassRandomizer.validateCharacterInventory(inventoryOptions, AbstractGBARandomizer.holisticCharacterMap.get(slot.getID()), targetClass, unit,
 							characterData.characterIDRequiresRange(slot.getID()),
 							characterData.characterIDRequiresMelee(slot.getID()), characterData, classData, itemData,
 							textData, false, rng);

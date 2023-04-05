@@ -14,9 +14,12 @@ import fedata.gba.GBAFEChapterData;
 import fedata.gba.GBAFEChapterUnitData;
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.GBAFEStatDto;
+import fedata.gba.GBAFEWeaponRankDto;
 import fedata.gba.fe6.FE6Data;
 import fedata.gba.general.PaletteColor;
+import fedata.gba.general.WeaponRank;
 import fedata.general.FEBase.GameType;
 import io.FileHandler;
 import random.gba.loader.ChapterLoader;
@@ -25,6 +28,7 @@ import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.TextLoader;
+import random.gba.randomizer.AbstractGBARandomizer;
 import random.gba.randomizer.service.ClassAdjustmentDto;
 import random.gba.randomizer.service.GBASlotAdjustmentService;
 import random.gba.randomizer.service.GBATextReplacementService;
@@ -81,6 +85,7 @@ public class CharacterShuffler {
 					// If no more character to find, then stop
 					return;
 				}
+				GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(slot.getID());
 				
 				DebugPrinter.log(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING, String.format("Shuffling Character %s into Slot %d, which was originally %s", crossGameData.name, slot.getID(), slot.displayString()));
 
@@ -116,23 +121,24 @@ public class CharacterShuffler {
 					textData.setStringAtIndex(slot.getDescriptionIndex(),String.format("%s[0x1]%s[X]", crossGameData.description1, crossGameData.description2));
 				}
 				
-				for (GBAFECharacterData linkedSlot : characterData.linkedCharactersForCharacter(slot)) {
-					linkedSlot.setGrowths(crossGameData.growths);
-					linkedSlot.setConstitution(crossGameData.constitution);
-					updateWeaponRanks(linkedSlot, crossGameData, options);
+				holisticCharacter.setGrowths(crossGameData.growths);
+				holisticCharacter.setCon(crossGameData.constitution);
+				updateWeaponRanks(holisticCharacter, crossGameData, options, type);
+				
+				for (GBAFECharacterData gbafeCharacterData : holisticCharacter.linkedCharacters) {
+					GBAFEHolisticCharacter holisticLinkedChar = AbstractGBARandomizer.holisticCharacterMap.get(gbafeCharacterData.getID());
 					
 					// (e) Update the bases, and potentially auto level the Character to the level of the slot.
 					// Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
-					targetClass = updateBases(textData, rng, classData, options, linkedSlot, crossGameData, targetClassId,
+					targetClass = updateBases(textData, rng, classData, options, holisticLinkedChar, crossGameData,
 							targetClass, sourceClass, slotLevel);
 					targetClassId = targetClass.getID();
-	
 					
 					// (f) Update the class for all the slots of the character
-					updateUnitInChapter(chapterData, linkedSlot, crossGameData, targetClassId, options, itemData, inventoryOptions);
+					updateUnitInChapter(chapterData, holisticLinkedChar, crossGameData, targetClassId, options, itemData, inventoryOptions);
 						
 					// (g) give the Unit new items to use
-					ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
+					ItemAssignmentService.assignNewItems(characterData, holisticLinkedChar, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
 				}
 			}
 
@@ -158,12 +164,14 @@ public class CharacterShuffler {
 	/**
 	 * Sets the configured Weapon ranks (clamped to ensure it's between 0 and 255) for the given character
 	 */
-	private static void updateWeaponRanks(GBAFECharacterData character, GBACrossGameData crossGameData, CharacterShufflingOptions options) {
+	private static void updateWeaponRanks(GBAFEHolisticCharacter character, GBACrossGameData crossGameData, CharacterShufflingOptions options, GameType type) {
+		GBAFEWeaponRankDto weaponRanks = new GBAFEWeaponRankDto();
+		
 		if (ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())){
 			// If we auto level, then adjust the ranks down to the level of the char they replace.
 			
 			// Get the total weapon ranks of the replaced char
-			long totalWeaponRanksSlot = character.getAllWeaponRanks().stream().mapToLong(num -> (long) num).sum();
+			long totalWeaponRanksSlot = character.getWeaponRanks().asList().stream().mapToLong(wr -> wr.rankValue(type)).sum();
 
 			// get the total Weapon ranks of the replacing char
 			long totalWeaponRanksFill = 0;
@@ -172,62 +180,59 @@ public class CharacterShuffler {
 			}
 			
 			// map the Ranks by the ratio that they had for the original unit, so that characters still keep their Rank strengths
-			Map<Integer, Float> adjustedRanks = new HashMap<>();
+			List<Integer> adjustedRanks = new ArrayList<>();
 			for(int i = 0; i < crossGameData.weaponRanks.length; i++) {
-				adjustedRanks.put(i, ((float) crossGameData.weaponRanks[i]) / totalWeaponRanksFill * totalWeaponRanksSlot);
+				adjustedRanks.add(Math.round(((float) crossGameData.weaponRanks[i]) / totalWeaponRanksFill * totalWeaponRanksSlot));
 			}
-			
-			character.setSwordRank(WhyDoesJavaNotHaveThese.clamp(Math.round(adjustedRanks.get(0)), 0, 255));
-			character.setLanceRank(WhyDoesJavaNotHaveThese.clamp(Math.round(adjustedRanks.get(1)), 0, 255));
-			character.setAxeRank(WhyDoesJavaNotHaveThese.clamp(Math.round(adjustedRanks.get(2)), 0, 255));
-			character.setBowRank(WhyDoesJavaNotHaveThese.clamp(Math.round(adjustedRanks.get(3)), 0, 255));
-			character.setStaffRank(WhyDoesJavaNotHaveThese.clamp(Math.round(adjustedRanks.get(4)), 0, 255));
-			character.setAnimaRank(WhyDoesJavaNotHaveThese.clamp(Math.round(adjustedRanks.get(5)), 0, 255));
-			character.setLightRank(WhyDoesJavaNotHaveThese.clamp(Math.round(adjustedRanks.get(6)), 0, 255));
-			character.setDarkRank(WhyDoesJavaNotHaveThese.clamp(Math.round(adjustedRanks.get(7)), 0, 255));
+			weaponRanks.sword = WeaponRank.roundToFullRank(adjustedRanks.get(0), type);
+			weaponRanks.lance = WeaponRank.roundToFullRank(adjustedRanks.get(1), type);
+			weaponRanks.axe = WeaponRank.roundToFullRank(adjustedRanks.get(2), type);
+			weaponRanks.bow = WeaponRank.roundToFullRank(adjustedRanks.get(3), type);
+			weaponRanks.staff = WeaponRank.roundToFullRank(adjustedRanks.get(4), type);
+			weaponRanks.anima = WeaponRank.roundToFullRank(adjustedRanks.get(5), type);
+			weaponRanks.light = WeaponRank.roundToFullRank(adjustedRanks.get(6), type);
+			weaponRanks.dark = WeaponRank.roundToFullRank(adjustedRanks.get(7), type);
 		} else {
 			// If we don't auto level transfer 1 to 1 while making sure it doesn't over or underflow
-			character.setSwordRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[0], 0, 255));
-			character.setLanceRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[1], 0, 255));
-			character.setAxeRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[2], 0, 255));
-			character.setBowRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[3], 0, 255));
-			character.setStaffRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[4], 0, 255));
-			character.setAnimaRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[5], 0, 255));
-			character.setLightRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[6], 0, 255));
-			character.setDarkRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[7], 0, 255));
+			weaponRanks.sword = WeaponRank.roundToFullRank(crossGameData.weaponRanks[0], type);
+			weaponRanks.lance = WeaponRank.roundToFullRank(crossGameData.weaponRanks[1], type);
+			weaponRanks.axe = WeaponRank.roundToFullRank(crossGameData.weaponRanks[2], type);
+			weaponRanks.bow = WeaponRank.roundToFullRank(crossGameData.weaponRanks[3], type);
+			weaponRanks.staff = WeaponRank.roundToFullRank(crossGameData.weaponRanks[4], type);
+			weaponRanks.anima = WeaponRank.roundToFullRank(crossGameData.weaponRanks[5], type);
+			weaponRanks.light = WeaponRank.roundToFullRank(crossGameData.weaponRanks[6], type);
+			weaponRanks.dark = WeaponRank.roundToFullRank(crossGameData.weaponRanks[7], type);
 		}
 		
-		
+		character.setWeaponRanks(weaponRanks);
 	}
 
 	/**
 	 * Update the class and stats for the slot based on the configured personal bases and potentially autolevels and promotion bonuses
 	 */
 	private static GBAFEClassData updateBases(TextLoader textData, Random rng, ClassDataLoader classData,
-			CharacterShufflingOptions options, GBAFECharacterData slot, GBACrossGameData chara, int targetClassId,
+			CharacterShufflingOptions options, GBAFEHolisticCharacter slot, GBACrossGameData chara,
 			GBAFEClassData targetClass, GBAFEClassData sourceClass, int slotLevel) {
+		
 		if (CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(options.getLevelingMode())) {
-			slot.setBases(chara.bases);
+			slot.changeClass(targetClass);
+			slot.setStats(chara.bases.add(targetClass.getBases()));
 		} else if (CharacterShufflingOptions.ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())) {
 
-			boolean shouldBePromoted = classData.isPromotedClass(slot.getClassID());
-
-			slot.setClassID(targetClassId);
-
-			boolean isPromoted = classData.isPromotedClass(targetClassId);
+			boolean shouldBePromoted = classData.isPromotedClass(targetClass.getID());
+			boolean isPromoted = classData.isPromotedClass(slot.getClassID());
 
 			// Decide Target Class / Promotions or Demotions / Number of Autolevels 
 			ClassAdjustmentDto adjustmentDAO = GBASlotAdjustmentService.handleClassAdjustment(slotLevel,
 					chara.level, shouldBePromoted, isPromoted, rng, classData, null, targetClass, slot,
 					sourceClass, null, textData, DebugPrinter.Key.GBA_CHARACTER_SHUFFLING );
 			targetClass = adjustmentDAO.targetClass;
-			slot.setClassID(targetClassId);
-
+			slot.changeClass(targetClass);
+			
 			// Calculate the auto leveled personal bases
-			GBAFEStatDto newPersonalBases = GBASlotAdjustmentService.autolevel(chara.bases, chara.growths, 
+			GBAFEStatDto newBases = GBASlotAdjustmentService.autolevel(chara.bases, chara.growths, 
 					adjustmentDAO.promoBonuses, adjustmentDAO.levelAdjustment, targetClass, DebugPrinter.Key.GBA_CHARACTER_SHUFFLING);
-
-			slot.setBases(newPersonalBases);
+			slot.setStats(newBases);
 		}
 		return targetClass;
 	}
@@ -240,11 +245,10 @@ public class CharacterShuffler {
 	 * @param character   - the current Character being changed
 	 * @param targetClass - the target Class that the character should now have.
 	 */
-	private static void updateUnitInChapter(ChapterLoader chapterData, GBAFECharacterData character,
+	private static void updateUnitInChapter(ChapterLoader chapterData, GBAFEHolisticCharacter character,
 			GBACrossGameData replacement, int targetClass, CharacterShufflingOptions options, 
 			ItemDataLoader itemData, ItemAssignmentOptions inventoryOptions) {
-		character.setClassID(targetClass);
-
+		
 		for (GBAFEChapterData chapter : chapterData.allChapters()) {
 			for (GBAFEChapterUnitData chapterUnit : chapter.allUnits()) {
 				if (chapterUnit.getCharacterNumber() == character.getID()) {

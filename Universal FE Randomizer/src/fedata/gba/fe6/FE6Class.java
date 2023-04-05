@@ -6,6 +6,7 @@ import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
+import fedata.general.FEBase.GameType;
 
 public class FE6Class extends GBAFEClassData {
 
@@ -17,7 +18,7 @@ public class FE6Class extends GBAFEClassData {
 	int promoRES;
 
 	public FE6Class(GBAFEClassData reference) {
-		super();
+		super(GameType.FE6);
 		this.originalData = Arrays.copyOf(reference.getData(), reference.getData().length);
 		this.data = Arrays.copyOf(reference.getData(), reference.getData().length);
 
@@ -30,7 +31,7 @@ public class FE6Class extends GBAFEClassData {
 	}
 
 	public FE6Class(byte[] data, long originalOffset, GBAFEClassData demotedClass) {
-		super();
+		super(GameType.FE6);
 		this.originalData = data;
 		this.data = data;
 		this.originalOffset = originalOffset;
@@ -84,9 +85,7 @@ public class FE6Class extends GBAFEClassData {
 
 	@Override
 	public void setSwordRank(WeaponRank rank) {
-		FE6Data.Item.FE6WeaponRank fe6Rank = FE6Data.Item.FE6WeaponRank.rankFromGeneralRank(rank);
-		int value = fe6Rank.value;
-		data[40] = (byte) (value & 0xFF);
+		data[40] = (byte) (rank.fe6RankValue & 0xFF);
 		wasModified = true;
 	}
 
@@ -97,9 +96,7 @@ public class FE6Class extends GBAFEClassData {
 
 	@Override
 	public void setLanceRank(WeaponRank rank) {
-		FE6Data.Item.FE6WeaponRank fe6Rank = FE6Data.Item.FE6WeaponRank.rankFromGeneralRank(rank);
-		int value = fe6Rank.value;
-		data[41] = (byte) (value & 0xFF);
+		data[41] = (byte) (rank.fe6RankValue & 0xFF);
 		wasModified = true;
 	}
 
@@ -110,9 +107,7 @@ public class FE6Class extends GBAFEClassData {
 
 	@Override
 	public void setAxeRank(WeaponRank rank) {
-		FE6Data.Item.FE6WeaponRank fe6Rank = FE6Data.Item.FE6WeaponRank.rankFromGeneralRank(rank);
-		int value = fe6Rank.value;
-		data[42] = (byte) (value & 0xFF);
+		data[42] = (byte) (rank.fe6RankValue & 0xFF);
 		wasModified = true;
 	}
 
@@ -123,9 +118,7 @@ public class FE6Class extends GBAFEClassData {
 
 	@Override
 	public void setBowRank(WeaponRank rank) {
-		FE6Data.Item.FE6WeaponRank fe6Rank = FE6Data.Item.FE6WeaponRank.rankFromGeneralRank(rank);
-		int value = fe6Rank.value;
-		data[43] = (byte) (value & 0xFF);
+		data[43] = (byte) (rank.fe6RankValue & 0xFF);
 		wasModified = true;
 	}
 
@@ -136,9 +129,7 @@ public class FE6Class extends GBAFEClassData {
 
 	@Override
 	public void setAnimaRank(WeaponRank rank) {
-		FE6Data.Item.FE6WeaponRank fe6Rank = FE6Data.Item.FE6WeaponRank.rankFromGeneralRank(rank);
-		int value = fe6Rank.value;
-		data[45] = (byte) (value & 0xFF);
+		data[45] = (byte) (rank.fe6RankValue & 0xFF);
 		wasModified = true;
 	}
 
@@ -149,9 +140,7 @@ public class FE6Class extends GBAFEClassData {
 
 	@Override
 	public void setLightRank(WeaponRank rank) {
-		FE6Data.Item.FE6WeaponRank fe6Rank = FE6Data.Item.FE6WeaponRank.rankFromGeneralRank(rank);
-		int value = fe6Rank.value;
-		data[46] = (byte) (value & 0xFF);
+		data[46] = (byte) (rank.fe6RankValue & 0xFF);
 		wasModified = true;
 	}
 
@@ -162,9 +151,7 @@ public class FE6Class extends GBAFEClassData {
 
 	@Override
 	public void setDarkRank(WeaponRank rank) {
-		FE6Data.Item.FE6WeaponRank fe6Rank = FE6Data.Item.FE6WeaponRank.rankFromGeneralRank(rank);
-		int value = fe6Rank.value;
-		data[47] = (byte) (value & 0xFF);
+		data[47] = (byte) (rank.fe6RankValue & 0xFF);
 		wasModified = true;
 	}
 
@@ -175,9 +162,7 @@ public class FE6Class extends GBAFEClassData {
 
 	@Override
 	public void setStaffRank(WeaponRank rank) {
-		FE6Data.Item.FE6WeaponRank fe6Rank = FE6Data.Item.FE6WeaponRank.rankFromGeneralRank(rank);
-		int value = fe6Rank.value;
-		data[44] = (byte) (value & 0xFF);
+		data[44] = (byte) (rank.fe6RankValue & 0xFF);
 		wasModified = true;
 	}
 
@@ -226,7 +211,7 @@ public class FE6Class extends GBAFEClassData {
 			return WeaponRank.NONE;
 		}
 
-		return FE6Data.Item.FE6WeaponRank.valueOf(rankValue).toGeneralRank();
+		return WeaponRank.valueOf(rankValue);
 	}
 
 	public void removeLordLocks() {

@@ -6,13 +6,13 @@ import java.util.Comparator;
 import fedata.gba.fe7.FE7Data;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
+import fedata.general.FEBase.GameType;
 import fedata.general.FEPrintableData;
 import util.WhyDoesJavaNotHaveThese;
 
 public abstract class GBAFEClassData extends AbstractGBAData implements FEPrintableData {
 	
 	protected String debugString = "Uninitialized";
-
 	
 	public static Comparator<GBAFEClassData> defaultComparator = new Comparator<GBAFEClassData>() {
 		@Override
@@ -20,6 +20,9 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 			return Integer.compare(arg0.getID(), arg1.getID());
 		}
 	};
+
+	public GBAFEClassData() {
+	}
 	
 	// Info
 	
@@ -31,6 +34,9 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 		return debugString;
 	}
 	
+	public GBAFEClassData(GameType type) {
+		super(type);
+	}
 	public abstract GBAFEClassData createClone();
 
 	public int getNameIndex() {
@@ -296,9 +302,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	}
 
 	public void setSwordRank(WeaponRank rank) {
-		FE7Data.Item.FE7WeaponRank fe7Rank = FE7Data.Item.FE7WeaponRank.rankFromGeneralRank(rank);
-		int value = fe7Rank.value;
-		data[44] = (byte)(value & 0xFF);
+		data[44] = (byte)(rank.rankValue(gameType) & 0xFF);
 		wasModified = true;
 	}
 
@@ -307,9 +311,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	}
 
 	public void setLanceRank(WeaponRank rank) {
-		FE7Data.Item.FE7WeaponRank fe7Rank = FE7Data.Item.FE7WeaponRank.rankFromGeneralRank(rank);
-		int value = fe7Rank.value;
-		data[45] = (byte)(value & 0xFF);
+		data[45] = (byte)(rank.rankValue(gameType) & 0xFF);
 		wasModified = true;
 	}
 
@@ -318,9 +320,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	}
 
 	public void setAxeRank(WeaponRank rank) {
-		FE7Data.Item.FE7WeaponRank fe7Rank = FE7Data.Item.FE7WeaponRank.rankFromGeneralRank(rank);
-		int value = fe7Rank.value;
-		data[46] = (byte)(value & 0xFF);
+		data[46] = (byte)(rank.rankValue(gameType) & 0xFF);
 		wasModified = true;
 	}
 
@@ -329,9 +329,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	}
 
 	public void setBowRank(WeaponRank rank) {
-		FE7Data.Item.FE7WeaponRank fe7Rank = FE7Data.Item.FE7WeaponRank.rankFromGeneralRank(rank);
-		int value = fe7Rank.value;
-		data[47] = (byte)(value & 0xFF);
+		data[47] = (byte)(rank.rankValue(gameType) & 0xFF);
 		wasModified = true;
 	}
 
@@ -340,9 +338,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	}
 
 	public void setAnimaRank(WeaponRank rank) {
-		FE7Data.Item.FE7WeaponRank fe7Rank = FE7Data.Item.FE7WeaponRank.rankFromGeneralRank(rank);
-		int value = fe7Rank.value;
-		data[49] = (byte)(value & 0xFF);
+		data[49] = (byte)(rank.rankValue(gameType) & 0xFF);
 		wasModified = true;
 	}
 
@@ -351,9 +347,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	}
 
 	public void setLightRank(WeaponRank rank) {
-		FE7Data.Item.FE7WeaponRank fe7Rank = FE7Data.Item.FE7WeaponRank.rankFromGeneralRank(rank);
-		int value = fe7Rank.value;
-		data[50] = (byte)(value & 0xFF);
+		data[50] = (byte)(rank.rankValue(gameType) & 0xFF);
 		wasModified = true;
 	}
 
@@ -362,9 +356,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	}
 
 	public void setDarkRank(WeaponRank rank) {
-		FE7Data.Item.FE7WeaponRank fe7Rank = FE7Data.Item.FE7WeaponRank.rankFromGeneralRank(rank);
-		int value = fe7Rank.value;
-		data[51] = (byte)(value & 0xFF);
+		data[51] = (byte)(rank.rankValue(gameType) & 0xFF);
 		wasModified = true;
 	}
 
@@ -373,10 +365,12 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	}
 
 	public void setStaffRank(WeaponRank rank) {
-		FE7Data.Item.FE7WeaponRank fe7Rank = FE7Data.Item.FE7WeaponRank.rankFromGeneralRank(rank);
-		int value = fe7Rank.value;
-		data[48] = (byte)(value & 0xFF);
+		data[48] = (byte)(rank.rankValue(gameType) & 0xFF);
 		wasModified = true;
+	}
+	
+	public GBAFEWeaponRankDto getWeaponRanks(){
+		return new GBAFEWeaponRankDto(gameType, getSwordRank(), getLanceRank(), getAxeRank(), getBowRank(), getStaffRank(), getAnimaRank(), getLightRank(), getDarkRank());
 	}
 
 	public int getBaseRankValue() {
@@ -423,6 +417,10 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	public int getCON() {
 		return data[17] & 0xFF;
 	}
+	
+	public int getMaxCON() {
+		return data[19] & 0xFF;
+	}
 
 	public Boolean canUseWeapon(GBAFEItemData weapon) {
 		if (weapon == null) { return false; }
@@ -447,7 +445,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 		
 		if (rankValue == 0) { return WeaponRank.NONE; }
 		
-		return FE7Data.Item.FE7WeaponRank.valueOf(rankValue).toGeneralRank();
+		return WeaponRank.valueOf(rankValue);
 	}
 
 	public void removeLordLocks() {

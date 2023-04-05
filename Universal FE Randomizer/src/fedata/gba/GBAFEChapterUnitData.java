@@ -91,7 +91,18 @@ public abstract class GBAFEChapterUnitData extends AbstractGBAData {
 		wasModified = true;
 	}
 
-
+	public int getItem(int i) {
+		assert(i>=1 && i<=4);
+		
+		return data[11+i] & 0xFF;
+	}
+	
+	public void setItem(int i, int itemId) {
+		assert(i>=1 && i<=4);
+		data[11+i] = (byte)(itemId & 0xFF);
+		wasModified = true;
+	}
+	
 	public int getItem1() {
 		return data[8] & 0xFF;
 	}

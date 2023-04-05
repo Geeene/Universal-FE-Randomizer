@@ -13,6 +13,7 @@ import fedata.gba.GBAFEChapterItemData;
 import fedata.gba.GBAFEChapterUnitData;
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFEWorldMapData;
 import fedata.gba.GBAFEWorldMapSpriteData;
@@ -31,6 +32,7 @@ import random.gba.loader.ClassDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.loader.PaletteLoader;
+import random.gba.loader.PortraitDataLoader;
 import random.gba.loader.TextLoader;
 import ui.model.BaseOptions;
 import ui.model.ClassOptions;
@@ -67,7 +69,6 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 	@Override
 	public void runDataloaders() {
 		sourceFileHandler.setAppliedDiffs(diffCompiler);
-		
 		updateStatusString("Detecting Free Space...");
 		updateProgress(0.02);
 		freeSpace = new FreeSpaceManager(FEBase.GameType.FE8, FE8Data.InternalFreeRange, sourceFileHandler);
@@ -96,6 +97,10 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 		updateProgress(0.30);
 		paletteData = new PaletteLoader(FEBase.GameType.FE8, sourceFileHandler, charData, classData);
 		updateStatusString("Loading Statboost Data...");
+		
+		updateProgress(0.32);
+		portraitData = new PortraitDataLoader(FE8Data.shufflingDataProvider, sourceFileHandler);
+		updateStatusString("Loading Potrait Data...");
 		
 		updateStatusString("Loading Summoner Module...");
 		updateProgress(0.35);
@@ -182,8 +187,8 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 
 	@Override
 	protected void createSpecialLordClasses() {
-		GBAFECharacterData eirika = charData.characterWithID(FE8Data.Character.EIRIKA.ID);
-		GBAFECharacterData ephraim = charData.characterWithID(FE8Data.Character.EPHRAIM.ID);
+		GBAFEHolisticCharacter eirika = holisticCharacterMap.get(FE8Data.Character.EIRIKA.ID);
+		GBAFEHolisticCharacter ephraim = holisticCharacterMap.get(FE8Data.Character.EPHRAIM.ID);
 		
 		int oldEirikaClass = eirika.getClassID();
 		int oldEphraimClass = ephraim.getClassID();
@@ -191,9 +196,8 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 		// GBAFE only stores 5 bits for the class (in save data), so using any ID greater than 0x7F will have issues. We have to replace an existing class.
 		GBAFEClassData newEirikaClass = classData.createLordClassBasedOnClass(classData.classForID(oldEirikaClass), FE8Data.CharacterClass.UNUSED_TENT.ID); // This was a (unused?) tent.
 		GBAFEClassData newEphraimClass = classData.createLordClassBasedOnClass(classData.classForID(oldEphraimClass), FE8Data.CharacterClass.UNUSED_MANAKETE.ID); // This is an unused manakete class.
-		
-		eirika.setClassID(newEirikaClass.getID());
-		ephraim.setClassID(newEphraimClass.getID());
+		eirika.changeClass(newEirikaClass);
+		ephraim.changeClass(newEphraimClass);
 		
 		// Add new classes to any effectiveness tables.
 		List<AdditionalData> effectivenesses = itemData.effectivenessArraysForClassID(oldEirikaClass);
@@ -543,7 +547,7 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 		fe8_summonerModule.validateSummoners(charData, new Random(SeedGenerator.generateSeedValue(seedString, 0)));
 		fe8_summonerModule.commitChanges(diffCompiler, freeSpace);
 	}
-	
+
 	@Override
 	protected void applyUpsPatches() {
 		// N/A

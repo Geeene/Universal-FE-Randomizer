@@ -4,9 +4,10 @@ import java.util.Random;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEHolisticCharacter;
+import fedata.gba.GBAFEStatDto;
 import random.gba.loader.CharacterDataLoader;
 import random.gba.loader.ClassDataLoader;
-import util.WhyDoesJavaNotHaveThese;
 
 public class BasesRandomizer {
 	
@@ -15,191 +16,101 @@ public class BasesRandomizer {
 	public static void randomizeBasesByRedistribution(int variance, CharacterDataLoader charactersData, ClassDataLoader classData, Random rng) {
 		GBAFECharacterData[] allPlayableCharacters = charactersData.playableCharacters();
 		for (GBAFECharacterData character : allPlayableCharacters) {
-			int baseTotal = character.getBaseHP() + character.getBaseSTR() + character.getBaseSKL() + character.getBaseSPD() + character.getBaseDEF() +
-					character.getBaseRES() + character.getBaseLCK();
+			GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character.getID());
+			GBAFEClassData charClass = holisticCharacter.getCurrentClass();
+
+			// calculate the total number of stats that can be redistributed. This is the complete bases (personal and class) + the selected variance
+			int baseTotal = holisticCharacter.getStats().getStatTotal();
+			// 50/50 chance for the variance to be negative, so multiply it by -1 or 1
+			baseTotal += rng.nextInt(variance + 1) * nextMultiplier(rng);
 			
-			int classID = character.getClassID();
-			GBAFEClassData charClass = classData.classForID(classID);
+
+			GBAFEStatDto newStats = new GBAFEStatDto();
+			GBAFEStatDto caps = charClass.getCaps();
 			
-			int randomNum = rng.nextInt(2);
-			if (randomNum == 0) {
-				baseTotal += rng.nextInt(variance + 1);
-			} else {
-				baseTotal -= rng.nextInt(variance + 1);
-			}
+			while (baseTotal > 0) {
+				int randomNum = rng.nextInt(10);
+				int amount = rng.nextInt(3) + 1;
+				
+				switch (randomNum) {
+				case 0:
+				case 5:
+				case 1:
+					amount = reduceAmountIfNecessary(caps.hp, amount, newStats.hp);
+					newStats.hp += amount;
+					break;
+				case 2:
+					amount = reduceAmountIfNecessary(caps.str, amount, newStats.str);
+					newStats.str += amount;
+					break;
+				case 3:
+					amount = reduceAmountIfNecessary(caps.skl, amount, newStats.skl);
+					newStats.skl += amount;
+					break;
+				case 4:
+					amount = reduceAmountIfNecessary(caps.spd, amount, newStats.spd);
+					newStats.spd += amount;
+					break;
+				case 8:
+				case 9:
+					amount = reduceAmountIfNecessary(caps.lck, amount, newStats.lck);
+					newStats.lck += amount;
+					break;
+				case 6: 
+					amount = reduceAmountIfNecessary(caps.def, amount, newStats.def);
+					newStats.def += amount;
+					break;
+				case 7:
+					amount = reduceAmountIfNecessary(caps.res, amount, newStats.res);
+					newStats.res += amount;
+					break;
+				default:
+					break;
+				}
+				
+				baseTotal -= amount;
+			} 
 			
-			int newHPBase = 0;
-			int newSTRBase = 0;
-			int newSKLBase = 0;
-			int newSPDBase = 0;
-			int newLCKBase = 0;
-			int newDEFBase = 0;
-			int newRESBase = 0;
+			// Set the Stats for the Holistic Character. This automatically clamps to caps / minimum values again if needed.
+			holisticCharacter.setStats(newStats);
 			
-			int initialLuck = rng.nextInt(Math.max(1, baseTotal / 7)) + 2;
-			newLCKBase += initialLuck;
-			baseTotal -= initialLuck;
-			if (baseTotal < 0) {
-				baseTotal = 0;
-			}
-			
-			if (baseTotal > 0) {	
-				do {
-					randomNum = rng.nextInt(10);
-					int amount = rng.nextInt(3) + 1;
-					
-					switch (randomNum) {
-					case 0:
-					case 5:
-					case 1:
-						if (!WhyDoesJavaNotHaveThese.isValueBetween(newHPBase + amount, -1 * charClass.getBaseHP(), charClass.getMaxHP() - charClass.getBaseHP())) {
-							continue;
-						}
-						newHPBase += amount;
-						break;
-					case 2:
-						if (!WhyDoesJavaNotHaveThese.isValueBetween(newSTRBase + amount, -1 * charClass.getBaseSTR(), charClass.getMaxSTR() - charClass.getBaseSTR())) {
-							continue;
-						}
-						newSTRBase += amount;
-						break;
-					case 3:
-						if (!WhyDoesJavaNotHaveThese.isValueBetween(newSKLBase + amount, -1 * charClass.getBaseSKL(), charClass.getMaxSKL() - charClass.getBaseSKL())) {
-							continue;
-						}
-						newSKLBase += amount;
-						break;
-					case 4:
-						if (!WhyDoesJavaNotHaveThese.isValueBetween(newSPDBase + amount, -1 * charClass.getBaseSPD(), charClass.getMaxSPD() - charClass.getBaseSPD())) {
-							continue;
-						}
-						newSPDBase += amount;
-						break;
-					case 8:
-					case 9:
-						if (!WhyDoesJavaNotHaveThese.isValueBetween(newLCKBase + amount, -1 * charClass.getBaseLCK(), charClass.getMaxLCK() - charClass.getBaseLCK())) {
-							continue;
-						}
-						newLCKBase += amount;
-						break;
-					case 6: 
-						if (!WhyDoesJavaNotHaveThese.isValueBetween(newDEFBase + amount, -1 * charClass.getBaseDEF(), charClass.getMaxDEF() - charClass.getBaseDEF())) {
-							continue;
-						}
-						newDEFBase += amount;
-						break;
-					case 7:
-						if (!WhyDoesJavaNotHaveThese.isValueBetween(newRESBase + amount, -1 * charClass.getBaseRES(), charClass.getMaxRES() - charClass.getBaseRES())) {
-							continue;
-						}
-						newRESBase += amount;
-						break;
-					default:
-						break;
-					}
-					
-					baseTotal -= amount;
-				} while (baseTotal > 0);
-			}
-			
-			character.setBaseHP(newHPBase);
-			character.setBaseSTR(newSTRBase);
-			character.setBaseSKL(newSKLBase);
-			character.setBaseSPD(newSPDBase);
-			character.setBaseLCK(newLCKBase);
-			character.setBaseDEF(newDEFBase);
-			character.setBaseRES(newRESBase);
 		}
-		
-		charactersData.commit();
 	}
+	
+	public static int reduceAmountIfNecessary(int cap, int amount, int currentStat) {
+		int statAfterIncrease = currentStat + amount;
+		if (statAfterIncrease > cap) {
+			return amount - (statAfterIncrease - cap);
+		}
+		return amount;
+	}
+
 	
 	public static void randomizeBasesByRandomDelta(int maxDelta, CharacterDataLoader charactersData, ClassDataLoader classData, Random rng) {
 		GBAFECharacterData[] allPlayableCharacters = charactersData.playableCharacters();
 		for (GBAFECharacterData character : allPlayableCharacters) {
+			GBAFEHolisticCharacter holisticCharacter = AbstractGBARandomizer.holisticCharacterMap.get(character.getID());
+			GBAFEStatDto oldStats = holisticCharacter.getStats();
+			GBAFEStatDto deltas = new GBAFEStatDto();
+			deltas.hp = rng.nextInt(maxDelta + 1) * nextMultiplier(rng);
+			deltas.str = rng.nextInt(maxDelta + 1) * nextMultiplier(rng);
+			deltas.skl = rng.nextInt(maxDelta + 1) * nextMultiplier(rng);
+			deltas.spd = rng.nextInt(maxDelta + 1) * nextMultiplier(rng);
+			deltas.lck = rng.nextInt(maxDelta + 1) * nextMultiplier(rng);
+			deltas.def = rng.nextInt(maxDelta + 1) * nextMultiplier(rng);
+			deltas.res = rng.nextInt(maxDelta + 1) * nextMultiplier(rng);
 			
-			int classID = character.getClassID();
-			GBAFEClassData charClass = classData.classForID(classID);
-			
-			int newHPBase = character.getBaseHP();
-			int newSTRBase = character.getBaseSTR();
-			int newSKLBase = character.getBaseSKL();
-			int newSPDBase = character.getBaseSPD();
-			int newLCKBase = character.getBaseLCK();
-			int newDEFBase = character.getBaseDEF();
-			int newRESBase = character.getBaseRES();
-			
-			int randomNum = rng.nextInt(2);
-			int multiplier = 1;
-			if (randomNum == 0) {
-				multiplier = -1;
-			}
-			newHPBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newHPBase, 
-					-1 * charClass.getBaseHP(), charClass.getMaxHP() - charClass.getBaseHP());
-			
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0) {
-				multiplier = 1;
-			} else {
-				multiplier = -1;
-			}
-			newSTRBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newSTRBase, 
-					-1 * charClass.getBaseSTR(), charClass.getMaxSTR() - charClass.getBaseSTR());
-			
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0) {
-				multiplier = 1;
-			} else {
-				multiplier = -1;
-			}
-			newSKLBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newSKLBase, 
-					-1 * charClass.getBaseSKL(), charClass.getMaxSKL() - charClass.getBaseSKL());
-			
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0) {
-				multiplier = 1;
-			} else {
-				multiplier = -1;
-			}
-			newSPDBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newSPDBase, 
-					-1 * charClass.getBaseSPD(), charClass.getMaxSPD() - charClass.getBaseSPD());
-			
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0) {
-				multiplier = 1;
-			} else {
-				multiplier = -1;
-			}
-			newLCKBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newLCKBase, 
-					-1 * charClass.getBaseLCK(), charClass.getMaxLCK() - charClass.getBaseLCK());
-			
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0) {
-				multiplier = 1;
-			} else {
-				multiplier = -1;
-			}
-			newDEFBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newDEFBase, 
-					-1 * charClass.getBaseDEF(), charClass.getMaxDEF() - charClass.getBaseDEF());
-			
-			randomNum = rng.nextInt(2);
-			if (randomNum == 0) {
-				multiplier = 1;
-			} else {
-				multiplier = -1;
-			}
-			newRESBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newRESBase, 
-					-1 * charClass.getBaseRES(), charClass.getMaxRES() - charClass.getBaseRES());
-			
-			character.setBaseHP(newHPBase);
-			character.setBaseSTR(newSTRBase);
-			character.setBaseSKL(newSKLBase);
-			character.setBaseSPD(newSPDBase);
-			character.setBaseLCK(newLCKBase);
-			character.setBaseDEF(newDEFBase);
-			character.setBaseRES(newRESBase);
+			// Set the Stats for the Holistic Character. This automatically clamps to caps / minimum values if needed.
+			holisticCharacter.setStats(oldStats.add(deltas));
+		}
+	}
+	
+	private static int nextMultiplier(Random rng) {
+		int randomNum = rng.nextInt(2);
+		if (randomNum == 0) {
+			return 1;
 		}
 		
-		charactersData.commit();
+		return -1;
 	}
 }

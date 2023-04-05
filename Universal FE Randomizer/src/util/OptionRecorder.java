@@ -5,6 +5,7 @@ import java.util.prefs.Preferences;
 import com.google.gson.Gson;
 
 import fedata.general.FEBase;
+import fedata.general.FEBase.GameType;
 import ui.fe4.FE4ClassOptions;
 import ui.fe4.FE4EnemyBuffOptions;
 import ui.fe4.FE4PromotionOptions;
@@ -24,6 +25,7 @@ import ui.model.MiscellaneousOptions;
 import ui.model.OtherCharacterOptions;
 import ui.model.RecruitmentOptions;
 import ui.model.WeaponOptions;
+import util.OptionRecorder.GBAOptionBundle;
 
 public class OptionRecorder {
 	private static final Integer FE4OptionBundleVersion = 5;
@@ -36,6 +38,15 @@ public class OptionRecorder {
 		public GBAOptionBundle fe7;
 		public GBAOptionBundle fe8;
 		public FE9OptionBundle fe9;
+		
+		public GBAOptionBundle gbaBundleByGame(GameType type) {
+			GBAOptionBundle bundle = null;
+			if (type == GameType.FE6) { bundle = OptionRecorder.options.fe6; }
+			else if (type == GameType.FE7) { bundle = OptionRecorder.options.fe7; }
+			else if (type == GameType.FE8) { bundle = OptionRecorder.options.fe8; }
+			
+			return bundle;
+		}
 	}
 	
 	public static class GBAOptionBundle {
@@ -229,6 +240,8 @@ public class OptionRecorder {
 			String fe9String = gson.toJson(options.fe9);
 			prefs.put(SettingsKey + FE9Suffix, fe9String);
 		}
+		
+		loadOptions();
 	}
 	
 	public static void recordFE9Options(GrowthOptions growthOptions, BaseOptions baseOptions, FE9SkillsOptions skillOptions,

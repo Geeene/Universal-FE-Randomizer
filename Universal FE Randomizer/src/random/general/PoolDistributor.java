@@ -21,6 +21,12 @@ public class PoolDistributor<T> {
 			addItem(item, 1);
 		}
 	}
+
+	public void addAll(T... items) {
+		for(T item : items) {
+			addItem(item, 1);
+		}
+	}
 	public void addItem(T item) {
 		addItem(item, 1);
 	}

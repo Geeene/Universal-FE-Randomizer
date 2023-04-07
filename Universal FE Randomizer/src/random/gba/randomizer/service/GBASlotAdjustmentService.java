@@ -155,7 +155,6 @@ public class GBASlotAdjustmentService {
 			, int levelsRequired, GBAFEClassData targetClass, DebugPrinter.Key key) {
 		// initialize a new DAO with the original Bases
 		GBAFEStatDto newBases = new GBAFEStatDto(bases);
-		GBAFEStatDto classBases = targetClass.getBases();
 		DebugPrinter.log(key, String.format("Original Bases: %s%n", newBases.toString()));
 		// Add all necessary promotion or demotions
 		if (!promoBonuses.isEmpty()) {
@@ -171,9 +170,8 @@ public class GBASlotAdjustmentService {
 		
 		// Now we have the calculated auto leveled stats.
 		// Here we must ensure that the character doesn't over or underflow, so we add the Stats to the class bases, and clamp it to the max and min stats.
-		GBAFEStatDto totalBases = new GBAFEStatDto(Arrays.asList(newBases, classBases));
-		totalBases = totalBases.clamp(GBAFEStatDto.MINIMUM_STATS, targetClass.getCaps()); // Clamp to prevent over or underflow
-		DebugPrinter.log(key, String.format("Theoretical final Stats after clamp: %s%n", totalBases.toString()));
+		newBases.clamp(GBAFEStatDto.MINIMUM_STATS, targetClass.getCaps()); // Clamp to prevent over or underflow
+		DebugPrinter.log(key, String.format("Theoretical final Stats after clamp: %s%n", newBases.toString()));
 		return newBases;
 	}
 

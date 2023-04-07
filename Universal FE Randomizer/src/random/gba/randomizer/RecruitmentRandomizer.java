@@ -433,7 +433,7 @@ public class RecruitmentRandomizer {
 			// Do not modify if they happen to have a different class.
 			if (linkedSlot.getClassID() != slotReference.getClassID()) { continue; }
 			
-			GBAFEHolisticCharacter holisticLinkedSLot = AbstractGBARandomizer.holisticCharacterMap.get(linkedSlot.getID());
+			GBAFEHolisticCharacter holisticLinkedSlot = AbstractGBARandomizer.holisticCharacterMap.get(linkedSlot.getID());
 			int targetLevel = linkedSlot.getLevel();
 			int sourceLevel = fill.getLevel();
 			
@@ -447,7 +447,7 @@ public class RecruitmentRandomizer {
 			int levelsToAdd = adjustmentDAO.levelAdjustment;
 			promoBonuses =  adjustmentDAO.promoBonuses;
 			
-			setSlotClass(inventoryOptions, holisticLinkedSLot, targetClass, characterData, classData, itemData, textData, chapterData, rng);
+			setSlotClass(inventoryOptions, holisticLinkedSlot, targetClass, characterData, classData, itemData, textData, chapterData, rng);
 			
 			GBAFEStatDto targetGrowths;
 			switch(options.growthMode) {
@@ -471,7 +471,7 @@ public class RecruitmentRandomizer {
 				GBAFEStatDto growthsToUse = options.autolevelMode == BaseStatAutolevelType.USE_NEW ? targetGrowths : fill.getGrowths();
 				
 				// Calculate the auto leveled personal bases
-				newStats = GBASlotAdjustmentService.autolevel(fill.getBases(), growthsToUse, 
+				newStats = GBASlotAdjustmentService.autolevel(holisticFill.getStats(), growthsToUse, 
 						promoBonuses, levelsToAdd, targetClass, DebugPrinter.Key.GBA_RANDOM_RECRUITMENT); 
 				
 				DebugPrinter.log(DebugPrinter.Key.GBA_RANDOM_RECRUITMENT, String.format("== New Bases ==%n%s", newStats.toString()));
@@ -501,12 +501,14 @@ public class RecruitmentRandomizer {
 			} else {
 				assert false : "Invalid stat adjustment mode for random recruitment.";
 			}
-			holisticLinkedSLot.setStats(newStats);
+			holisticLinkedSlot.setStats(newStats);
 		}
 	}
 	
 	private static void setSlotClass(ItemAssignmentOptions inventoryOptions, GBAFEHolisticCharacter slot, GBAFEClassData targetClass, CharacterDataLoader characterData, ClassDataLoader classData, ItemDataLoader itemData, TextLoader textData, ChapterLoader chapterData, Random rng) {
 		slot.changeClass(targetClass);
+		slot.updateWeaponRanksToMatchClass(rng);
+
 		ItemAssignmentService.assignNewItems(characterData, slot, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
 	}
 }

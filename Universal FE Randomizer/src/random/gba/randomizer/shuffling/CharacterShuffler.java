@@ -125,9 +125,7 @@ public class CharacterShuffler {
 				holisticCharacter.setCon(crossGameData.constitution);
 				updateWeaponRanks(holisticCharacter, crossGameData, options, type);
 				
-				for (GBAFECharacterData gbafeCharacterData : holisticCharacter.linkedCharacters) {
-					GBAFEHolisticCharacter holisticLinkedChar = AbstractGBARandomizer.holisticCharacterMap.get(gbafeCharacterData.getID());
-					
+				for (GBAFEHolisticCharacter holisticLinkedChar : holisticCharacter.linkedCharacters) {
 					// (e) Update the bases, and potentially auto level the Character to the level of the slot.
 					// Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
 					targetClass = updateBases(textData, rng, classData, options, holisticLinkedChar, crossGameData,

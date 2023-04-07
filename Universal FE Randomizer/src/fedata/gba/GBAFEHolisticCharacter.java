@@ -32,7 +32,7 @@ public class GBAFEHolisticCharacter {
 
 	public String charDebugString;
 	public String classDebugString;
-	public List<GBAFECharacterData> linkedCharacters = new ArrayList<>();
+	public List<GBAFEHolisticCharacter> linkedCharacters = new ArrayList<>();
 	
 	private GameType gameType;
 
@@ -75,8 +75,18 @@ public class GBAFEHolisticCharacter {
 		return this.classData.getID();
 	}
 	
-	/** Associate the charcter with other related CharacterData so they can be updated together */
-	public void setLinkedCharacters(List<GBAFECharacterData> chars) {
+	
+	/** Associate the charcater with other related CharacterData so they can be updated together */
+	public void addLinkedChar(GBAFEHolisticCharacter link) {
+		if (linkedCharacters == null) {
+			linkedCharacters = new ArrayList<>();
+		}
+		
+		linkedCharacters.add(link);
+	}
+	
+	/** Associate the character with other related CharacterData so they can be updated together */
+	public void setLinkedCharacters(List<GBAFEHolisticCharacter> chars) {
 		this.linkedCharacters = chars;
 	}
 	
@@ -170,13 +180,12 @@ public class GBAFEHolisticCharacter {
 	public void updateWeaponRanksToMatchClass(Random rng) {
 		GBAFEWeaponRankDto characterRanks = this.personalData.getWeaponRanks();
 		GBAFEWeaponRankDto classRanks = this.classData.getWeaponRanks();
-		// Remove the current weapon ranks
-		this.weaponRanks.reset();
 
 		List<WeaponRank> classRanksList = classRanks.asList();
 		WeaponRank lowestRank = null;
 		for (WeaponRank weaponRank : classRanksList) {
-			if (weaponRank == null || lowestRank == null || weaponRank.isLowerThan(lowestRank, gameType)) {
+			if (weaponRank == null || lowestRank == null || 
+					(weaponRank.isLowerThan(lowestRank, gameType) && !weaponRank.equals(WeaponRank.NONE) )) {
 				lowestRank = weaponRank;
 			}
 		}
@@ -220,6 +229,7 @@ public class GBAFEHolisticCharacter {
 	public void setWeaponRanks(GBAFEWeaponRankDto newRanks) {
 		// Update the full weapon rank including the class part for this character
 		this.weaponRanks = new GBAFEWeaponRankDto(newRanks);
+		this.personalData.setWeaponRanks(weaponRanks);
 		this.linkedCharacters.forEach(c -> c.setWeaponRanks(newRanks));
 		
 	}
@@ -248,7 +258,8 @@ public class GBAFEHolisticCharacter {
 	}
 	
 	public void setAffinity(int affinity) {
-		this.linkedCharacters.forEach(c -> c.setAffinityValue(affinity));
+		this.personalData.setAffinityValue(affinity);
+		this.linkedCharacters.forEach(c -> c.setAffinity(affinity));
 	}
 	
 	public int getNameIndex() {
@@ -264,11 +275,13 @@ public class GBAFEHolisticCharacter {
 	}
 
 	public void setFaceId(int faceId) {
-		this.linkedCharacters.forEach(c -> c.setFaceID(faceId));
+		this.personalData.setFaceID(faceId);
+		this.linkedCharacters.forEach(c -> c.setFaceId(faceId));
 	}
 
 	public void setLord(boolean isLord) {
-		this.linkedCharacters.forEach(c -> c.setIsLord(isLord));
+		this.personalData.setIsLord(isLord);
+		this.linkedCharacters.forEach(c -> c.setLord(isLord));
 	}
 	
 	/**

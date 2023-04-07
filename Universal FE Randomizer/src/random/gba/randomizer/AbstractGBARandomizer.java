@@ -3,6 +3,7 @@ package random.gba.randomizer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -253,7 +254,14 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		charData.canonicalPlayableCharacters(recruitOptions != null ? recruitOptions.includeExtras : false).forEach(chara -> {
 			GBAFEClassData charClass = classData.classForID(chara.getClassID());
 			GBAFEHolisticCharacter holisticCharacter = new GBAFEHolisticCharacter(chara, charClass, gameType);
-			holisticCharacter.setLinkedCharacters(Arrays.asList(charData.linkedCharactersForCharacter(chara)));
+			
+			for (GBAFECharacterData linkedChar : charData.linkedCharactersForCharacter(chara)) {
+				GBAFEHolisticCharacter linkedCharHolistic = new GBAFEHolisticCharacter(chara, classData.classForID(linkedChar.getClassID()), gameType);
+				holisticCharacterMap.put(linkedChar.getID(), linkedCharHolistic);
+				holisticCharacter.addLinkedChar(linkedCharHolistic);
+			}
+			
+			holisticCharacter.setLinkedCharacters(Arrays.asList());
 			holisticCharacterMap.put(chara.getID(), holisticCharacter);
 		});
 		
@@ -261,7 +269,11 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		for (GBAFECharacterData chara : charData.bossCharacters()) {
 			GBAFEClassData charClass = classData.classForID(chara.getClassID()); 
 			GBAFEHolisticCharacter holisticCharacter = new GBAFEHolisticCharacter(chara, charClass, gameType);
-			holisticCharacter.setLinkedCharacters(Arrays.asList(charData.linkedCharactersForCharacter(chara)));
+			for (GBAFECharacterData linkedChar : charData.linkedCharactersForCharacter(chara)) {
+				GBAFEHolisticCharacter linkedCharHolistic = new GBAFEHolisticCharacter(chara, classData.classForID(linkedChar.getClassID()), gameType);
+				holisticCharacterMap.put(linkedChar.getID(), linkedCharHolistic);
+				holisticCharacter.addLinkedChar(linkedCharHolistic);
+			}
 			holisticCharacterMap.put(chara.getID(), new GBAFEHolisticCharacter(chara, charClass, gameType));
 		}
 		
@@ -677,9 +689,9 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 					continue;
 				}
 				if (charData.isPlayableCharacterID(chapterUnit.getCharacterNumber())) {
-					GBAFECharacterData character = charData.characterWithID(chapterUnit.getCharacterNumber());
+					GBAFEHolisticCharacter holisticCharacter = holisticCharacterMap.get(chapterUnit.getCharacterNumber());
 					GBAFEItemData healingStaff = itemData
-							.getRandomHealingStaff(itemData.rankForValue(character.getStaffRank()), rng);
+							.getRandomHealingStaff(holisticCharacter.getWeaponRanks().staff, rng);
 					if (healingStaff != null) {
 						chapterUnit.giveItem(healingStaff.getID());
 					}

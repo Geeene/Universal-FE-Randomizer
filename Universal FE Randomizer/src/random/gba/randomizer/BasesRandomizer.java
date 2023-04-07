@@ -29,7 +29,7 @@ public class BasesRandomizer {
 			GBAFEStatDto caps = charClass.getCaps();
 			
 			while (baseTotal > 0) {
-				int randomNum = rng.nextInt(10);
+				int randomNum = rng.nextInt(9);
 				int amount = rng.nextInt(3) + 1;
 				
 				switch (randomNum) {
@@ -52,7 +52,6 @@ public class BasesRandomizer {
 					newStats.spd += amount;
 					break;
 				case 8:
-				case 9:
 					amount = reduceAmountIfNecessary(caps.lck, amount, newStats.lck);
 					newStats.lck += amount;
 					break;

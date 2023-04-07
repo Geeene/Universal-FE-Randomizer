@@ -35,6 +35,7 @@ import ui.model.EnemyOptions;
 import ui.model.GrowthOptions;
 import ui.model.ItemAssignmentOptions;
 import ui.model.MiscellaneousOptions;
+import ui.model.MiscellaneousOptions.ExperienceRate;
 import ui.model.OtherCharacterOptions;
 import ui.model.RecruitmentOptions;
 import ui.model.WeaponOptions;
@@ -341,5 +342,75 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 	@Override
 	protected void applyUpsPatches() {
 		applyEnglishPatch();
+	}
+
+	@Override
+	protected void applyCasualMode() {
+		diffCompiler.addDiff(new Diff(0x17BEA, 1, new byte[] {(byte)0x09}, new byte[] {(byte)0x05}));
+	}
+
+	@Override
+	protected void applyExpMode() {
+		switch(miscOptions.experienceRate) {
+		case NORMAL: break;
+		case PARAGON:
+			// Combat EXP
+			diffCompiler.addDiff(new Diff(0x258D0, 24, 
+					new byte[] {(byte)0x24, (byte)0x18, (byte)0x64, (byte)0x00, (byte)0x64, (byte)0x2C, (byte)0x00, (byte)0xDD,
+							    (byte)0x64, (byte)0x24, (byte)0x00, (byte)0x2C, (byte)0x00, (byte)0xDA, (byte)0x00, (byte)0x24,
+							    (byte)0x20, (byte)0x1C, (byte)0x70, (byte)0xBC, (byte)0x02, (byte)0xBC, (byte)0x08, (byte)0x47}, 
+					new byte[] {(byte)0x24, (byte)0x18, (byte)0x64, (byte)0x2C, (byte)0x00, (byte)0xDD, (byte)0x64, (byte)0x24, 
+							    (byte)0x00, (byte)0x2C, (byte)0x00, (byte)0xDA, (byte)0x00, (byte)0x24, (byte)0x20, (byte)0x1C,
+							    (byte)0x70, (byte)0xBC, (byte)0x02, (byte)0xBC, (byte)0x08, (byte)0x47, (byte)0x00, (byte)0x00}));
+			diffCompiler.addDiff(new Diff(0x258BC, 2,
+					new byte[] {(byte)0x11, (byte)0xE0},
+					new byte[] {(byte)0x10, (byte)0xE0}));
+			diffCompiler.addDiff(new Diff(0x258AA, 2,
+					new byte[] {(byte)0x1A, (byte)0xE0},
+					new byte[] {(byte)0x19, (byte)0xE0}));
+			diffCompiler.addDiff(new Diff(0x258BA, 2,
+					new byte[] {(byte)0x02, (byte)0x20},
+					new byte[] {(byte)0x01, (byte)0x20}));
+			
+			// Staff EXP
+			diffCompiler.addDiff(new Diff(0x25988, 12,
+					new byte[] {(byte)0x00, (byte)0x28, (byte)0x01, (byte)0xD0, (byte)0x52, (byte)0x10, (byte)0x00, (byte)0x00,
+							    (byte)0x52, (byte)0x00, (byte)0x64, (byte)0x2A},
+					new byte[] {(byte)0x00, (byte)0x28, (byte)0x02, (byte)0xD0, (byte)0xD0, (byte)0x0F, (byte)0x10, (byte)0x18,
+							    (byte)0x42, (byte)0x10, (byte)0x64, (byte)0x2A}));
+			
+			// Steal/Dance EXP
+			diffCompiler.addDiff(new Diff(0x259C6, 8,
+					new byte[] {(byte)0x14, (byte)0x20, (byte)0x08, (byte)0x70, (byte)0x18, (byte)0x1C, (byte)0x14, (byte)0x30},
+					new byte[] {(byte)0x0A, (byte)0x20, (byte)0x08, (byte)0x70, (byte)0x18, (byte)0x1C, (byte)0x0A, (byte)0x30}));
+			break;
+		case RENEGADE:
+			// Combat EXP
+			diffCompiler.addDiff(new Diff(0x258D0, 24, 
+					new byte[] {(byte)0x24, (byte)0x18, (byte)0x64, (byte)0x10, (byte)0x64, (byte)0x2C, (byte)0x00, (byte)0xDD,
+							    (byte)0x64, (byte)0x24, (byte)0x00, (byte)0x2C, (byte)0x00, (byte)0xDA, (byte)0x00, (byte)0x24,
+							    (byte)0x20, (byte)0x1C, (byte)0x70, (byte)0xBC, (byte)0x02, (byte)0xBC, (byte)0x08, (byte)0x47}, 
+					new byte[] {(byte)0x24, (byte)0x18, (byte)0x64, (byte)0x2C, (byte)0x00, (byte)0xDD, (byte)0x64, (byte)0x24, 
+							    (byte)0x00, (byte)0x2C, (byte)0x00, (byte)0xDA, (byte)0x00, (byte)0x24, (byte)0x20, (byte)0x1C,
+							    (byte)0x70, (byte)0xBC, (byte)0x02, (byte)0xBC, (byte)0x08, (byte)0x47, (byte)0x00, (byte)0x00}));
+			diffCompiler.addDiff(new Diff(0x258BC, 2,
+					new byte[] {(byte)0x11, (byte)0xE0},
+					new byte[] {(byte)0x10, (byte)0xE0}));
+			diffCompiler.addDiff(new Diff(0x258AA, 2,
+					new byte[] {(byte)0x1A, (byte)0xE0},
+					new byte[] {(byte)0x19, (byte)0xE0}));
+			
+			// Staff EXP
+			diffCompiler.addDiff(new Diff(0x25988, 12,
+					new byte[] {(byte)0x00, (byte)0x28, (byte)0x01, (byte)0xD0, (byte)0x52, (byte)0x10, (byte)0x00, (byte)0x00,
+							    (byte)0x52, (byte)0x10, (byte)0x64, (byte)0x2A},
+					new byte[] {(byte)0x00, (byte)0x28, (byte)0x02, (byte)0xD0, (byte)0xD0, (byte)0x0F, (byte)0x10, (byte)0x18,
+							    (byte)0x42, (byte)0x10, (byte)0x64, (byte)0x2A}));
+			
+			// Steal/Dance EXP
+			diffCompiler.addDiff(new Diff(0x259C6, 8,
+					new byte[] {(byte)0x05, (byte)0x20, (byte)0x08, (byte)0x70, (byte)0x18, (byte)0x1C, (byte)0x05, (byte)0x30},
+					new byte[] {(byte)0x0A, (byte)0x20, (byte)0x08, (byte)0x70, (byte)0x18, (byte)0x1C, (byte)0x0A, (byte)0x30}));
+		}
 	}
 }

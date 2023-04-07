@@ -39,6 +39,7 @@ import ui.model.CharacterShufflingOptions;
 import ui.model.ClassOptions;
 import ui.model.EnemyOptions;
 import ui.model.EnemyOptions.BossStatMode;
+import ui.model.MiscellaneousOptions.ExperienceRate;
 import ui.model.GrowthOptions;
 import ui.model.ItemAssignmentOptions;
 import ui.model.MiscellaneousOptions;
@@ -539,6 +540,14 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		if (miscOptions.singleRNMode) {
 			applySingleRN();
 		}
+		
+		if (miscOptions.casualMode) {
+			applyCasualMode();
+		}
+		
+		if (miscOptions.experienceRate != null){
+			applyExpMode();
+		}
 	}
 
 	protected void addRandomDrops() {
@@ -629,6 +638,10 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 * prematurely.
 	 */
 	protected abstract void createSpecialLordClasses();
+	
+	protected abstract void applyCasualMode();
+	
+	protected abstract void applyExpMode();
 
 	/**
 	 * Abstract Method.

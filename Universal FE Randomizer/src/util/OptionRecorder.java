@@ -1,6 +1,7 @@
 package util;
 
 import com.google.gson.Gson;
+import fedata.general.FEBase;
 import fedata.general.FEBase.GameType;
 import ui.model.*;
 import ui.model.fe4.*;
@@ -13,7 +14,7 @@ import java.util.prefs.Preferences;
 
 public class OptionRecorder {
     private static final Integer FE4OptionBundleVersion = 7;
-    private static final Integer GBAOptionBundleVersion = 16;
+    private static final Integer GBAOptionBundleVersion = 17;
     private static final Integer FE9OptionBundleVersion = 14;
 
     public static class AllOptions {
@@ -38,6 +39,7 @@ public class OptionRecorder {
         public ItemAssignmentOptions itemAssignmentOptions;
         public CharacterShufflingOptions characterShufflingOptions;
         public PrfOptions prfs;
+        public StatboosterOptions statboosters;
     }
 
     public static class FE4OptionBundle extends Bundle {

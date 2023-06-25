@@ -1,6 +1,5 @@
 package ui;
 
-import fedata.general.FEBase;
 import fedata.general.FEBase.GameType;
 import fedata.snes.fe4.FE4Data;
 import org.eclipse.swt.SWT;
@@ -8,7 +7,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
-import random.gba.randomizer.GBARandomizer;
+import random.gba.randomizer.AbstractGBARandomizer;
 import random.gcnwii.fe9.randomizer.FE9Randomizer;
 import random.general.Randomizer;
 import random.general.RandomizerListener;
@@ -97,7 +96,7 @@ public class RandomizeButtonListener implements Listener {
             GBAOptionBundle bundle = (GBAOptionBundle) baseBundle;
             // Update the Bundle in the Option Recorder
             OptionRecorder.recordGBAFEOptions(bundle, type);
-            randomizer = new GBARandomizer(sourceFile, writePath, type, compiler, bundle.growths, bundle.bases, bundle.classes, bundle.weapons, bundle.other, bundle.enemies, bundle.otherOptions, bundle.recruitmentOptions, bundle.itemAssignmentOptions, bundle.characterShufflingOptions, bundle.rewards, bundle.seed);
+            randomizer = AbstractGBARandomizer.buildRandomizer(sourceFile, writePath, type, compiler, bundle, bundle.seed);
         } else if (type.isSFC()) {
             // Update the Bundle in the Option Recorder
             FE4OptionBundle bundle = (FE4OptionBundle) baseBundle;

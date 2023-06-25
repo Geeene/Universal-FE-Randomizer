@@ -3,6 +3,7 @@ package ui.tabs.gba;
 import fedata.general.FEBase;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
+import ui.StatboosterView;
 import ui.common.GuiUtil;
 import ui.common.YuneTabItem;
 import ui.views.ItemAssignmentView;
@@ -27,6 +28,7 @@ public class GBAItemsTab extends YuneTabItem {
     private WeaponsView weapons;
     private ItemAssignmentView itemAssignment;
     private RewardRandomizationView rewards;
+    private StatboosterView statboosters;
     private PrfView prfs;
 
     public GBAItemsTab(CTabFolder parent, FEBase.GameType type) {
@@ -36,8 +38,9 @@ public class GBAItemsTab extends YuneTabItem {
     @Override
     protected void compose() {
         weapons = addView(new WeaponsView(container, type, 2), GuiUtil.defaultGridData(2));
-        setViewData(weapons, 1, 3);
+        setViewData(weapons, 2, 2);
         itemAssignment = addView(new ItemAssignmentView(container, type));
+        statboosters = addView(new StatboosterView(container));
         rewards = addView(new RewardRandomizationView(container, type));
         prfs = addView(new PrfView(container));
     }
@@ -54,7 +57,7 @@ public class GBAItemsTab extends YuneTabItem {
 
     @Override
     protected int numberColumns() {
-        return 2;
+        return 3;
     }
 
     @Override
@@ -63,6 +66,7 @@ public class GBAItemsTab extends YuneTabItem {
         this.itemAssignment.initialize(bundle.itemAssignmentOptions);
         this.rewards.initialize(bundle.rewards);
         this.prfs.initialize(bundle.prfs);
+        this.statboosters.initialize(bundle.statboosters);
     }
 
     @Override
@@ -71,5 +75,6 @@ public class GBAItemsTab extends YuneTabItem {
         bundle.itemAssignmentOptions = itemAssignment.getOptions();
         bundle.rewards = rewards.getOptions();
         bundle.prfs = prfs.getOptions();
+        bundle.statboosters = statboosters.getOptions();
     }
 }

@@ -36,6 +36,7 @@ public class LegacyViewContainer extends YuneViewContainer {
     private ItemAssignmentView itemAssignmentView;
     private CharacterShufflingView characterShufflingView;
     private PrfView prfView;
+    private StatboosterView statboosterView;
 
     // FE4
     private FE4SkillsView skillsView;
@@ -143,6 +144,7 @@ public class LegacyViewContainer extends YuneViewContainer {
         otherCharOptionView = new MOVCONAffinityView(this);
         otherCharOptionView.group.setSize(200, 200);
 
+
         FormData otherData = new FormData();
         otherData.top = new FormAttachment(baseView.group, 5);
         otherData.left = new FormAttachment(baseView.group, 0, SWT.LEFT);
@@ -158,14 +160,9 @@ public class LegacyViewContainer extends YuneViewContainer {
         miscData.right = new FormAttachment(otherCharOptionView.group, 0, SWT.RIGHT);
         miscView.group.setLayoutData(miscData);
 
-        rewardView = new RewardRandomizationView(this, type);
-        rewardView.group.setSize(200, 200);
-
-        FormData rewardData = new FormData();
-        rewardData.top = new FormAttachment(miscView.group, 5);
-        rewardData.left = new FormAttachment(miscView.group, 0, SWT.LEFT);
-        rewardData.right = new FormAttachment(miscView.group, 0, SWT.RIGHT);
-        rewardView.group.setLayoutData(rewardData);
+        // --------------------------------------------------------------
+        // Start of Column 2
+        // --------------------------------------------------------------
 
         weaponView = new WeaponsView(this, type, 1);
         weaponView.group.setSize(200, 200);
@@ -176,12 +173,53 @@ public class LegacyViewContainer extends YuneViewContainer {
         weaponData.bottom = new FormAttachment(100, -10);
         weaponView.group.setLayoutData(weaponData);
 
+        // --------------------------------------------------------------
+        // Start of Column 3
+        // --------------------------------------------------------------
+        statboosterView = new StatboosterView(this);
+        statboosterView.group.setSize(200, 200);
+
+        FormData statboosterData = new FormData();
+        statboosterData.top = new FormAttachment(weaponView.group, 0, SWT.TOP);
+        statboosterData.left = new FormAttachment(weaponView.group, 5);
+        statboosterView.group.setLayoutData(statboosterData);
+
+        rewardView = new RewardRandomizationView(this, type);
+        rewardView.group.setSize(200, 200);
+
+        FormData rewardData = new FormData();
+        rewardData.top = new FormAttachment(statboosterView.group, 5);
+        rewardData.left = new FormAttachment(statboosterView.group, 0, SWT.LEFT);
+        rewardData.right = new FormAttachment(statboosterView.group, 0, SWT.RIGHT);
+        rewardView.group.setLayoutData(rewardData);
+
+        prfView = new PrfView(this);
+        prfView.group.setSize(200, 200);
+
+        FormData prfViewData = new FormData();
+        prfViewData.top = new FormAttachment(rewardView.group, 5);
+        prfViewData.left = new FormAttachment(rewardView.group, 0, SWT.LEFT);
+        prfViewData.right = new FormAttachment(rewardView.group, 0, SWT.RIGHT);
+        prfView.group.setLayoutData(prfViewData);
+
+        itemAssignmentView = new ItemAssignmentView(this, type);
+        itemAssignmentView.group.setSize(200, 200);
+
+        FormData itemAssignData = new FormData();
+        itemAssignData.top = new FormAttachment(prfView.group, 5);
+        itemAssignData.left = new FormAttachment(prfView.group, 0, SWT.LEFT);
+        itemAssignData.right = new FormAttachment(prfView.group, 0, SWT.RIGHT);
+        itemAssignmentView.group.setLayoutData(itemAssignData);
+
+        // --------------------------------------------------------------
+        // Start of Column 4
+        // --------------------------------------------------------------
         classView = new ClassesView(this, type);
         classView.group.setSize(200, 200);
 
         FormData classData = new FormData();
-        classData.top = new FormAttachment(weaponView.group, 0, SWT.TOP);
-        classData.left = new FormAttachment(weaponView.group, 5);
+        classData.top = new FormAttachment(statboosterView.group, 0, SWT.TOP);
+        classData.left = new FormAttachment(statboosterView.group, 5);
         classView.group.setLayoutData(classData);
 
         enemyView = new EnemyBuffsView(this);
@@ -194,6 +232,9 @@ public class LegacyViewContainer extends YuneViewContainer {
         enemyData.bottom = new FormAttachment(100, -10);
         enemyView.group.setLayoutData(enemyData);
 
+        // --------------------------------------------------------------
+        // Start of Column 5
+        // --------------------------------------------------------------
         recruitView = new RecruitmentView(this, type);
         recruitView.group.setSize(200, 200);
 
@@ -206,28 +247,10 @@ public class LegacyViewContainer extends YuneViewContainer {
         characterShufflingView.group.setSize(200, 200);
 
         FormData characterShufflingData = new FormData();
-        characterShufflingData.top = new FormAttachment(recruitView.group, 0, SWT.TOP);
-        characterShufflingData.left = new FormAttachment(recruitView.group, 5);
-        characterShufflingData.right = new FormAttachment(100, 0);
+        characterShufflingData.top = new FormAttachment(recruitView.group, 0);
+        characterShufflingData.left = new FormAttachment(recruitView.group, 0, SWT.LEFT);
+        characterShufflingData.right = new FormAttachment(recruitView.group, 0, SWT.RIGHT);
         characterShufflingView.group.setLayoutData(characterShufflingData);
-
-        itemAssignmentView = new ItemAssignmentView(this, type);
-        itemAssignmentView.group.setSize(200, 200);
-
-        FormData itemAssignData = new FormData();
-        itemAssignData.top = new FormAttachment(characterShufflingView.group, 5);
-        itemAssignData.left = new FormAttachment(characterShufflingView.group, 0, SWT.LEFT);
-        itemAssignData.right = new FormAttachment(characterShufflingView.group, 0, SWT.RIGHT);
-        itemAssignmentView.group.setLayoutData(itemAssignData);
-
-        prfView = new PrfView(this);
-        prfView.group.setSize(200, 200);
-
-        FormData prfViewData = new FormData();
-        prfViewData.top = new FormAttachment(itemAssignmentView.group, 5);
-        prfViewData.left = new FormAttachment(itemAssignmentView.group, 0, SWT.LEFT);
-        prfViewData.right = new FormAttachment(itemAssignmentView.group, 0, SWT.RIGHT);
-        prfView.group.setLayoutData(prfViewData);
     }
 
     private void composeFE4() {
@@ -316,6 +339,7 @@ public class LegacyViewContainer extends YuneViewContainer {
         recruitView.initialize(bundle.recruitmentOptions);
         itemAssignmentView.initialize(bundle.itemAssignmentOptions);
         characterShufflingView.initialize(bundle.characterShufflingOptions);
+        statboosterView.initialize(bundle.statboosters);
     }
 
     @Override
@@ -334,6 +358,7 @@ public class LegacyViewContainer extends YuneViewContainer {
         bundle.itemAssignmentOptions = itemAssignmentView.getOptions();
         bundle.recruitmentOptions = recruitView.getOptions();
         bundle.characterShufflingOptions = characterShufflingView.getOptions();
+        bundle.statboosters = statboosterView.getOptions();
     }
 
     @Override

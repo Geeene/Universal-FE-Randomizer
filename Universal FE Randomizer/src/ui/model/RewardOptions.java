@@ -1,8 +1,12 @@
 package ui.model;
 
+import fedata.general.FEBase;
+import util.recordkeeper.RecordKeeper;
+
 import static ui.model.RewardOptions.RewardMode.SIMILAR;
 
-public class RewardOptions {
+public class RewardOptions implements RecordableOption {
+
     public enum RewardMode {
         SIMILAR, RANDOM
     }
@@ -41,5 +45,10 @@ public class RewardOptions {
         this.randomizeRewards = randomizeRewards;
         this.enemyDropChance = enemyDropChance;
         this.randomizeRings = false;
+    }
+
+    @Override
+    public void record(RecordKeeper rk, FEBase.GameType type) {
+
     }
 }

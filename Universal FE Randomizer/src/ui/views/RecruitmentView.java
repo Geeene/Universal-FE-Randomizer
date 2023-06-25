@@ -293,7 +293,7 @@ public class RecruitmentView extends YuneView<RecruitmentOptions> {
 		
 		optionData = new FormData();
 		optionData.left = new FormAttachment(classContainer, 0, SWT.LEFT);
-		optionData.top = new FormAttachment(classContainer, 10);
+		optionData.top = new FormAttachment(classContainer, 5);
 		lordsButton.setLayoutData(optionData);
 
 		thievesButton = new Button(group, SWT.CHECK);

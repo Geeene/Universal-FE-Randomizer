@@ -16,6 +16,7 @@ import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFEWorldMapData;
 import fedata.gba.GBAFEWorldMapSpriteData;
+import fedata.gba.fe6.FE6Data;
 import fedata.gba.fe7.FE7Data;
 import fedata.gba.fe8.FE8Data;
 import fedata.gba.fe8.FE8PaletteMapper;
@@ -26,20 +27,14 @@ import fedata.gba.general.WeaponType;
 import fedata.general.FEBase;
 import fedata.general.FEBase.GameType;
 import io.UPSPatcher;
-import random.gba.loader.ChapterLoader;
-import random.gba.loader.CharacterDataLoader;
-import random.gba.loader.ClassDataLoader;
-import random.gba.loader.ItemDataLoader;
+import random.gba.loader.*;
 import random.gba.loader.ItemDataLoader.AdditionalData;
-import random.gba.loader.PaletteLoader;
-import random.gba.loader.PortraitDataLoader;
-import random.gba.loader.TextLoader;
 import ui.model.BaseOptions;
 import ui.model.ClassOptions;
 import ui.model.EnemyOptions;
 import ui.model.GrowthOptions;
 import ui.model.ItemAssignmentOptions;
-import ui.model.MiscellaneousOptions;
+import ui.model.GameMechanicOptions;
 import ui.model.OtherCharacterOptions;
 import ui.model.RecruitmentOptions;
 import ui.model.WeaponOptions;
@@ -99,7 +94,9 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 		updateStatusString("Loading Palette Data...");
 		updateProgress(0.30);
 		paletteData = new PaletteLoader(FEBase.GameType.FE8, sourceFileHandler, charData, classData);
+		updateProgress(0.31);
 		updateStatusString("Loading Statboost Data...");
+		statboostData = new StatboostLoader(FE8Data.statboostProvider, sourceFileHandler);
 		
 		updateStatusString("Loading Summoner Module...");
 		updateProgress(0.35);
@@ -274,11 +271,11 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 
 	@Override
 	protected void createPrfs(Random rng) {
-		if ((classes == null || !classes.createPrfs) || (recruitOptions == null || !recruitOptions.createPrfs)) {
+		if (prfOptions.createPrfs) {
 			return;
 		}
-		
-		boolean unbreakablePrfs = ((classes != null && classes.unbreakablePrfs) || (recruitOptions != null && recruitOptions.createPrfs));
+
+		boolean unbreakablePrfs = prfOptions.unbreakablePrfs;
 		GBAFECharacterData eirika = charData.characterWithID(FE8Data.Character.EIRIKA.ID);
 		GBAFECharacterData ephraim = charData.characterWithID(FE8Data.Character.EPHRAIM.ID);
 		

@@ -13,6 +13,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Spinner;
 
+import ui.common.GuiUtil;
 import ui.general.MinMaxControl;
 import ui.model.GrowthOptions;
 import ui.model.MinMaxOption;
@@ -20,13 +21,12 @@ import ui.model.MinMaxVarOption;
 import ui.model.StatboosterOptions;
 import ui.model.StatboosterOptions.StatboosterRandomizationModes;
 import ui.model.VarOption;
+import ui.views.YuneView;
 
-public class StatboosterView extends Composite {
+public class StatboosterView extends YuneView<StatboosterOptions> {
 	
 	private Boolean isEnabled = false;
 	private StatboosterRandomizationModes currentMode = StatboosterRandomizationModes.SAME_STAT;
-	
-	private Group container;
 	
 	private Button enableButton;
 	private MinMaxControl boostRangeControl;
@@ -45,24 +45,23 @@ public class StatboosterView extends Composite {
 	private Button includeBoots;
 	private Button includeBodyring;
 
-	public StatboosterView(Composite parent, int style) {
-		super(parent, style);
+	public StatboosterView(Composite parent) {
+		super(parent);
+	}
 
-		FillLayout layout = new FillLayout();
-		setLayout(layout);
-		
-		container = new Group(this, SWT.NONE);
-		container.setText("Statboosters");
-		container.setToolTipText("Randomizes the boosts granted by the statboosting items in the game.");
-		
-		FormLayout mainLayout = new FormLayout();
-		mainLayout.marginLeft = 5;
-		mainLayout.marginTop = 5;
-		mainLayout.marginBottom = 5;
-		mainLayout.marginRight = 5;
-		container.setLayout(mainLayout);
-		
-		enableButton = new Button(container, SWT.CHECK);
+	@Override
+	protected String getGroupTitle() {
+		return "Statboosters";
+	}
+
+	@Override
+	protected String getGroupTooltip() {
+		return "Randomizes the boosts granted by the statboosting items in the game.";
+	}
+
+	@Override
+	protected void compose() {
+		enableButton = new Button(group, SWT.CHECK);
 		enableButton.setText("Enable Statbooster Randomization");
 		enableButton.addListener(SWT.Selection, new Listener() {
 			@Override
@@ -71,7 +70,7 @@ public class StatboosterView extends Composite {
 			}
 		});
 		
-		boostRangeControl = new MinMaxControl(container, SWT.NONE, "Min Boost:", "Max Boost:");
+		boostRangeControl = new MinMaxControl(group, SWT.NONE, "Min Boost:", "Max Boost:");
 		boostRangeControl.getMinSpinner().setValues(1, 0, 20, 0, 1, 5);
 		boostRangeControl.getMaxSpinner().setValues(3, 0, 20, 0, 1, 5);
 		boostRangeControl.setEnabled(false);
@@ -82,15 +81,9 @@ public class StatboosterView extends Composite {
 		boostRangeData.right = new FormAttachment(100, -5);
 		boostRangeControl.setLayoutData(boostRangeData);
 		
-		modeContainer = new Group(container, SWT.NONE);
+		modeContainer = new Group(group, SWT.NONE);
 		modeContainer.setText("Mode");
-		
-		FormLayout modeLayout = new FormLayout();
-		modeLayout.marginTop = 5;
-		modeLayout.marginLeft = 5;
-		modeLayout.marginBottom = 5;
-		modeLayout.marginRight = 5;
-		modeContainer.setLayout(modeLayout);
+		modeContainer.setLayout(GuiUtil.formLayoutWithMargin());
 		
 		FormData modeData = new FormData();
 		modeData.left = new FormAttachment(enableButton, 5, SWT.LEFT);
@@ -137,12 +130,7 @@ public class StatboosterView extends Composite {
 		multipleBoostsOption.setLayoutData(optionData);
 		
 		Composite multipleParamContainer = new Composite(modeContainer, 0);
-		FormLayout multipleParamLayout = new FormLayout();
-		multipleParamLayout.marginTop = 5;
-		multipleParamLayout.marginLeft = 5;
-		multipleParamLayout.marginBottom = 5;
-		multipleParamLayout.marginRight = 5;
-		multipleParamContainer.setLayout(multipleParamLayout);
+		multipleParamContainer.setLayout(GuiUtil.formLayoutWithMargin());
 		
 		multipleBoostsRangeControl = new MinMaxControl(multipleParamContainer, SWT.NONE, "Min Boosts:", "Max Boosts:");
 		multipleBoostsRangeControl.getMinSpinner().setValues(1, 0, 20, 0, 1, 5);
@@ -179,43 +167,28 @@ public class StatboosterView extends Composite {
 		optionData.top = new FormAttachment(multipleParamContainer, 0);
 		shuffleOption.setLayoutData(optionData);
 		/////////////////////////////////////////////////////////////
-		
-		
-		Group hpModifierContainer = new Group(container, 0);
-		hpModifierContainer.setText("Misc");
-		
-		FormLayout hpModContainerLayout = new FormLayout();
-		hpModContainerLayout.marginBottom = 5;
-		hpModContainerLayout.marginTop = 5;
-		hpModContainerLayout.marginLeft = 5;
-		hpModContainerLayout.marginRight = 5;
-		hpModifierContainer.setLayout(hpModContainerLayout);
-		
-		optionData = new FormData();
-		optionData.left = new FormAttachment(enableButton, 5, SWT.LEFT);
-		optionData.top = new FormAttachment(modeContainer, 5);
-		hpModifierContainer.setLayoutData(optionData);
-		
-		includeBoots = new Button(hpModifierContainer, SWT.CHECK);
+
+		includeBoots = new Button(group, SWT.CHECK);
 		includeBoots.setText("Include Boots");
-		includeBoots.setToolTipText("As you can't naturally level up move, randomizing the body ring is opt-in only.");
+		includeBoots.setToolTipText("As you can't naturally level up move, randomizing the boots is opt-in only.");
 		includeBoots.setEnabled(false);
 		
 		optionData = new FormData();
-		optionData.top = new FormAttachment(0, 0);
-		optionData.left = new FormAttachment(0, 0);
+		optionData.top = new FormAttachment(modeContainer, 5);
+		optionData.left = new FormAttachment(modeContainer, 0, SWT.LEFT);
 		includeBoots.setLayoutData(optionData);
 		
-		includeBodyring = new Button(hpModifierContainer, SWT.CHECK);
+		includeBodyring = new Button(group, SWT.CHECK);
 		includeBodyring.setText("Include Body Ring");
 		includeBodyring.setToolTipText("As you can't naturally level up con, randomizing the body ring is opt-in only.");
 		includeBodyring.setEnabled(false);
 		
 		optionData = new FormData();
 		optionData.top = new FormAttachment(includeBoots, 5);
+		optionData.left = new FormAttachment(includeBoots, 0, SWT.LEFT);
 		includeBodyring.setLayoutData(optionData);
 		
-		hpModifierButton = new Button(hpModifierContainer, SWT.CHECK);
+		hpModifierButton = new Button(group, SWT.CHECK);
 		hpModifierButton.setText("Apply HP Modifier");
 		hpModifierButton.setToolTipText("In Vanilla the HP Statbooster grants much more stats, with this option all HP statboosts will grant the selected flat modifier.");
 		hpModifierButton.setEnabled(false);
@@ -228,13 +201,14 @@ public class StatboosterView extends Composite {
 		
 		optionData = new FormData();
 		optionData.top = new FormAttachment(includeBodyring, 5);
+		optionData.left = new FormAttachment(includeBoots, 0, SWT.LEFT);
 		hpModifierButton.setLayoutData(optionData);
 		
-		hpModifierSpinner = new Spinner(hpModifierContainer, SWT.NONE);
+		hpModifierSpinner = new Spinner(group, SWT.NONE);
 		hpModifierSpinner.setValues(5, 0, 10, 0, 1, 5);
 		hpModifierSpinner.setEnabled(false);
 		
-		Label hpModifierLabel = new Label(hpModifierContainer, SWT.RIGHT);
+		Label hpModifierLabel = new Label(group, SWT.RIGHT);
 		hpModifierLabel.setText("Additional HP:");
 		
 		FormData labelData = new FormData();
@@ -277,8 +251,9 @@ public class StatboosterView extends Composite {
 			}
 		}
 	}
-	
-	public StatboosterOptions getStatboosterOptions() {
+
+	@Override
+	public StatboosterOptions getOptions() {
 		if (!isEnabled) { return null; }
 		
 		MinMaxOption multipleStats = multipleBoostsRangeControl.getMinMaxOption();
@@ -287,8 +262,9 @@ public class StatboosterView extends Composite {
 		
 		return new StatboosterOptions(true, currentMode,boostRange.minValue, boostRange.maxValue, multipleStats.minValue, multipleStats.maxValue, includeBoots.getSelection(), includeBodyring.getSelection(), hpModifierButton.getSelection(), hpModifierSpinner.getSelection());
 	}
-	
-	public void setGrowthOptions(StatboosterOptions options) {
+
+	@Override
+	public void initialize(StatboosterOptions options) {
 		if (options == null) {
 			enableButton.setSelection(false);
 			enableChanged(false);

@@ -50,6 +50,6 @@ My main focus will be on the GBA FE Games.
     <td>GBA Randomized Promotions</td>
     <td><a href='https://github.com/Geeene/Universal-FE-Randomizer/tree/GUI_Rework'>link</a></td>
     <td>Have implemented before, needs cleanup on separate branch TODO</td>
-    <td><a href='https://github.com/lushen124/Universal-FE-Randomizer/pull/419'> PR#419</a> Draft</td>
+    <td>N/A</td>
   </tr>
 </table>

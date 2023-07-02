@@ -286,6 +286,7 @@ public class OptionRecorder {
     public static void recordFE9Options(FE9OptionBundle bundle) {
         bundle.version = FE9OptionBundleVersion;
         options.fe9 = bundle;
+        bundle.type = GameType.FE9;
         saveOptions(options);
     }
 
@@ -308,6 +309,7 @@ public class OptionRecorder {
 
     public static void recordFE4Options(FE4OptionBundle bundle) {
         bundle.version = FE4OptionBundleVersion;
+        bundle.type = GameType.FE4;
         options.fe4 = bundle;
         saveOptions(options);
     }
@@ -332,6 +334,7 @@ public class OptionRecorder {
 
     public static void recordGBAFEOptions(GBAOptionBundle bundle, GameType gameType) {
         bundle.version = GBAOptionBundleVersion;
+        bundle.type = gameType;
         switch (gameType) {
             case FE6:
                 options.fe6 = bundle;
@@ -347,6 +350,16 @@ public class OptionRecorder {
         }
 
         saveOptions(options);
+    }
+
+    public static void recordOptions(Bundle bundle, GameType type) {
+        if (bundle instanceof GBAOptionBundle) {
+           recordGBAFEOptions((GBAOptionBundle) bundle, type);
+        } else if (bundle instanceof FE4OptionBundle) {
+            recordFE4Options((FE4OptionBundle) bundle);
+        } else if (bundle instanceof FE9OptionBundle) {
+            recordFE9Options((FE9OptionBundle) bundle);
+        }
     }
 
 }

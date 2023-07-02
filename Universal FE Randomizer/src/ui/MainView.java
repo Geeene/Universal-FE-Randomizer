@@ -2,38 +2,32 @@ package ui;
 
 import application.Main;
 import fedata.general.FEBase.GameType;
-import fedata.snes.fe4.FE4Data;
 import io.FileHandler;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
-import random.gba.randomizer.AbstractGBARandomizer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
-import random.gcnwii.fe9.randomizer.FE9Randomizer;
-import random.general.Randomizer;
-import random.general.RandomizerListener;
-import random.snes.fe4.randomizer.FE4Randomizer;
-import ui.common.*;
+import ui.common.RomInfoDto;
+import ui.common.RomInfoGroup;
+import ui.common.RomSelectionGroup;
+import ui.common.SeedGroup;
 import ui.general.FileFlowDelegate;
 import ui.general.MessageModal;
 import ui.general.ModalButtonListener;
 import ui.general.ProgressModal;
 import util.Bundle;
-import util.DiffCompiler;
 import util.OptionRecorder;
-import util.OptionRecorder.FE4OptionBundle;
-import util.OptionRecorder.FE9OptionBundle;
-import util.OptionRecorder.GBAOptionBundle;
 import util.SeedGenerator;
-import util.recordkeeper.ChangelogBuilder;
-import util.recordkeeper.RecordKeeper;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainView implements FileFlowDelegate {
 
@@ -271,7 +265,7 @@ public class MainView implements FileFlowDelegate {
     /**
      * Read the saved
      */
-    private void preloadOptions() {
+    public void preloadOptions() {
         // If no Options exist at all (f.e. first time user), then don't preload
         if (OptionRecorder.options == null) {
             return;
@@ -321,6 +315,7 @@ public class MainView implements FileFlowDelegate {
         loadedGameType = romInfoDto.getType();
         patchingAvailable = romInfoDto.isPatchingAvailable();
         romInfo.initialize(romInfoDto);
+		romInfo.updateImportExportListeners(this, loadedGameType);
 
         if (randomizeButton == null) {
             randomizeButton = new Button(mainContainer, SWT.PUSH);
@@ -407,4 +402,13 @@ public class MainView implements FileFlowDelegate {
 
         return checksumFailure;
     }
+
+	public Bundle saveCurrentOptions() {
+        Bundle baseBundle = OptionRecorder.createBundle(loadedGameType);
+        baseBundle.seed = seedGroup.getSeed();
+        // Make the View Container update the settings they contain into the bundle
+        viewContainer.updateOptionBundle(baseBundle);
+        OptionRecorder.recordOptions(baseBundle, loadedGameType);
+        return baseBundle;
+	}
 }

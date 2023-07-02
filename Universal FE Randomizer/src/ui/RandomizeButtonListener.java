@@ -86,27 +86,19 @@ public class RandomizeButtonListener implements Listener {
         }
 
         Randomizer randomizer = null;
-
-        // Start building the new Option Bundle
-        Bundle baseBundle = OptionRecorder.createBundle(type);
-        baseBundle.seed = mainView.seedGroup.getSeed();
-        // Make the View Container update the settings they contain into the bundle
-        mainView.viewContainer.updateOptionBundle(baseBundle);
+        Bundle baseBundle = mainView.saveCurrentOptions();
         if (type.isGBA()) {
             GBAOptionBundle bundle = (GBAOptionBundle) baseBundle;
             // Update the Bundle in the Option Recorder
-            OptionRecorder.recordGBAFEOptions(bundle, type);
             randomizer = AbstractGBARandomizer.buildRandomizer(sourceFile, writePath, type, compiler, bundle, bundle.seed);
         } else if (type.isSFC()) {
             // Update the Bundle in the Option Recorder
             FE4OptionBundle bundle = (FE4OptionBundle) baseBundle;
-            OptionRecorder.recordFE4Options(bundle);
             boolean headeredROM = mainView.romInfo.getCrc32() == FE4Data.CleanHeaderedCRC32;
             randomizer = new FE4Randomizer(sourceFile, headeredROM, writePath, compiler, bundle.growths, bundle.bases, bundle.holyBlood, bundle.skills, bundle.classes, bundle.promo, bundle.enemyBuff, bundle.mechanics, bundle.rewards, bundle.seed);
         } else if (type.isGCN()) {
             // Update the Bundle in the Option Recorder
             FE9OptionBundle bundle = (FE9OptionBundle) baseBundle;
-            OptionRecorder.recordFE9Options(bundle);
             randomizer = new FE9Randomizer(sourceFile, writePath, bundle.growths, bundle.bases, bundle.skills, bundle.otherOptions, bundle.enemyBuff, bundle.classes, bundle.weapons, bundle.mechanics, bundle.rewards, bundle.seed);
         }
 

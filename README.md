@@ -48,8 +48,14 @@ My main focus will be on the GBA FE Games.
   </tr>
   <tr>
     <td>GBA Randomized Promotions</td>
-    <td><a href='https://github.com/Geeene/Universal-FE-Randomizer/tree/GUI_Rework'>link</a></td>
+    <td><a href='https://github.com/Geeene/Universal-FE-Randomizer/tree/gbaPromotionRandomizer'>link</a></td>
     <td>Have implemented before, needs cleanup on separate branch TODO</td>
     <td>N/A</td>
+  </tr>
+  <tr>
+    <td>Settings Import / Export</td>
+    <td><a href='https://github.com/Geeene/Universal-FE-Randomizer/tree/exportSettings'>link</a></td>
+    <td>Done</td>
+    <td><a href='https://github.com/lushen124/Universal-FE-Randomizer/pull/422'> PR#422</a> New</td>
   </tr>
 </table>

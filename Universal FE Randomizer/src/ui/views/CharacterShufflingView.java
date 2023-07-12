@@ -297,6 +297,8 @@ public class CharacterShufflingView extends YuneView<CharacterShufflingOptions> 
 			
 			includeFE8Button.setEnabled(!GameType.FE8.equals(type));
 			includeFE8Button.setSelection(!GameType.FE8.equals(type) && options.getIncludedShuffles().contains("fe8chars.json"));
+
+			selectFilesButton.setEnabled(true);
 		}
 	}
 }

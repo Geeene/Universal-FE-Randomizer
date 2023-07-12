@@ -300,6 +300,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		paletteData.compileDiffs(diffCompiler);
 		textData.commitChanges(freeSpace, diffCompiler);
 		portraitData.compileDiffs(diffCompiler);
+		statboostData.compileDiffs(diffCompiler);
 
 
 		// If the implementing game has any game specific dataloaders (such as FE8 Promotion Data), 

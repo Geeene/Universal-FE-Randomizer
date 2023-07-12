@@ -194,14 +194,14 @@ public class CharacterShufflingView extends YuneView<CharacterShufflingOptions> 
 		
 		
 		selectFilesButton = new Button(includedFilesContainer, SWT.PUSH);
-		selectFilesButton.setText("Select configuration files to include");
+		selectFilesButton.setText("Add more files");
 		selectFilesButton.addListener(SWT.Selection, new Listener() {
 			
 			@Override
 			public void handleEvent(Event event) {
 				fileDialog.setFilterExtensions(new String[]{"*.json"});
 				fileDialog.setFilterNames(new String[] {"JSON Files"});
-				// Reset the already inclauded shuffles whenever we enter the dialog again, 
+				// Reset the already included shuffles whenever we enter the dialog again,
 				// this limits us to only selecting files from one folder, but atleast we don't have to add a proper way to remove ones from here...
 				includedShuffles = new ArrayList<>();
 				// Open file dialog
@@ -214,7 +214,7 @@ public class CharacterShufflingView extends YuneView<CharacterShufflingOptions> 
 					StringBuilder sb = new StringBuilder();
 					for (String file : chosenFiles) {
 						includedShuffles.add(currentFolder + "/"+ file);
-						if (!sb.isEmpty()){
+						if (sb.length() != 0){
 							sb.append(",");
 						}
 						sb.append(file);

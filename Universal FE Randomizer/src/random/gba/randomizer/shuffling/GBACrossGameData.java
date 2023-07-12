@@ -1,10 +1,6 @@
 package random.gba.randomizer.shuffling;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import fedata.gba.GBAFEStatDto;
 import fedata.gba.fe6.FE6Data;
@@ -303,12 +299,15 @@ public class GBACrossGameData {
 	}
 
 	
-	private static Map<GameType, List<GameType>> sourceGameMap = 
-			Map.of(
-					GameType.FE6, Arrays.asList(GameType.FE7, GameType.FE8), 
-					GameType.FE7, Arrays.asList(GameType.FE6, GameType.FE8), 
-					GameType.FE8, Arrays.asList(GameType.FE6, GameType.FE7)
-			); 
+	private static Map<GameType, List<GameType>> sourceGameMap = buildSourceGameMap();
+
+	private static Map<GameType, List<GameType>> buildSourceGameMap() {
+		Map<GameType, List<GameType>> map = new HashMap<>();
+		map.put(GameType.FE6, Arrays.asList(GameType.FE7, GameType.FE8));
+		map.put(GameType.FE7, Arrays.asList(GameType.FE6, GameType.FE8));
+		map.put(GameType.FE8, Arrays.asList(GameType.FE6, GameType.FE7));
+		return Collections.unmodifiableMap(map);
+	}
 	//@formatter:on
 
 	/**
@@ -329,7 +328,10 @@ public class GBACrossGameData {
 	 */
 	private static void addEntry(GameType sourceGame, GBAFEClass source, GBAFEClass to1, GBAFEClass to2) {
 		List<GameType> sourceGames = sourceGameMap.get(sourceGame);
-		classMap.put(source, Map.of(sourceGames.get(0), to1, sourceGames.get(1), to2));
+		Map<GameType, GBAFEClass> inner = new HashMap<>();
+		inner.put(sourceGames.get(0), to1);
+		inner.put(sourceGames.get(1), to2);
+		classMap.put(source, Collections.unmodifiableMap(inner));
 	}
 
 }

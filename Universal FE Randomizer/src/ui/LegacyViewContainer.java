@@ -220,6 +220,7 @@ public class LegacyViewContainer extends YuneViewContainer {
         FormData classData = new FormData();
         classData.top = new FormAttachment(statboosterView.group, 0, SWT.TOP);
         classData.left = new FormAttachment(statboosterView.group, 5);
+        classData.width = 230;
         classView.group.setLayoutData(classData);
 
         enemyView = new EnemyBuffsView(this);

@@ -195,7 +195,7 @@ public class RewardRandomizationView extends YuneView<RewardOptions> {
             return new RewardOptions(rewardMode, randomRewardsButton.getSelection(), enemyDropsButton.getSelection() == true ? enemyDropChanceSpinner.getSelection() : 0);
         }
 
-        return new RewardOptions(randomizeChestVillageRewards.getSelection(), enemyDropsButton.getSelection() == true ? enemyDropChanceSpinner.getSelection() : 0);
+        return new RewardOptions(randomizeChestVillageRewards.getSelection(), enemyDropsButton == null ? null : enemyDropsButton.getSelection() ? enemyDropChanceSpinner.getSelection() : 0);
     }
 
 }

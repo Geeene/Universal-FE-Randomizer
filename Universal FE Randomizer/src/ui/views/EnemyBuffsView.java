@@ -210,7 +210,7 @@ public class EnemyBuffsView extends YuneView<EnemyOptions> {
 		minionGroupData.left = new FormAttachment(0, 10);
 		minionGroupData.right = new FormAttachment(100, -10);
 		minionGroupData.top = new FormAttachment(buffParamContainer, 0);
-		minionGroupData.width = 200;
+		minionGroupData.width = 280;
 		minionStatGroup.setLayoutData(minionGroupData);
 		
 		//////////////////////////////////////////////////////////////////
@@ -378,7 +378,7 @@ public class EnemyBuffsView extends YuneView<EnemyOptions> {
 		bossGroupData.left = new FormAttachment(0, 10);
 		bossGroupData.right = new FormAttachment(100, -10);
 		bossGroupData.top = new FormAttachment(bossStatSpinner, 5);
-		bossGroupData.width = 200;
+		bossGroupData.width = 280;
 		bossStatGroup.setLayoutData(bossGroupData);
 		
 		improveBossWeaponButton = new Button(bossGroup, SWT.CHECK);

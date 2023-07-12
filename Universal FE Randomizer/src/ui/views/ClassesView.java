@@ -230,7 +230,7 @@ public class ClassesView extends YuneView<ClassOptions> {
 		
 		FormData bossFormData = new FormData();
 		bossFormData.left = new FormAttachment(randomizeEnemiesButton, 0, SWT.LEFT);
-		bossFormData.top = new FormAttachment(randomizeEnemiesButton, 10);
+		bossFormData.top = new FormAttachment(randomizeEnemiesButton, 5);
 		randomizeBossesButton.setLayoutData(bossFormData);
 		
 		//////////////////////////////////////////////////////////////////
@@ -318,7 +318,7 @@ public class ClassesView extends YuneView<ClassOptions> {
 		optionData = new FormData();
 		optionData.left = new FormAttachment(0, 5);
 		optionData.right = new FormAttachment(100, -5);
-		optionData.top = new FormAttachment(baseTransferGroup, 10);
+		optionData.top = new FormAttachment(baseTransferGroup, 5);
 		genderGroup.setLayoutData(optionData);
 		
 		forceChangeButton = new Button(group, SWT.CHECK);

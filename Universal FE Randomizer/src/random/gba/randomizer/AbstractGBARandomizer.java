@@ -358,8 +358,8 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 * Run all the Main Randomization steps
 	 */
 	public void executeRandomization() throws RandomizationStoppedException {
-		runRandomizationStep("character shuffling", 37, () -> shuffleCharactersIfNecessary());
-		runRandomizationStep("recruitment", 40, () -> randomizeRecruitmentIfNecessary());
+		runRandomizationStep("recruitment", 37, () -> randomizeRecruitmentIfNecessary());
+		runRandomizationStep("character shuffling", 40, () -> shuffleCharactersIfNecessary());
 		runRandomizationStep("classes", 45, () -> randomizeClassesIfNecessary());
 		runRandomizationStep("bases", 50, () -> randomizeBasesIfNecessary());
 		runRandomizationStep("weapons", 55, () -> randomizeWeaponsIfNecessary());

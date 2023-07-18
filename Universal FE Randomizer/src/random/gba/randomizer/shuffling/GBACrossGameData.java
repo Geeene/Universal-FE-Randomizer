@@ -96,7 +96,13 @@ public class GBACrossGameData {
 		// try to find a fitting replacement if the origin class could be found
 		if (classOpt.isPresent()) {
 			GBAFEClass classToSub = classOpt.get();
-			GBAFEClass substituteClass = classMap.get(classToSub).get(targetGame);
+			Map<GameType, GBAFEClass> classMapping = classMap.get(classToSub);
+			if (classMapping == null) {
+				DebugPrinter.log(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING,
+						String.format("Found no class mapping for class %s in game %s.", classToSub.name(), targetGame));
+				return FE6Data.CharacterClass.NONE;
+			}
+			GBAFEClass substituteClass = classMapping.get(targetGame);
 			if (substituteClass != null) {
 				return substituteClass;
 			} else {

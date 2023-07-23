@@ -2,7 +2,6 @@ package ui.views.fe4;
 
 import fedata.snes.fe4.FE4Data;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.widgets.*;
@@ -151,7 +150,7 @@ public class FE4SkillsView extends YuneView<SkillsOptions> {
         FormData viewData = new FormData();
         viewData.left = new FormAttachment(randomizeButton, 0, SWT.LEFT);
         viewData.top = new FormAttachment(randomizeButton, 0);
-        viewData.width = GuiUtil.DEFAULT_ITEM_WIDTH_280;
+        viewData.width = GuiUtil.DEFAULT_ITEM_WIDTH_300;
         skillCountView.setLayoutData(viewData);
 
         List<String> skillList = Arrays.stream(FE4Data.Skill.values()).map(FE4Data.Skill::capitalizedName).collect(Collectors.toList());

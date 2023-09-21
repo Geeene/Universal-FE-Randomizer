@@ -104,6 +104,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		this.weapons = options.weapons;
 		this.otherCharacterOptions = options.other;
 		this.enemies = options.enemies;
+		this.rewardOptions = options.rewards;
 		this.miscOptions = options.otherOptions;
 		this.recruitOptions = options.recruitmentOptions;
 		this.itemAssignmentOptions = options.itemAssignmentOptions == null ? new ItemAssignmentOptions() : options.itemAssignmentOptions;
@@ -318,6 +319,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		paletteData.compileDiffs(diffCompiler);
 		textData.commitChanges(freeSpace, diffCompiler);
 		portraitData.compileDiffs(diffCompiler);
+		statboostData.compileDiffs(diffCompiler);
 
 
 		// If the implementing game has any game specific dataloaders (such as FE8 Promotion Data), 
@@ -375,8 +377,8 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 * Run all the Main Randomization steps
 	 */
 	public void executeRandomization() throws RandomizationStoppedException {
-		runRandomizationStep("character shuffling", 37, () -> shuffleCharactersIfNecessary());
-		runRandomizationStep("recruitment", 40, () -> randomizeRecruitmentIfNecessary());
+		runRandomizationStep("recruitment", 37, () -> randomizeRecruitmentIfNecessary());
+		runRandomizationStep("character shuffling", 40, () -> shuffleCharactersIfNecessary());
 		runRandomizationStep("classes", 45, () -> randomizeClassesIfNecessary());
 		runRandomizationStep("promotions", 47, () -> randomizePromotionsIfNecessary());
 		runRandomizationStep("bases", 50, () -> randomizeBasesIfNecessary());
@@ -870,11 +872,15 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 
 		tryRecordingCategory("Randomize Growths", growths);
 		tryRecordingCategory("Randomize Bases", bases);
+		tryRecordingCategory("Other character traits", otherCharacterOptions);
 		tryRecordingCategory("Weapons", weapons);
+		tryRecordingCategory("Statboosters", statboosters);
 		tryRecordingCategory("Classes", classes);
 		tryRecordingCategory("Enemies", enemies);
 		tryRecordingCategory("Misc", miscOptions);
+		tryRecordingCategory("Rewards", rewardOptions);
 		tryRecordingCategory("Randomized Recruitment", recruitOptions);
+		tryRecordingCategory("Character Shuffling", shufflingOptions);
 		tryRecordingCategory("Item Assignment", itemAssignmentOptions);
 	}
 

@@ -96,7 +96,13 @@ public class GBACrossGameData {
 		// try to find a fitting replacement if the origin class could be found
 		if (classOpt.isPresent()) {
 			GBAFEClass classToSub = classOpt.get();
-			GBAFEClass substituteClass = classMap.get(classToSub).get(targetGame);
+			Map<GameType, GBAFEClass> classMapping = classMap.get(classToSub);
+			if (classMapping == null) {
+				DebugPrinter.log(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING,
+						String.format("Found no class mapping for class %s in game %s.", classToSub.name(), targetGame));
+				return FE6Data.CharacterClass.NONE;
+			}
+			GBAFEClass substituteClass = classMapping.get(targetGame);
 			if (substituteClass != null) {
 				return substituteClass;
 			} else {
@@ -203,6 +209,7 @@ public class GBACrossGameData {
 		addEntry(GameType.FE6, FE6Data.CharacterClass.PRIEST, FE7Data.CharacterClass.CLERIC, FE8Data.CharacterClass.PRIEST);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.TROUBADOUR, FE7Data.CharacterClass.TROUBADOUR, FE8Data.CharacterClass.TROUBADOUR);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.SAGE, FE7Data.CharacterClass.SAGE, FE8Data.CharacterClass.SAGE);
+		addEntry(GameType.FE6, FE6Data.CharacterClass.MANAKETE_F, FE7Data.CharacterClass.DANCER, FE8Data.CharacterClass.MANAKETE_F);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.SNIPER, FE7Data.CharacterClass.SNIPER, FE8Data.CharacterClass.SNIPER);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.ARCHER_F, FE7Data.CharacterClass.ARCHER_F, FE8Data.CharacterClass.ARCHER_F);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.SHAMAN, FE7Data.CharacterClass.SHAMAN, FE8Data.CharacterClass.SHAMAN);

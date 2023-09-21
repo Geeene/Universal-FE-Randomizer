@@ -194,14 +194,14 @@ public class CharacterShufflingView extends YuneView<CharacterShufflingOptions> 
 		
 		
 		selectFilesButton = new Button(includedFilesContainer, SWT.PUSH);
-		selectFilesButton.setText("Select configuration files to include");
+		selectFilesButton.setText("Add more characters");
 		selectFilesButton.addListener(SWT.Selection, new Listener() {
 			
 			@Override
 			public void handleEvent(Event event) {
 				fileDialog.setFilterExtensions(new String[]{"*.json"});
 				fileDialog.setFilterNames(new String[] {"JSON Files"});
-				// Reset the already inclauded shuffles whenever we enter the dialog again, 
+				// Reset the already included shuffles whenever we enter the dialog again,
 				// this limits us to only selecting files from one folder, but atleast we don't have to add a proper way to remove ones from here...
 				includedShuffles = new ArrayList<>();
 				// Open file dialog
@@ -259,7 +259,7 @@ public class CharacterShufflingView extends YuneView<CharacterShufflingOptions> 
 		}
 		
 		
-		return new CharacterShufflingOptions(levelingMode, isEnabled, chance, shuffles, isEnabled);
+		return new CharacterShufflingOptions(levelingMode, isEnabled, chance, shuffles, changeDescriptionButton.getSelection());
 	}
 
 	@Override
@@ -297,6 +297,7 @@ public class CharacterShufflingView extends YuneView<CharacterShufflingOptions> 
 			
 			includeFE8Button.setEnabled(!GameType.FE8.equals(type));
 			includeFE8Button.setSelection(!GameType.FE8.equals(type) && options.getIncludedShuffles().contains("fe8chars.json"));
+			selectFilesButton.setEnabled(true);
 		}
 	}
 }

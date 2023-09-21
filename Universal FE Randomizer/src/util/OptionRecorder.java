@@ -40,6 +40,7 @@ public class OptionRecorder {
         public CharacterShufflingOptions characterShufflingOptions;
         public PrfOptions prfs;
         public StatboosterOptions statboosters;
+        public PromotionOptions promotionOptions;
     }
 
     public static class FE4OptionBundle extends Bundle {
@@ -48,7 +49,7 @@ public class OptionRecorder {
         public HolyBloodOptions holyBlood;
         public SkillsOptions skills;
         public FE4ClassOptions classes;
-        public FE4PromotionOptions promo;
+        public PromotionOptions promo;
         public FE4EnemyBuffOptions enemyBuff;
         public GameMechanicOptions mechanics;
         public RewardOptions rewards;
@@ -291,7 +292,7 @@ public class OptionRecorder {
     }
 
     public static void recordFE4Options(GrowthOptions growthOptions, BaseOptions basesOptions, HolyBloodOptions bloodOptions, SkillsOptions skillOptions,
-                                        FE4ClassOptions classOptions, FE4PromotionOptions promoOptions, FE4EnemyBuffOptions buffOptions, GameMechanicOptions miscOptions, RewardOptions rewards, String seed) {
+                                        FE4ClassOptions classOptions, PromotionOptions promoOptions, FE4EnemyBuffOptions buffOptions, GameMechanicOptions miscOptions, RewardOptions rewards, String seed) {
         FE4OptionBundle bundle = new FE4OptionBundle();
         bundle.growths = growthOptions;
         bundle.bases = basesOptions;

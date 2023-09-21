@@ -65,6 +65,11 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 		updateProgress(0.05);
 		textData = new TextLoader(FEBase.GameType.FE7, FE7Data.textProvider, sourceFileHandler);
 		textData.allowTextChanges = true;
+
+		updateStatusString("Preparing Mapsprites...");
+		updateProgress(0.06);
+		mapSprites = new MapSpriteManager(FEBase.GameType.FE7, sourceFileHandler);
+
 		updateStatusString("Loading Portrait Data...");
 		updateProgress(0.07);
 		portraitData = new PortraitDataLoader(FE7Data.shufflingDataProvider, sourceFileHandler);
@@ -394,24 +399,14 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 			}
 		}
 
-		long mapSpriteTableOffset = FileReadHelper.readAddress(sourceFileHandler, FE7Data.ClassMapSpriteTablePointer);
-		byte[] spriteTable = sourceFileHandler.readBytesAtOffset(mapSpriteTableOffset,
-				FE7Data.BytesPerMapSpriteTableEntry * FE7Data.NumberOfMapSpriteEntries);
-		long newSpriteTableOffset = freeSpace.setValue(spriteTable, "Repointed Sprite Table", true);
-		freeSpace.setValue(WhyDoesJavaNotHaveThese.subArray(spriteTable, (oldLynClassID - 1) * 8, 8),
-				"Lyn Map Sprite Entry");
-		freeSpace.setValue(WhyDoesJavaNotHaveThese.subArray(spriteTable, (oldEliwoodClassID - 1) * 8, 8),
-				"Eliwood Map Sprite Entry");
-		freeSpace.setValue(WhyDoesJavaNotHaveThese.subArray(spriteTable, (oldHectorClassID - 1) * 8, 8),
-				"Hector Map Sprite Entry");
-		diffCompiler.findAndReplace(new FindAndReplace(WhyDoesJavaNotHaveThese.bytesFromAddress(mapSpriteTableOffset),
-				WhyDoesJavaNotHaveThese.bytesFromAddress(newSpriteTableOffset), true));
-
+		mapSprites.duplicateSprite("Lyn Map Sprite Entry", oldLynClassID);
+		mapSprites.duplicateSprite("Eliwood Map Sprite Entry", oldEliwoodClassID);
+		mapSprites.duplicateSprite("Hector Map Sprite Entry", oldHectorClassID);
 	}
 
 	@Override
 	protected void createPrfs(Random rng) {
-		if (prfOptions.createPrfs) {
+		if (!prfOptions.createPrfs) {
 			return;
 		}
 
@@ -1059,6 +1054,13 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 	@Override
 	protected void applyUpsPatches() {
 		// N/A
+	}
+
+	@Override
+	protected void addNewPromotions() {
+		Map<Integer, GBAFEClassData> classMap = classData.getClassMap();
+		GBAFEClassData soldierClassData = classMap.get(FE7Data.CharacterClass.SOLDIER.ID);
+		soldierClassData.setTargetPromotionID(FE7Data.CharacterClass.GENERAL.ID);
 	}
 
 	@Override

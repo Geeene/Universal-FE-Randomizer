@@ -16,10 +16,7 @@ import ui.tabs.fe4.FE4StatsTab;
 import ui.tabs.fe9.FE9CharactersTab;
 import ui.tabs.fe9.FE9ItemsTab;
 import ui.tabs.fe9.FE9SkillsTab;
-import ui.tabs.gba.GBACharactersTab;
-import ui.tabs.gba.GBAItemsTab;
-import ui.tabs.gba.GBAMechanicsTab;
-import ui.tabs.gba.GBAStatsTab;
+import ui.tabs.gba.*;
 import util.Bundle;
 import util.OptionRecorder;
 
@@ -52,6 +49,7 @@ public class TabbedViewContainer extends YuneViewContainer {
         if (type.isGBA()) {
             addTab(new GBAStatsTab(tabFolder, type));
             addTab(new GBACharactersTab(tabFolder, type));
+            addTab(new GBAClassesTab(tabFolder, type));
             addTab(new GBAItemsTab(tabFolder, type));
             addTab(new GBAMechanicsTab(tabFolder, type));
         } else if (type.isSFC()) {

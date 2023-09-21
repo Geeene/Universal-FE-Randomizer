@@ -42,7 +42,7 @@ public class LegacyViewContainer extends YuneViewContainer {
     private FE4SkillsView skillsView;
     private HolyBloodView holyBloodView;
     private FE4ClassesView fe4ClassView;
-    private FE4PromotionView fe4PromotionView;
+    private PromotionView promotionView;
     private FE4EnemyBuffView fe4EnemyBuffView;
 
     // FE9
@@ -211,6 +211,15 @@ public class LegacyViewContainer extends YuneViewContainer {
         itemAssignData.right = new FormAttachment(prfView.group, 0, SWT.RIGHT);
         itemAssignmentView.group.setLayoutData(itemAssignData);
 
+        promotionView = new PromotionView(this, type);
+        promotionView.group.setSize(200, 200);
+
+        FormData promoData = new FormData();
+        promoData.top = new FormAttachment(itemAssignmentView.group, 5);
+        promoData.left = new FormAttachment(itemAssignmentView.group, 0, SWT.LEFT);
+        promoData.right = new FormAttachment(itemAssignmentView.group, 0, SWT.RIGHT);
+        promotionView.group.setLayoutData(promoData);
+
         // --------------------------------------------------------------
         // Start of Column 4
         // --------------------------------------------------------------
@@ -285,22 +294,22 @@ public class LegacyViewContainer extends YuneViewContainer {
         classData.bottom = new FormAttachment(100, -10);
         fe4ClassView.group.setLayoutData(classData);
 
-        fe4PromotionView = new FE4PromotionView(this);
-        fe4PromotionView.group.setSize(200, 200);
+        promotionView = new PromotionView(this, type);
+        promotionView.group.setSize(200, 200);
 
         FormData promoData = new FormData();
         promoData.top = new FormAttachment(fe4ClassView.group, 0, SWT.TOP);
         promoData.left = new FormAttachment(fe4ClassView.group, 5);
         promoData.right = new FormAttachment(100, -5);
-        fe4PromotionView.group.setLayoutData(promoData);
+        promotionView.group.setLayoutData(promoData);
 
         fe4EnemyBuffView = new FE4EnemyBuffView(this);
         fe4EnemyBuffView.group.setSize(200, 200);
 
         FormData buffData = new FormData();
-        buffData.top = new FormAttachment(fe4PromotionView.group, 5);
-        buffData.left = new FormAttachment(fe4PromotionView.group, 0, SWT.LEFT);
-        buffData.right = new FormAttachment(fe4PromotionView.group, 0, SWT.RIGHT);
+        buffData.top = new FormAttachment(promotionView.group, 5);
+        buffData.left = new FormAttachment(promotionView.group, 0, SWT.LEFT);
+        buffData.right = new FormAttachment(promotionView.group, 0, SWT.RIGHT);
         fe4EnemyBuffView.group.setLayoutData(buffData);
 
         miscView = new GameMechanicsView(this, type);
@@ -372,7 +381,7 @@ public class LegacyViewContainer extends YuneViewContainer {
         skillsView.initialize(bundle.skills);
         fe4ClassView.initialize(bundle.classes);
         fe4EnemyBuffView.initialize(bundle.enemyBuff);
-        fe4PromotionView.initialize(bundle.promo);
+        promotionView.initialize(bundle.promo);
         holyBloodView.initialize(bundle.holyBlood);
     }
 
@@ -388,7 +397,7 @@ public class LegacyViewContainer extends YuneViewContainer {
         bundle.enemyBuff = fe4EnemyBuffView.getOptions();
         bundle.holyBlood = holyBloodView.getOptions();
         bundle.classes = fe4ClassView.getOptions();
-        bundle.promo = fe4PromotionView.getOptions();
+        bundle.promo = promotionView.getOptions();
     }
 
     @Override

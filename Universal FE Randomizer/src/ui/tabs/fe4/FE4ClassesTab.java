@@ -3,8 +3,9 @@ package ui.tabs.fe4;
 import fedata.general.FEBase.GameType;
 import org.eclipse.swt.custom.CTabFolder;
 import ui.common.GuiUtil;
+import ui.views.PromotionView;
 import ui.views.fe4.FE4ClassesView;
-import ui.views.fe4.FE4PromotionView;
+import ui.views.PromotionView;
 import ui.common.YuneTabItem;
 import util.OptionRecorder;
 
@@ -20,7 +21,7 @@ import util.OptionRecorder;
 public class FE4ClassesTab extends YuneTabItem {
 
     FE4ClassesView classes;
-    FE4PromotionView promotions;
+    PromotionView promotions;
 
     public FE4ClassesTab(CTabFolder parent) {
         super(parent, GameType.FE4);
@@ -29,7 +30,7 @@ public class FE4ClassesTab extends YuneTabItem {
     @Override
     protected void compose() {
         classes = addView(new FE4ClassesView(container, 2), GuiUtil.defaultGridData(2, true));
-        promotions = addView(new FE4PromotionView(container));
+        promotions = addView(new PromotionView(container, this.type));
     }
 
     @Override

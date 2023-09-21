@@ -3,6 +3,7 @@ package random.gba.randomizer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
@@ -14,12 +15,15 @@ import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFEWorldMapSpriteData;
+import fedata.gba.fe6.FE6Data;
 import fedata.gba.general.GBAFEChapterMetadataChapter;
 import fedata.gba.general.GBAFEChapterMetadataData;
+import fedata.gba.general.GBAFEClass;
 import fedata.general.FEBase;
 import fedata.general.FEBase.GameType;
 import io.DiffApplicator;
 import io.FileHandler;
+import io.UPSPatcher;
 import random.exc.RandomizationStoppedException;
 import random.gba.loader.*;
 import random.gba.randomizer.shuffling.CharacterShuffler;
@@ -27,6 +31,7 @@ import random.general.Randomizer;
 import ui.model.*;
 import ui.model.EnemyOptions.BossStatMode;
 import ui.model.GameMechanicOptions.ExperienceRate;
+import util.Diff;
 import util.DiffCompiler;
 import util.FreeSpaceManager;
 import util.SeedGenerator;
@@ -70,6 +75,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	protected RewardOptions rewardOptions;
 	protected PrfOptions prfOptions;
 	protected StatboosterOptions statboosters;
+	protected PromotionOptions promotionOptions;
 
 	// DATALOADERS
 	protected CharacterDataLoader charData;
@@ -80,6 +86,8 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	protected TextLoader textData;
 	protected PortraitDataLoader portraitData;
 	protected StatboostLoader statboostData;
+	protected MapSpriteManager mapSprites;
+	protected PromotionDataLoader promotionData;
 
 	/**
 	 * Shared constructor
@@ -102,6 +110,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		this.shufflingOptions = options.characterShufflingOptions;
 		this.prfOptions = options.prfs;
 		this.statboosters = options.statboosters;
+		this.promotionOptions = options.promotionOptions;
 		this.gameType = gameType;
 		this.gameFriendlyName = friendlyName;
 	}
@@ -194,6 +203,15 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 * UPS Patches before any data is loaded. Currently this is only used for the FE6 Translation patch. 
 	 */
 	protected abstract void applyUpsPatches();
+
+	/**
+	 * Abstract Method.
+	 *
+	 * The implementation fo this method lets to the subsclass add / change promotions for different classes before any other randomization step happens.
+	 * F.e. Soldier -> General
+	 */
+	protected abstract void addNewPromotions();
+
 
 	/**
 	 * The core method which executes the randomization.
@@ -360,12 +378,14 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		runRandomizationStep("character shuffling", 37, () -> shuffleCharactersIfNecessary());
 		runRandomizationStep("recruitment", 40, () -> randomizeRecruitmentIfNecessary());
 		runRandomizationStep("classes", 45, () -> randomizeClassesIfNecessary());
+		runRandomizationStep("promotions", 47, () -> randomizePromotionsIfNecessary());
 		runRandomizationStep("bases", 50, () -> randomizeBasesIfNecessary());
 		runRandomizationStep("weapons", 55, () -> randomizeWeaponsIfNecessary());
 		runRandomizationStep("other character traits", 60, () -> randomizeOtherCharacterTraitsIfNecessary());
-		runRandomizationStep("growths", 65, () -> randomizeGrowthsIfNecessary());
-		runRandomizationStep("miscellaneous things", 70, () -> randomizeMiscellaneousThingsIfNecessary());
-		runRandomizationStep("statboosters", 75, () -> randomizeStatboostersIfNecessary());
+		runRandomizationStep("enemy buffing", 65, () -> buffEnemiesIfNecessary());
+		runRandomizationStep("growths", 70, () -> randomizeGrowthsIfNecessary());
+		runRandomizationStep("miscellaneous things", 75, () -> randomizeMiscellaneousThingsIfNecessary());
+		runRandomizationStep("statboosters", 80, () -> randomizeStatboostersIfNecessary());
 	}
 
 	protected void randomizeRecruitmentIfNecessary() {
@@ -448,6 +468,85 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 					chapterData, itemData, textData, rng);
 			paletteFixRequired = true;
 		}
+	}
+
+	protected void randomizePromotionsIfNecessary() {
+		if (promotionOptions == null || PromotionOptions.Mode.STRICT.equals(promotionOptions.promotionMode)) {
+			return;
+		}
+
+		updateStatusString("Randomizing Promotions...");
+		try {
+			prepareForPromotionRandomization();
+		} catch (IOException e) {
+			throw new RandomizationStoppedException("Failed to apply the promotion weapon ranks fix.");
+		}
+		Random rng = new Random(SeedGenerator.generateSeedValue(seedString, GBAPromotionRandomizer.rngSalt));
+		GBAPromotionRandomizer.randomizePromotions(promotionOptions, promotionData, classData, gameType, rng);
+
+		// If the current game is FE6, and the user opted to have thieves keep their stealing ability with random promotions, then make sure to set the flag on the class
+		if (GameType.FE6.equals(gameType) && !promotionOptions.promotionMode.equals(PromotionOptions.Mode.STRICT) && promotionOptions.keepThiefAbilities) {
+			for (GBAFEClass thiefClass : Arrays.asList(FE6Data.CharacterClass.THIEF, FE6Data.CharacterClass.THIEF_F)) {
+				GBAFEClassData unpromotedThief = classData.classForID(thiefClass.getID());
+				int originalPromotionId = unpromotedThief.getTargetPromotionID();
+				GBAFEClassData promotion = classData.classForID(unpromotedThief.getTargetPromotionID());
+
+				/*
+				 * If the user selected to not have the Thief
+				 * abilities be universal (f.e. if Mercenary and Thief promote into the same class,
+				 * then the ones promoting from Merc shouldn't be able to steal)
+				 * Then Make a duplicate of the original promotion and do necessary adjustments
+				 */
+				if (!promotionOptions.universal) {
+					promotion = classData.createLordClassBasedOnClass(promotion);
+					mapSprites.duplicateSprite("FE6 "+thiefClass.name()+" Promotion Map Sprite", originalPromotionId);
+					unpromotedThief.setTargetPromotionID(promotion.getID());
+					itemData.addClassToPromotionItem(FE6Data.PromotionItem.HERO_CREST, thiefClass.getID());
+				}
+
+				// bitwise OR the ability1Flag of the originalPromotion with 0xC to give them Steal / Lockpick access (0x4 and 0x8)
+				promotion.makeThief(true);
+			}
+		}
+	}
+
+	/**
+	 * If you promote and lose a weapon type, by default the old weapon type would
+	 * still be available, these patches by Vennobennu fix that, by resetting the
+	 * Weapon types to 0.
+	 */
+	private void prepareForPromotionRandomization() throws IOException {
+		String resourceFile;
+		byte[] bytes;
+		long offset;
+
+		switch (gameType) {
+			case FE6:
+				bytes = new byte[84];
+				resourceFile = "FE6Promotion.dmp";
+				offset = 0x252F8;
+				break;
+			case FE7:
+				bytes = new byte[74];
+				resourceFile = "FE7Promotion.dmp";
+				offset = 0x298B4;
+				break;
+			case FE8:
+				bytes = new byte[54];
+				resourceFile = "FE8Promotion.dmp";
+				offset = 0x2BE38;
+				break;
+
+			default:
+				return;
+
+		}
+
+		InputStream stream = UPSPatcher.class.getClassLoader().getResourceAsStream(resourceFile);
+		stream.read(bytes);
+		stream.close();
+
+		diffCompiler.addDiff(new Diff(offset, bytes.length, bytes, null));
 	}
 
 	protected void randomizeOtherCharacterTraitsIfNecessary() {
@@ -584,7 +683,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		}
 	}
 
-	protected void buffEnemiesIfNecessary(String seed) {
+	protected void buffEnemiesIfNecessary() {
 		if (enemies == null) {
 			return;
 		}
@@ -599,7 +698,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 
 		if (enemies.improveMinionWeapons) {
 			updateStatusString("Upgrading enemy weapons...");
-			Random rng = new Random(SeedGenerator.generateSeedValue(seed, EnemyBuffer.rngSalt));
+			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, EnemyBuffer.rngSalt));
 			EnemyBuffer.improveMinionWeapons(enemies.minionImprovementChance, charData, classData, chapterData,
 					itemData, rng);
 		}
@@ -614,7 +713,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 
 		if (enemies.improveBossWeapons) {
 			updateStatusString("Upgrading boss weapons...");
-			Random rng = new Random(SeedGenerator.generateSeedValue(seed, EnemyBuffer.rngSalt + 1));
+			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, EnemyBuffer.rngSalt + 1));
 			EnemyBuffer.improveBossWeapons(enemies.bossImprovementChance, charData, classData, chapterData, itemData,
 					rng);
 		}
@@ -685,6 +784,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		// We'll try to address that before we get to any modifications.
 		charData.applyLevelCorrectionsIfNecessary();
 		itemData.prepareForRandomization();
+		addNewPromotions();
 	}
 	
 
@@ -736,7 +836,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 */
 	public void recordOriginalState() {
 		charData.recordCharacters(recordKeeper, true, classData, itemData, textData);
-		classData.recordClasses(recordKeeper, true, classData, textData);
+		classData.recordClasses(recordKeeper, true, classData, textData, promotionData);
 		itemData.recordWeapons(recordKeeper, true, classData, textData, sourceFileHandler);
 		chapterData.recordChapters(recordKeeper, true, charData, classData, itemData, textData);
 		paletteData.recordReferencePalettes(recordKeeper, charData, classData, textData);
@@ -747,7 +847,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 */
 	public void recordPostRandomizationState() {
 		charData.recordCharacters(recordKeeper, false, classData, itemData, textData);
-		classData.recordClasses(recordKeeper, false, classData, textData);
+		classData.recordClasses(recordKeeper, false, classData, textData, promotionData);
 		itemData.recordWeapons(recordKeeper, false, classData, textData, targetFileHandler);
 		chapterData.recordChapters(recordKeeper, false, charData, classData, itemData, textData);
 		paletteData.recordUpdatedPalettes(recordKeeper, charData, classData, textData);

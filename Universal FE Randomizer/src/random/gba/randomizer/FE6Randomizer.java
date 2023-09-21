@@ -3,6 +3,7 @@ package random.gba.randomizer;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -21,15 +22,7 @@ import io.FileHandler;
 import io.UPSPatcher;
 import random.gba.loader.*;
 import random.gba.loader.ItemDataLoader.AdditionalData;
-import ui.model.BaseOptions;
-import ui.model.ClassOptions;
-import ui.model.EnemyOptions;
-import ui.model.GrowthOptions;
-import ui.model.ItemAssignmentOptions;
-import ui.model.GameMechanicOptions;
-import ui.model.OtherCharacterOptions;
-import ui.model.RecruitmentOptions;
-import ui.model.WeaponOptions;
+import ui.model.*;
 import util.Diff;
 import util.DiffCompiler;
 import util.FileReadHelper;
@@ -63,6 +56,11 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 		if (miscOptions.applyEnglishPatch) {
 			textData.allowTextChanges = true;
 		}
+
+		updateStatusString("Preparing Mapsprites...");
+		updateProgress(0.06);
+		mapSprites = new MapSpriteManager(FEBase.GameType.FE6, sourceFileHandler);
+
 		updateStatusString("Loading Portrait Data...");
 		updateProgress(0.07);
 		portraitData = new PortraitDataLoader(FE6Data.shufflingDataProvider, sourceFileHandler);
@@ -150,6 +148,51 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 	}
 
 	@Override
+	protected void addNewPromotions() {
+		Map<Integer, GBAFEClassData> classMap = classData.getClassMap();
+		// FE6 & FE7, always allow Soldiers to promote.
+		GBAFEClassData soldierClassData = classMap.get(FE6Data.CharacterClass.SOLDIER.ID);
+		soldierClassData.setTargetPromotionID(FE6Data.CharacterClass.GENERAL.ID);
+
+		// If User selects it, add promotion for thieves
+		if (promotionOptions != null
+				&& PromotionOptions.Mode.STRICT.equals(promotionOptions.promotionMode)
+				&& Boolean.TRUE.equals(promotionOptions.allowThiefPromotion)) {
+			GBAFEClassData maleThiefPromotion = classMap.get(FE6Data.CharacterClass.SWORDMASTER.ID);
+			GBAFEClassData femaleThiefPromotion = classMap.get(FE6Data.CharacterClass.SWORDMASTER_F.ID);
+
+			// This option allows the thief to keep the ability to steal / use lockpicks
+			if (Boolean.TRUE.equals(promotionOptions.keepThiefAbilities)) {
+				// If the user doesn't want the steal ability to be univeral
+				// (i.e. by default thiefs promote to Swordmaster, so if we keep abilities universally Myrmidons that promote to Swordmaster also get steal)
+				// then we make a copy class and set the attributes on that one so that Original Swordmaster doesn't get the abilities
+				if (Boolean.FALSE.equals(promotionOptions.universal)) {
+					// while named create Lord Class, there is nothing special being added other than making a copy.
+					maleThiefPromotion = classData.createLordClassBasedOnClass(maleThiefPromotion);
+					femaleThiefPromotion = classData.createLordClassBasedOnClass(maleThiefPromotion);
+					textData.setStringAtIndex(0x7E8, "Thiefmaster");
+					maleThiefPromotion.setNameIndex(0x7E8);
+					femaleThiefPromotion.setNameIndex(0x7E8);
+					mapSprites.duplicateSprite("Male Thiefmaster Mapsprite", FE6Data.CharacterClass.SWORDMASTER.ID);
+					mapSprites.duplicateSprite("Female Thiefmaster Mapsprite", FE6Data.CharacterClass.SWORDMASTER_F.ID);
+				}
+
+				// if the user wanted it to be universal, then keep crit.
+				// Otherwise remove the crit from Thiefmaster to keep them distinct.
+				maleThiefPromotion.makeThief(promotionOptions.universal);
+				femaleThiefPromotion.makeThief(promotionOptions.universal);
+			}
+
+			GBAFEClassData thiefClassData = classMap.get(FE6Data.CharacterClass.THIEF.ID);
+			GBAFEClassData femaleThiefClassData = classMap.get(FE6Data.CharacterClass.THIEF_F.ID);
+			thiefClassData.setTargetPromotionID(maleThiefPromotion.getID());
+			femaleThiefClassData.setTargetPromotionID(femaleThiefPromotion.getID());
+			itemData.addClassToPromotionItem(FE6Data.PromotionItem.HERO_CREST, FE6Data.CharacterClass.THIEF.ID);
+			itemData.addClassToPromotionItem(FE6Data.PromotionItem.HERO_CREST, FE6Data.CharacterClass.THIEF_F.ID);
+		}
+	}
+
+	@Override
 	protected void createSpecialLordClasses() {
 		GBAFECharacterData roy = charData.characterWithID(FE6Data.Character.ROY.ID);
 
@@ -190,7 +233,7 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 
 	@Override
 	protected void createPrfs(Random rng) {
-		if (prfOptions.createPrfs) {
+		if (!prfOptions.createPrfs) {
 			return;
 		}
 

@@ -259,7 +259,7 @@ public class CharacterShufflingView extends YuneView<CharacterShufflingOptions> 
 		}
 		
 		
-		return new CharacterShufflingOptions(levelingMode, isEnabled, chance, shuffles, isEnabled);
+		return new CharacterShufflingOptions(levelingMode, isEnabled, chance, shuffles, changeDescriptionButton.getSelection());
 	}
 
 	@Override

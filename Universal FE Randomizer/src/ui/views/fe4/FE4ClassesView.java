@@ -4,7 +4,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.*;
 import org.eclipse.swt.widgets.*;
 import ui.common.GuiUtil;
-import ui.common.YuneGroup;
 import ui.model.fe4.FE4ClassOptions;
 import ui.model.fe4.FE4ClassOptions.BloodOptions;
 import ui.model.fe4.FE4ClassOptions.ChildOptions;
@@ -347,7 +346,7 @@ public class FE4ClassesView extends YuneView<FE4ClassOptions> {
             groupData = new FormData();
             groupData.left = new FormAttachment(0, 0);
             groupData.top = new FormAttachment(0, 0);
-            groupData.width = GuiUtil.DEFAULT_ITEM_WIDTH_280;
+            groupData.width = GuiUtil.DEFAULT_ITEM_WIDTH_300;
             playablesGroup.setLayoutData(groupData);
         } // Group Layout Data
 
@@ -467,7 +466,7 @@ public class FE4ClassesView extends YuneView<FE4ClassOptions> {
                 groupData.left = new FormAttachment(playablesGroup, 10);
                 groupData.top = new FormAttachment(playablesGroup, 0, SWT.TOP);
             }
-            groupData.width = GuiUtil.DEFAULT_ITEM_WIDTH_280;
+            groupData.width = GuiUtil.DEFAULT_ITEM_WIDTH_300;
             itemsGroup.setLayoutData(groupData);
         } // Group Layout Data
 
@@ -617,7 +616,7 @@ public class FE4ClassesView extends YuneView<FE4ClassOptions> {
                 groupData.left = new FormAttachment(itemsGroup,0, SWT.LEFT);
             }
             groupData.top = new FormAttachment(itemsGroup,10);
-            groupData.width = GuiUtil.DEFAULT_ITEM_WIDTH_280;
+            groupData.width = GuiUtil.DEFAULT_ITEM_WIDTH_300;
             enemyGroup.setLayoutData(groupData);
         } // Group Layout Data
     }

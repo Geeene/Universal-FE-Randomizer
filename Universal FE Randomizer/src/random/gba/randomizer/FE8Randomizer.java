@@ -271,7 +271,7 @@ public class FE8Randomizer extends AbstractGBARandomizer {
 
 	@Override
 	protected void createPrfs(Random rng) {
-		if (prfOptions.createPrfs) {
+		if (prfOptions == null || !prfOptions.createPrfs) {
 			return;
 		}
 

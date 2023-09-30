@@ -49,6 +49,22 @@ public class RewardOptions implements RecordableOption {
 
     @Override
     public void record(RecordKeeper rk, FEBase.GameType type) {
-
+        StringBuilder sb = new StringBuilder();
+        if (FEBase.GameType.FE4.equals(type)) {
+            sb.append("Randomizer Rings:" + (randomizeRings ? "YES" : "NO"));
+        } else {
+            if (Boolean.TRUE.equals(randomizeRewards)) {
+                sb.append("Randomization Mode: ");
+                switch (rewardMode) {
+                    case SIMILAR: sb.append("Similar rewards"); break;
+                    case RANDOM: sb.append("Fully random"); break;
+                }
+                sb.append("<br>");
+            }
+            if (enemyDropChance != null) {
+                sb.append("Adding random enemy drops with " + enemyDropChance + "% chance");
+            }
+        }
+        rk.addHeaderItem("Reward Randomization", sb.toString());
     }
 }

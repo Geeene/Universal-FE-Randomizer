@@ -94,9 +94,9 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		this.bases = options.bases;
 		this.classes = options.classes;
 		this.weapons = options.weapons;
-		this.rewardOptions = options.rewards;
-		this.otherCharacterOptions = options.other;
+		this.otherCharacterOptions = options.other;;
 		this.enemies = options.enemies;
+		this.rewardOptions = options.rewards;
 		this.miscOptions = options.otherOptions;
 		this.recruitOptions = options.recruitmentOptions;
 		this.itemAssignmentOptions = options.itemAssignmentOptions == null ? new ItemAssignmentOptions() : options.itemAssignmentOptions;
@@ -772,10 +772,13 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 
 		tryRecordingCategory("Randomize Growths", growths);
 		tryRecordingCategory("Randomize Bases", bases);
+		tryRecordingCategory("Other character traits", otherCharacterOptions);
 		tryRecordingCategory("Weapons", weapons);
+		tryRecordingCategory("Statboosters", statboosters);
 		tryRecordingCategory("Classes", classes);
 		tryRecordingCategory("Enemies", enemies);
 		tryRecordingCategory("Misc", miscOptions);
+		tryRecordingCategory("Rewards", rewardOptions);
 		tryRecordingCategory("Randomized Recruitment", recruitOptions);
 		tryRecordingCategory("Item Assignment", itemAssignmentOptions);
 	}

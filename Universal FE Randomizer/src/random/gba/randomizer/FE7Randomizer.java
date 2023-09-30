@@ -992,13 +992,13 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 
 			// See if we can apply their palettes to the class default.
 			PaletteHelper.applyCharacterPaletteToSprite(GameType.FE7, sourceFileHandler,
-					characterMap != null ? characterMap.get(lyn) : lyn, lyn.getClassID(), paletteData, freeSpace,
+					characterMap != null && characterMap.containsKey(lyn) ? characterMap.get(lyn) : lyn, lyn.getClassID(), paletteData, freeSpace,
 					diffCompiler);
 			PaletteHelper.applyCharacterPaletteToSprite(GameType.FE7, sourceFileHandler,
-					characterMap != null ? characterMap.get(eliwood) : eliwood, eliwood.getClassID(), paletteData,
+					characterMap != null && characterMap.containsKey(eliwood) ? characterMap.get(eliwood) : eliwood, eliwood.getClassID(), paletteData,
 					freeSpace, diffCompiler);
 			PaletteHelper.applyCharacterPaletteToSprite(GameType.FE7, sourceFileHandler,
-					characterMap != null ? characterMap.get(hector) : hector, hector.getClassID(), paletteData,
+					characterMap != null && characterMap.containsKey(hector) ? characterMap.get(hector) : hector, hector.getClassID(), paletteData,
 					freeSpace, diffCompiler);
 
 			// Finally, fix the weapon text.

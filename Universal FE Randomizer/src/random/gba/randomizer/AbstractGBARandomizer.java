@@ -94,6 +94,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		this.bases = options.bases;
 		this.classes = options.classes;
 		this.weapons = options.weapons;
+		this.rewardOptions = options.rewards;
 		this.otherCharacterOptions = options.other;
 		this.enemies = options.enemies;
 		this.miscOptions = options.otherOptions;

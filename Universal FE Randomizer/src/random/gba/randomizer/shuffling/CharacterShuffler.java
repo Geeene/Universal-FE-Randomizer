@@ -273,8 +273,15 @@ public class CharacterShuffler {
 		// Get the Portrait Format depending on the game
 		PortraitFormat targetFormat = PortraitFormat.getPortraitFormatForGame(type);
 
-		// Get the Palette from the Json
-		PaletteColor[] palette = GBAImageCodec.getArrayFromPaletteString(chara.paletteString);
+		// Get the Palette from the Json or automatically calculate it if none was provided
+		String paletteString = chara.paletteString;
+		PaletteColor[] palette;
+		if (paletteString == null || paletteString.isEmpty()) {
+			palette = GBAImageCodec.collectPaletteForPicture(chara.portraitPath);
+			paletteString = PaletteColor.arrayToString(palette);
+		} else {
+			palette = GBAImageCodec.getArrayFromPaletteString(paletteString);
+		}
 
 		// Insert and repoint Main Portrait
 		byte[] mainPortrait = GBAImageCodec.getGBAPortraitGraphicsDataForImage(chara.portraitPath, palette,

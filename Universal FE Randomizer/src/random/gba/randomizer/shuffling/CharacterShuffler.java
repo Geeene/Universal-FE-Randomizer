@@ -1,30 +1,10 @@
 package random.gba.randomizer.shuffling;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import javax.print.attribute.HashAttributeSet;
-
-import fedata.gba.GBAFEChapterData;
-import fedata.gba.GBAFEChapterUnitData;
-import fedata.gba.GBAFECharacterData;
-import fedata.gba.GBAFEClassData;
-import fedata.gba.GBAFEStatDto;
-import fedata.gba.fe6.FE6Data;
+import fedata.gba.*;
 import fedata.gba.general.PaletteColor;
 import fedata.general.FEBase.GameType;
 import io.FileHandler;
-import random.gba.loader.ChapterLoader;
-import random.gba.loader.CharacterDataLoader;
-import random.gba.loader.ClassDataLoader;
-import random.gba.loader.ItemDataLoader;
-import random.gba.loader.PortraitDataLoader;
-import random.gba.loader.TextLoader;
+import random.gba.loader.*;
 import random.gba.randomizer.service.ClassAdjustmentDto;
 import random.gba.randomizer.service.GBASlotAdjustmentService;
 import random.gba.randomizer.service.GBATextReplacementService;
@@ -35,13 +15,12 @@ import random.general.PoolDistributor;
 import ui.model.CharacterShufflingOptions;
 import ui.model.CharacterShufflingOptions.ShuffleLevelingMode;
 import ui.model.ItemAssignmentOptions;
-import util.DebugPrinter;
-import util.FileReadHelper;
-import util.FreeSpaceManager;
-import util.GBAImageCodec;
-import util.LZ77;
-import util.PaletteUtil;
-import util.WhyDoesJavaNotHaveThese;
+import util.*;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * Randomizer that shuffles in characters from different games into the rom
@@ -51,130 +30,175 @@ import util.WhyDoesJavaNotHaveThese;
  */
 public class CharacterShuffler {
 
-	
+	private GameType type;
+	private CharacterDataLoader characterData;
+	private TextLoader textData;
+	private Random rng;
+	private FileHandler fileHandler;
+	private PortraitDataLoader portraitData;
+	private FreeSpaceManager freeSpace;
+	private ChapterLoader chapterData;
+	private ClassDataLoader classData;
+	private CharacterShufflingOptions options;
+	private ItemAssignmentOptions inventoryOptions;
+	private ItemDataLoader itemData;
+
+	public CharacterShuffler(GameType type, CharacterDataLoader characterData, TextLoader textData, Random rng,
+							 FileHandler fileHandler, PortraitDataLoader portraitData, FreeSpaceManager freeSpace,
+							 ChapterLoader chapterData, ClassDataLoader classData, CharacterShufflingOptions options,
+							 ItemAssignmentOptions inventoryOptions, ItemDataLoader itemData) {
+		this.type = type;
+		this.characterData = characterData;
+		this.textData = textData;
+		this.rng = rng;
+		this.fileHandler = fileHandler;
+		this.portraitData = portraitData;
+		this.freeSpace = freeSpace;
+		this.chapterData = chapterData;
+		this.classData = classData;
+		this.options = options;
+		this.inventoryOptions = inventoryOptions;
+		this.itemData = itemData;
+	}
+
 	static final int rngSalt = 18489;
 
 	@SuppressWarnings("unused")
-	public static void shuffleCharacters(GameType type, CharacterDataLoader characterData, TextLoader textData, 
-			Random rng, FileHandler fileHandler, PortraitDataLoader portraitData, FreeSpaceManager freeSpace, ChapterLoader chapterData,
-			ClassDataLoader classData, CharacterShufflingOptions options, ItemAssignmentOptions inventoryOptions, ItemDataLoader itemData) {
-		// Don't include playable characters into the ones that could be replaced, 
-		// as most files probably won't be played enough to unlock those anyway.
-		List<GBAFECharacterData> characterPool = new ArrayList<GBAFECharacterData>(
-				characterData.canonicalPlayableCharacters(false));
-
+	public void shuffleCharacters() {
 		// Shuffle in character from the other games
 		if (options.getIncludedShuffles().size() != 0) {
-			PoolDistributor<GBACrossGameData> distributor = new PoolDistributor<GBACrossGameData>();
+			List<GBACrossGameData> availableChars = new ArrayList<GBACrossGameData>();
 			for (String includedCharacters : options.getIncludedShuffles()) {
-				distributor.addAll(CharacterImporter.importCharacterDataFromFiles(includedCharacters));
+				availableChars.addAll(CharacterImporter.importCharacterDataFromFiles(includedCharacters));
 			}
-			for (GBAFECharacterData slot : characterPool) {
-				// Determine if the current character should be replaced
-				if (options.getChance() < rng.nextInt(100)) {
-					continue;
-				}
 
-				// The character should be replaced, get a random character to shuffle in
-				GBACrossGameData crossGameData = distributor.getRandomItem(rng, true);
-				if (crossGameData == null) {
-					// If no more character to find, then stop
-					break;
-				}
-				
-				DebugPrinter.log(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING, String.format("Shuffling Character %s into Slot %d, which was originally %s", crossGameData.name, slot.getID(), slot.displayString()));
-
-				// (a) Get a valid class in the target game for what was configured for the character
-				int targetClassId =  GBACrossGameData.getEquivalentClass(type, crossGameData).getID();
-
-				if (targetClassId == 0) {
-					DebugPrinter.error(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING, String.format("Couldn't find an applicable class for character %s class %s%n", crossGameData.name,
-							crossGameData.characterClass));
-					continue;
-				}
-				
-				// (b) initialize some variables needed later
-				GBAFEClassData targetClass = classData.classForID(targetClassId);
-				GBAFEClassData sourceClass = classData.classForID(slot.getClassID());
-				int slotLevel = slot.getLevel();
-
-				// (c) Insert the portrait for the current character into the rom and repoint the Portrait Data
-				try {
-					changePortrait(slot, portraitData, type, crossGameData, freeSpace, fileHandler);
-				} catch (Exception e) {
-					e.printStackTrace();
-					continue;
-				}
-				
-				// (d) Update name and Description
-				updateName(textData, portraitData, slot, crossGameData);
-				
-				// Give an option to not change the description to help with keeping track of which character is which
-				if (options.shouldChangeDescription()) {
-					// [0x1] = new line 
-					// [X] = end of text segment?
-					textData.setStringAtIndex(slot.getDescriptionIndex(),String.format("%s[0x1]%s[X]", crossGameData.description1, crossGameData.description2));
-				}
-				
-				for (GBAFECharacterData linkedSlot : characterData.linkedCharactersForCharacter(slot)) {
-					linkedSlot.setGrowths(crossGameData.growths);
-					linkedSlot.setConstitution(crossGameData.constitution);
-
-					// (e) Update the bases, and potentially auto level the Character to the level of the slot.
-					// Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
-					targetClass = updateBases(textData, rng, classData, options, linkedSlot, crossGameData, targetClassId,
-							targetClass, sourceClass, slotLevel);
-					targetClassId = targetClass.getID();
-
-					updateWeaponRanks(linkedSlot, crossGameData, options, targetClass);
-
-					// (f) Update the class for all the slots of the character
-					updateUnitInChapter(chapterData, linkedSlot, crossGameData, targetClassId, options, itemData, inventoryOptions);
-						
-					// (g) give the Unit new items to use
-					ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
-				}
-			}
+			Map<Boolean, List<GBACrossGameData>> partitions = availableChars.stream().collect(Collectors.partitioningBy(data -> data.forcedSlot != null));
+			Map<Integer, GBACrossGameData> forcedSlotMapping = partitions.get(true).stream().collect(Collectors.toMap(chara -> chara.forcedSlot, chara -> chara, (initial, replacement) -> initial));
+			shuffleByForcedSlot(forcedSlotMapping);
+			shuffleRandomly(partitions.get(false), forcedSlotMapping.keySet());
 
 			GBATextReplacementService.applyChanges(textData);
 		}
 	}
 
-	
-	private static void updateName(TextLoader textData, PortraitDataLoader portraitData,
-			GBAFECharacterData slot, GBACrossGameData crossGameData) {
+	private void shuffleByForcedSlot(Map<Integer, GBACrossGameData> forcedSlots) {
+		for (Entry<Integer, GBACrossGameData> e : forcedSlots.entrySet()) {
+			GBAFECharacterData slot = characterData.characterWithID(e.getKey());
+			shuffleImpl(slot, e.getValue());
+		}
+	}
+
+	private void shuffleRandomly(List<GBACrossGameData> availableChars, Set<Integer> forcedSlots) {
+		PoolDistributor<GBACrossGameData> distributor = new PoolDistributor<>();
+		distributor.addAll(availableChars);
+
+		// Don't include playable post game characters into the ones that could be replaced,
+		// as most files probably won't be played enough to unlock those anyway.
+		List<GBAFECharacterData> characterPool = new ArrayList<GBAFECharacterData>(
+				characterData.canonicalPlayableCharacters(false));
+
+		for (GBAFECharacterData slot : characterPool) {
+
+			if (forcedSlots.contains(slot.getID()))
+				continue;
+
+			// Determine if the current character should be replaced
+			if (options.getChance() < rng.nextInt(100)) {
+				continue;
+			}
+
+			// The character should be replaced, get a random character to shuffle in
+			GBACrossGameData crossGameData = distributor.getRandomItem(rng, true);
+			if (crossGameData == null) {
+				// If no more character to find, then stop
+				break;
+			}
+
+			shuffleImpl(slot, crossGameData);
+		}
+	}
+
+	private void shuffleImpl(GBAFECharacterData slot, GBACrossGameData crossGameData) {
+		DebugPrinter.log(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING, String.format("Shuffling Character %s into Slot %d, which was originally %s", crossGameData.name, slot.getID(), slot.displayString()));
+
+		// (a) Get a valid class in the target game for what was configured for the character
+		int targetClassId = GBACrossGameData.getEquivalentClass(type, crossGameData).getID();
+
+		if (targetClassId == 0) {
+			DebugPrinter.error(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING, String.format("Couldn't find an applicable class for character %s class %s%n", crossGameData.name,
+					crossGameData.characterClass));
+			return;
+		}
+
+		// (b) initialize some variables needed later
+		GBAFEClassData targetClass = classData.classForID(targetClassId);
+		GBAFEClassData sourceClass = classData.classForID(slot.getClassID());
+		int slotLevel = slot.getLevel();
+
+		// (c) Insert the portrait for the current character into the rom and repoint the Portrait Data
+		try {
+			changePortrait(slot, crossGameData);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
+
+		// (d) Update name and Description
+		updateName(slot, crossGameData);
+
+		// Give an option to not change the description to help with keeping track of which character is which
+		if (options.shouldChangeDescription()) {
+			// [0x1] = new line
+			// [X] = end of text segment?
+			textData.setStringAtIndex(slot.getDescriptionIndex(), String.format("%s[0x1]%s[X]", crossGameData.description1, crossGameData.description2));
+		}
+
+		for (GBAFECharacterData linkedSlot : characterData.linkedCharactersForCharacter(slot)) {
+			linkedSlot.setGrowths(crossGameData.growths);
+			linkedSlot.setConstitution(crossGameData.constitution);
+
+			// (e) Update the bases, and potentially auto level the Character to the level of the slot.
+			// Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
+			targetClass = updateBases(linkedSlot, crossGameData, targetClassId,
+					targetClass, sourceClass, slotLevel);
+			targetClassId = targetClass.getID();
+
+			updateWeaponRanks(linkedSlot, crossGameData, targetClass);
+
+			// (f) Update the class for all the slots of the character
+			updateUnitInChapter(linkedSlot, crossGameData, targetClassId);
+
+			// (g) give the Unit new items to use
+			ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
+		}
+	}
+
+
+	private void updateName(GBAFECharacterData slot, GBACrossGameData crossGameData) {
 		// Save the old name for text replacement
 		String oldName = textData.getStringAtIndex(slot.getNameIndex(), true).trim();
-		List<Integer> nameIndicies = new ArrayList<>();
-		nameIndicies.add(slot.getNameIndex());
-		nameIndicies.addAll(portraitData.getRelatedNameIndicies(slot.getNameIndex()));
-		for(Integer index : nameIndicies) {
-			textData.setStringAtIndex(index, crossGameData.name+"[X]");
-		}
-		
 		GBATextReplacementService.enqueueNameUpdate(textData, oldName, crossGameData.name);
-		GBATextReplacementService.applyChanges(textData);
 	}
 
 	/**
 	 * Sets the configured Weapon ranks (clamped to ensure it's between 0 and 255) for the given character
 	 */
-	private static void updateWeaponRanks(GBAFECharacterData character, GBACrossGameData crossGameData, CharacterShufflingOptions options, GBAFEClassData targetClass) {
-		if (ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())){
+	private void updateWeaponRanks(GBAFECharacterData character, GBACrossGameData crossGameData, GBAFEClassData targetClass) {
+		if (ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())) {
 			// If we auto level, then adjust the ranks down to the level of the char they replace.
-			
+
 			// Get the total weapon ranks of the replaced char
 			long totalWeaponRanksSlot = character.getAllWeaponRanks().stream().mapToLong(num -> (long) num).sum();
 
 			// get the total Weapon ranks of the replacing char
 			long totalWeaponRanksFill = 0;
-			for(int i = 0; i < crossGameData.weaponRanks.length; i++) {
+			for (int i = 0; i < crossGameData.weaponRanks.length; i++) {
 				totalWeaponRanksFill += crossGameData.weaponRanks[i];
 			}
-			
+
 			// map the Ranks by the ratio that they had for the original unit, so that characters still keep their Rank strengths
 			Map<Integer, Float> adjustedRanks = new HashMap<>();
-			for(int i = 0; i < crossGameData.weaponRanks.length; i++) {
+			for (int i = 0; i < crossGameData.weaponRanks.length; i++) {
 				adjustedRanks.put(i, ((float) crossGameData.weaponRanks[i]) / totalWeaponRanksFill * totalWeaponRanksSlot);
 			}
 
@@ -197,19 +221,18 @@ public class CharacterShuffler {
 			character.setLightRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[6], 0, 255));
 			character.setDarkRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[7], 0, 255));
 		}
-		
-		
+
+
 	}
 
 	/**
 	 * Update the class and stats for the slot based on the configured personal bases and potentially autolevels and promotion bonuses
 	 */
-	private static GBAFEClassData updateBases(TextLoader textData, Random rng, ClassDataLoader classData,
-			CharacterShufflingOptions options, GBAFECharacterData slot, GBACrossGameData chara, int targetClassId,
-			GBAFEClassData targetClass, GBAFEClassData sourceClass, int slotLevel) {
-		if (CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(options.getLevelingMode())) {
+	private GBAFEClassData updateBases(GBAFECharacterData slot, GBACrossGameData chara, int targetClassId,
+									   GBAFEClassData targetClass, GBAFEClassData sourceClass, int slotLevel) {
+		if (ui.model.CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(options.getLevelingMode())) {
 			slot.setBases(chara.bases);
-		} else if (CharacterShufflingOptions.ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())) {
+		} else if (ui.model.CharacterShufflingOptions.ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())) {
 
 			boolean shouldBePromoted = classData.isPromotedClass(slot.getClassID());
 
@@ -217,15 +240,15 @@ public class CharacterShuffler {
 
 			boolean isPromoted = classData.isPromotedClass(targetClassId);
 
-			// Decide Target Class / Promotions or Demotions / Number of Autolevels 
+			// Decide Target Class / Promotions or Demotions / Number of Autolevels
 			ClassAdjustmentDto adjustmentDAO = GBASlotAdjustmentService.handleClassAdjustment(slotLevel,
 					chara.level, shouldBePromoted, isPromoted, rng, classData, null, targetClass, slot,
-					sourceClass, null, textData, DebugPrinter.Key.GBA_CHARACTER_SHUFFLING );
+					sourceClass, null, textData, DebugPrinter.Key.GBA_CHARACTER_SHUFFLING);
 			targetClass = adjustmentDAO.targetClass;
 			slot.setClassID(targetClassId);
 
 			// Calculate the auto leveled personal bases
-			GBAFEStatDto newPersonalBases = GBASlotAdjustmentService.autolevel(chara.bases, chara.growths, 
+			GBAFEStatDto newPersonalBases = GBASlotAdjustmentService.autolevel(chara.bases, chara.growths,
 					adjustmentDAO.promoBonuses, adjustmentDAO.levelAdjustment, targetClass, DebugPrinter.Key.GBA_CHARACTER_SHUFFLING);
 
 			slot.setBases(newPersonalBases);
@@ -236,26 +259,24 @@ public class CharacterShuffler {
 	/**
 	 * Updates the class of the character being replaced to the one of the new
 	 * character
-	 * 
-	 * @param chapterData - the data for all the chapters
+	 *
 	 * @param character   - the current Character being changed
+	 * @param replacement - the character being shuffled in
 	 * @param targetClass - the target Class that the character should now have.
 	 */
-	private static void updateUnitInChapter(ChapterLoader chapterData, GBAFECharacterData character,
-			GBACrossGameData replacement, int targetClass, CharacterShufflingOptions options, 
-			ItemDataLoader itemData, ItemAssignmentOptions inventoryOptions) {
+	private void updateUnitInChapter(GBAFECharacterData character, GBACrossGameData replacement, int targetClass) {
 		character.setClassID(targetClass);
 
 		for (GBAFEChapterData chapter : chapterData.allChapters()) {
 			for (GBAFEChapterUnitData chapterUnit : chapter.allUnits()) {
 				if (chapterUnit.getCharacterNumber() == character.getID()) {
 					chapterUnit.setStartingClass(targetClass);
-					
+
 					// If the user selects that the Units should be inserted as they are (which would be dumb) then update the level.
-					if (CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(options.getLevelingMode())) {
+					if (ui.model.CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(options.getLevelingMode())) {
 						chapterUnit.setStartingLevel(replacement.level);
 					}
-					
+
 				}
 			}
 		}
@@ -266,14 +287,9 @@ public class CharacterShuffler {
 	 *
 	 * @param character    - the character in the Rom that will have their portrait
 	 *                     replaced
-	 * @param portraitData - Portrait Dataloader that gives the offsets
-	 * @param type         - The GBA FE Game that is the target of the Randomization
 	 * @param chara        - the Character that will get randomized into the rom
-	 * @param freeSpace    - the freeSpace manager to insert the new portrait into
-	 *                     the free space
 	 */
-	private static void changePortrait(GBAFECharacterData character, PortraitDataLoader portraitData, GameType type,
-			GBACrossGameData chara, FreeSpaceManager freeSpace, FileHandler fileHandler) throws IOException {
+	private void changePortrait(GBAFECharacterData character, GBACrossGameData chara) throws IOException {
 		// Grab the Portrait Data (Pointers)
 		GBAFEPortraitData characterPortraitData = portraitData.getPortraitDataByFaceId(character.getFaceID());
 

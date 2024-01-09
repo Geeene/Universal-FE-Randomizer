@@ -8,6 +8,9 @@ import java.util.stream.Collectors;
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEStatDto;
+import fedata.gba.general.WeaponRank;
+import fedata.gba.general.WeaponRanks;
+import fedata.gba.general.WeaponType;
 import random.gba.loader.ClassDataLoader;
 import random.gba.loader.TextLoader;
 import ui.model.RecruitmentOptions;
@@ -191,6 +194,52 @@ public class GBASlotAdjustmentService {
 		levelGains.lck += (int) Math.floor((growths.lck / 100.0) * levelsRequired);
 		DebugPrinter.log(key, String.format("Stats from %d Autolevels: %s with growths %s %n", levelsRequired, levelGains.toString(), growths.toString()));
 		return levelGains;
+	}
+
+	/**
+	 * Method to unify weapon rank transfer from one class to another
+	 *
+	 * @param slot {@link GBAFECharacterData} which contains the original weapon ranks of the current character slot
+	 * @param sourceClass the sourceClass that the character originated from
+	 * @param targetClass the targetClass that the character is now
+	 * @param rng rng to decide what rank will be chosen for which weapon type, assuming there is more than one option
+	 */
+	public static void transferWeaponRanks(GBAFECharacterData slot, GBAFEClassData sourceClass, GBAFEClassData targetClass, Random rng) {
+		WeaponRanks weaponRanks = new WeaponRanks(slot, sourceClass);
+		WeaponRanks targetClassRanks = targetClass.getWeaponRanks();
+
+		List<WeaponRank> rankValues = weaponRanks.asList().stream()
+				.filter(rank -> !WeaponRank.NONE.equals(rank))
+				.sorted(WeaponRank::compare)
+				.collect(Collectors.toList());
+
+		if (rankValues.isEmpty()) {
+			slot.setWeaponRanks(targetClassRanks);
+			return;
+		}
+
+		int targetWeaponUsage = targetClass.getWeaponRanks().getTypes().size();
+
+		while (rankValues.size() > targetWeaponUsage) {
+			rankValues.remove(0); // Remove the lowest rank if we're filling less weapons than we have to work with.
+		}
+
+		for (WeaponType weaponType : WeaponType.getWeaponTypes()) {
+			if (WeaponRank.NONE.equals(targetClassRanks.rankForType(weaponType))) {
+				slot.setWeaponRank(weaponType, WeaponRank.NONE);
+				continue;
+			}
+			WeaponRank randomRank = rankValues.get(rng.nextInt(rankValues.size()));
+			if (rankValues.size() > 1) {
+				rankValues.remove(randomRank);
+			}
+
+			// The lowest rank dark tome is D, so make sure to round up
+			if (WeaponType.DARK.equals(weaponType) && WeaponRank.D.isHigherThan(randomRank)) {
+				randomRank = WeaponRank.D;
+			}
+			slot.setWeaponRank(weaponType, randomRank);
+		}
 	}
 
 }

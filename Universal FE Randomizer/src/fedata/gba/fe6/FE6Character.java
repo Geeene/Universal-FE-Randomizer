@@ -3,6 +3,7 @@ package fedata.gba.fe6;
 import java.util.Arrays;
 
 import fedata.gba.GBAFECharacterData;
+import fedata.general.FEBase;
 
 public class FE6Character extends GBAFECharacterData {
 	
@@ -12,6 +13,7 @@ public class FE6Character extends GBAFECharacterData {
 		this.data = data;
 		this.originalOffset = originalOffset;
 		this.isClassRestricted = isClassRestricted;
+		this.gameType = FEBase.GameType.FE6;
 	}
 	
 	public GBAFECharacterData createCopy(boolean useOriginalData) {

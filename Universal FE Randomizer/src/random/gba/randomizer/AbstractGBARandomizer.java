@@ -76,6 +76,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	protected PrfOptions prfOptions;
 	protected StatboosterOptions statboosters;
 	protected PromotionOptions promotionOptions;
+	protected TerrainOptions terrainOptions;
 
 	// DATALOADERS
 	protected CharacterDataLoader charData;
@@ -88,6 +89,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	protected StatboostLoader statboostData;
 	protected MapSpriteManager mapSprites;
 	protected PromotionDataLoader promotionData;
+	protected TerrainDataLoader terrainData;
 
 	/**
 	 * Shared constructor
@@ -112,6 +114,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		this.prfOptions = options.prfs;
 		this.statboosters = options.statboosters;
 		this.promotionOptions = options.promotionOptions;
+		this.terrainOptions = options.terrainOptions;
 		this.gameType = gameType;
 		this.gameFriendlyName = friendlyName;
 	}
@@ -320,6 +323,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		textData.commitChanges(freeSpace, diffCompiler);
 		portraitData.compileDiffs(diffCompiler);
 		statboostData.compileDiffs(diffCompiler);
+		terrainData.compileDiffs(diffCompiler);
 
 
 		// If the implementing game has any game specific dataloaders (such as FE8 Promotion Data), 
@@ -387,6 +391,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		runRandomizationStep("enemy buffing", 65, () -> buffEnemiesIfNecessary());
 		runRandomizationStep("growths", 70, () -> randomizeGrowthsIfNecessary());
 		runRandomizationStep("miscellaneous things", 75, () -> randomizeMiscellaneousThingsIfNecessary());
+		runRandomizationStep("terrain bonuses", 78, () -> randomizeTerrainIfNecessary());
 		runRandomizationStep("statboosters", 80, () -> randomizeStatboostersIfNecessary());
 	}
 
@@ -636,7 +641,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	
 	public void shuffleCharactersIfNecessary() {
 		if (shufflingOptions != null && shufflingOptions.isShuffleEnabled()) {
-			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, GrowthsRandomizer.rngSalt));
+			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, CharacterShuffler.rngSalt));
 			new CharacterShuffler(gameType, charData, textData, rng, sourceFileHandler, portraitData, freeSpace,
 					chapterData, classData, shufflingOptions, itemAssignmentOptions, itemData).shuffleCharacters();
 		}
@@ -644,8 +649,14 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 
 	public void randomizeStatboostersIfNecessary() {
 		if (statboosters != null && statboosters.enabled) {
-			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, GrowthsRandomizer.rngSalt));
+			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, StatboosterRandomizer.rngSalt));
 			StatboosterRandomizer.randomize(statboosters, statboostData, itemData, textData, rng);
+		}
+	}
+	public void randomizeTerrainIfNecessary() {
+		if (terrainOptions != null && terrainOptions.enabled) {
+			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, TerrainRandomizer.rngSalt));
+			new TerrainRandomizer(rng, terrainData, terrainOptions).randomize();
 		}
 	}
 
@@ -877,8 +888,10 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		tryRecordingCategory("Weapons", weapons);
 		tryRecordingCategory("Statboosters", statboosters);
 		tryRecordingCategory("Classes", classes);
+		tryRecordingCategory("Promotions", promotionOptions);
 		tryRecordingCategory("Enemies", enemies);
 		tryRecordingCategory("Misc", miscOptions);
+		tryRecordingCategory("Terrain Bonuses", terrainOptions);
 		tryRecordingCategory("Rewards", rewardOptions);
 		tryRecordingCategory("Randomized Recruitment", recruitOptions);
 		tryRecordingCategory("Character Shuffling", shufflingOptions);

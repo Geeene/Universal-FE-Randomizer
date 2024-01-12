@@ -39,6 +39,8 @@ public class LegacyViewContainer extends YuneViewContainer {
     private PrfView prfView;
     private StatboosterView statboosterView;
 
+    private TerrainView terrainView;
+
     // FE4
     private FE4SkillsView skillsView;
     private HolyBloodView holyBloodView;
@@ -152,14 +154,6 @@ public class LegacyViewContainer extends YuneViewContainer {
         otherData.right = new FormAttachment(baseView.group, 0, SWT.RIGHT);
         otherCharOptionView.group.setLayoutData(otherData);
 
-        miscView = new GameMechanicsView(this, type);
-        miscView.group.setSize(200, 200);
-
-        FormData miscData = new FormData();
-        miscData.top = new FormAttachment(otherCharOptionView.group, 5);
-        miscData.left = new FormAttachment(otherCharOptionView.group, 0, SWT.LEFT);
-        miscData.right = new FormAttachment(otherCharOptionView.group, 0, SWT.RIGHT);
-        miscView.group.setLayoutData(miscData);
 
         // --------------------------------------------------------------
         // Start of Column 2
@@ -262,6 +256,27 @@ public class LegacyViewContainer extends YuneViewContainer {
         characterShufflingData.left = new FormAttachment(recruitView.group, 0, SWT.LEFT);
         characterShufflingData.right = new FormAttachment(recruitView.group, 0, SWT.RIGHT);
         characterShufflingView.group.setLayoutData(characterShufflingData);
+
+        // --------------------------------------------------------------
+        // Start of Column 6
+        // --------------------------------------------------------------
+
+        miscView = new GameMechanicsView(this, type);
+        miscView.group.setSize(200, 200);
+
+        FormData miscData = new FormData();
+        miscData.top = new FormAttachment(recruitView.group, 0, SWT.TOP);
+        miscData.left = new FormAttachment(recruitView.group, 5);
+        miscView.group.setLayoutData(miscData);
+
+        terrainView = new TerrainView(this);
+        terrainView.group.setSize(200, 200);
+
+        FormData terrainData = new FormData();
+        terrainData.top = new FormAttachment(miscView.group, 0);
+        terrainData.left = new FormAttachment(miscView.group, 0, SWT.LEFT);
+        terrainData.right = new FormAttachment(miscView.group, 0, SWT.RIGHT);
+        terrainView.group.setLayoutData(terrainData);
     }
 
     private void composeFE4() {
@@ -351,6 +366,9 @@ public class LegacyViewContainer extends YuneViewContainer {
         itemAssignmentView.initialize(bundle.itemAssignmentOptions);
         characterShufflingView.initialize(bundle.characterShufflingOptions);
         statboosterView.initialize(bundle.statboosters);
+        promotionView.initialize(bundle.promotionOptions);
+        terrainView.initialize(bundle.terrainOptions);
+
     }
 
     @Override
@@ -370,6 +388,8 @@ public class LegacyViewContainer extends YuneViewContainer {
         bundle.recruitmentOptions = recruitView.getOptions();
         bundle.characterShufflingOptions = characterShufflingView.getOptions();
         bundle.statboosters = statboosterView.getOptions();
+        bundle.promotionOptions = promotionView.getOptions();
+        bundle.terrainOptions = terrainView.getOptions();
     }
 
     @Override

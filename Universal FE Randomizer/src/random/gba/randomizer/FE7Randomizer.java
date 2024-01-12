@@ -91,7 +91,9 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 		updateProgress(0.31);
 		updateStatusString("Loading Statboost Data...");
 		statboostData = new StatboostLoader(FE7Data.statboostProvider, sourceFileHandler);
-
+		updateProgress(0.32);
+		updateStatusString("Loading Terrain Data...");
+		terrainData = new TerrainDataLoader(GameType.FE6, classData, sourceFileHandler);
 		sourceFileHandler.clearAppliedDiffs();
 	}
 

@@ -14,7 +14,7 @@ import java.util.prefs.Preferences;
 
 public class OptionRecorder {
     private static final Integer FE4OptionBundleVersion = 7;
-    private static final Integer GBAOptionBundleVersion = 17;
+    private static final Integer GBAOptionBundleVersion = 18;
     private static final Integer FE9OptionBundleVersion = 14;
 
     public static class AllOptions {
@@ -41,6 +41,7 @@ public class OptionRecorder {
         public PrfOptions prfs;
         public StatboosterOptions statboosters;
         public PromotionOptions promotionOptions;
+        public TerrainOptions terrainOptions;
     }
 
     public static class FE4OptionBundle extends Bundle {
@@ -316,7 +317,7 @@ public class OptionRecorder {
     }
 
     public static void recordGBAFEOptions(GameType gameType, GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
-                                          OtherCharacterOptions other, EnemyOptions enemies, GameMechanicOptions otherOptions, RewardOptions rewards, RecruitmentOptions recruitment, ItemAssignmentOptions itemAssignment, CharacterShufflingOptions shufflingOptions, String seed) {
+                                          OtherCharacterOptions other, EnemyOptions enemies, GameMechanicOptions otherOptions, RewardOptions rewards, RecruitmentOptions recruitment, ItemAssignmentOptions itemAssignment, CharacterShufflingOptions shufflingOptions, PromotionOptions promotionOptions, TerrainOptions terrainOptions, String seed) {
         GBAOptionBundle bundle = new GBAOptionBundle();
         bundle.growths = growths;
         bundle.bases = bases;
@@ -330,6 +331,8 @@ public class OptionRecorder {
         bundle.seed = seed;
         bundle.characterShufflingOptions = shufflingOptions;
         bundle.rewards = rewards;
+        bundle.promotionOptions = promotionOptions;
+        bundle.terrainOptions = terrainOptions;
         recordGBAFEOptions(bundle, gameType);
     }
 

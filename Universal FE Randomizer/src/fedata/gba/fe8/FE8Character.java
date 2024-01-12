@@ -7,12 +7,8 @@ import fedata.general.FEBase;
 
 public class FE8Character extends GBAFECharacterData {
 	public FE8Character(byte[] data, long originalOffset, Boolean isClassRestricted) {
-		super();
-		this.originalData = data;
-		this.data = data;
-		this.originalOffset = originalOffset;
-		this.isClassRestricted = isClassRestricted;
-		this.gameType = FEBase.GameType.FE8;
+		super(data, originalOffset, isClassRestricted);
+        this.gameType = FEBase.GameType.FE8;
 	}
 
 	public GBAFECharacterData createCopy(boolean useOriginalData) {

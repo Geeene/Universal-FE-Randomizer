@@ -3,6 +3,7 @@ package ui.tabs.gba;
 import fedata.general.FEBase;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
+import ui.TerrainView;
 import ui.common.YuneTabItem;
 import ui.views.GameMechanicsView;
 import util.OptionRecorder;
@@ -13,6 +14,7 @@ import util.OptionRecorder;
 public class GBAMechanicsTab extends YuneTabItem {
 
     private GameMechanicsView misc;
+    private TerrainView terrain;
 
     public GBAMechanicsTab(CTabFolder parent, FEBase.GameType type) {
         super(parent, type);
@@ -21,6 +23,7 @@ public class GBAMechanicsTab extends YuneTabItem {
     @Override
     protected void compose() {
         misc = addView(new GameMechanicsView(container, type));
+        terrain = addView(new TerrainView(container));
     }
 
     @Override
@@ -35,16 +38,18 @@ public class GBAMechanicsTab extends YuneTabItem {
 
     @Override
     protected int numberColumns() {
-        return 1;
+        return 2;
     }
 
     @Override
     public void preloadOptions(OptionRecorder.GBAOptionBundle bundle) {
         misc.initialize(bundle.otherOptions);
+        terrain.initialize(bundle.terrainOptions);
     }
 
     @Override
     public void updateOptionBundle(OptionRecorder.GBAOptionBundle bundle) {
         bundle.otherOptions = misc.getOptions();
+        bundle.terrainOptions = terrain.getOptions();
     }
 }

@@ -61,7 +61,7 @@ public class CharacterShuffler {
 		this.itemData = itemData;
 	}
 
-	static final int rngSalt = 18489;
+	public static final int rngSalt = 18489;
 
 	@SuppressWarnings("unused")
 	public void shuffleCharacters() {

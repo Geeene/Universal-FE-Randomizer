@@ -1,7 +1,9 @@
 package fedata.gba;
 
+import java.util.Arrays;
 import java.util.Comparator;
 
+import fedata.gba.general.TerrainTable.TerrainTableType;
 import fedata.gba.fe7.FE7Data;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponRanks;
@@ -20,7 +22,14 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 			return Integer.compare(arg0.getID(), arg1.getID());
 		}
 	};
-	
+
+	public GBAFEClassData() {
+	}
+
+	public GBAFEClassData(byte[] data, long originalOffset) {
+		super(data, originalOffset);
+	}
+
 	// Info
 	
 	public void initializeDisplayString(String debugString) {
@@ -36,6 +45,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	public int getNameIndex() {
 		return (data[0] & 0xFF) | ((data[1] & 0xFF) << 8);
 	}
+
 	public void setNameIndex(int newValue) {
 		data[0] = (byte)(newValue & 0xFF);
 		data[1] = (byte)((newValue >> 8) &0xFF);
@@ -505,21 +515,57 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 		wasModified = true;
 	}
 
-	public int getAbility1Value() {
-		return data[0x28];
+	public long getMoveCostPointer() {
+		return readPointerFromData(0x38);
 	}
-	public void setAbility1Value(int newValue) {
-		data[0x28] = (byte) (newValue & 0xFF);
-		wasModified = true;
+	public long getRainMoveCostPointer() {
+		return readPointerFromData(0x3C);
 	}
 
-	public void makeThief(boolean keepOldAbilities) {
-		int newValue = 0xC;
+	public long getSnowMoveCostPointer() {
+		return readPointerFromData(0x40);
+	}
 
-		if (keepOldAbilities) {
-			newValue |= getAbility1Value();
+	public long getTerrainAvoidPointer() {
+		return readPointerFromData(0x44);
+	}
+
+	public long getTerrainDefPointer() {
+		return readPointerFromData(0x48);
+	}
+
+	public long getTerrainResPointer() {
+		return readPointerFromData(0x4C);
+	}
+
+	public long getTerrainPointerByType(TerrainTableType type) {
+		switch (type) {
+			case MOVEMENT: return getMoveCostPointer();
+			case MOVEMENT_RAIN: return getRainMoveCostPointer();
+			case MOVEMENT_SNOW: return getSnowMoveCostPointer();
+			case AVOID: return getTerrainAvoidPointer();
+			case DEF: return getTerrainDefPointer();
+			case RES: return getTerrainResPointer();
 		}
-
-		setAbility1Value(newValue);
+		return 0;
 	}
+
+
+    public int getAbility1Value() {
+        return data[0x28];
+    }
+    public void setAbility1Value(int newValue) {
+        data[0x28] = (byte) (newValue & 0xFF);
+        wasModified = true;
+    }
+
+    public void makeThief(boolean keepOldAbilities) {
+        int newValue = 0xC;
+
+        if (keepOldAbilities) {
+            newValue |= getAbility1Value();
+        }
+
+        setAbility1Value(newValue);
+    }
 }

@@ -70,6 +70,9 @@ public class FE8Randomizer extends AbstractGBARandomizer {
         updateProgress(0.31);
         updateStatusString("Loading Statboost Data...");
         statboostData = new StatboostLoader(FE8Data.statboostProvider, sourceFileHandler);
+        updateProgress(0.32);
+        updateStatusString("Loading Terrain Data...");
+        terrainData = new TerrainDataLoader(GameType.FE6, classData, sourceFileHandler);
 
         updateStatusString("Loading Summoner Module...");
         updateProgress(0.35);

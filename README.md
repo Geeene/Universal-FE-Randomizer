@@ -55,8 +55,8 @@ My main focus will be on the GBA FE Games.
   <tr>
     <td>GBA Terrain Bonuses</td>
     <td><a href='https://github.com/Geeene/Universal-FE-Randomizer/tree/terrainBonuses'>link</a></td>
-    <td>Backend logic implemented, GUI still missing</td>
-    <td>N/A</td>
+    <td>Done</td>
+    <td><a href='https://github.com/lushen124/Universal-FE-Randomizer/pull/432'>PR#432</a> Open</td>
   </tr>
   <tr>
     <td>Settings Import / Export</td>

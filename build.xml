@@ -1,0 +1,98 @@
+<project name="YunePreview" basedir="." default="clean-build">
+
+	<property name="src.dir" value="Universal FE Randomizer/src" />
+
+	<!-- Define the necessary paths -->
+	<property name="build.dir" value="Executables/JAR/0.9.4_preview/ant" />
+	<property name="lib.dir" value="lib" />
+	<property name="lib.deploy.dir" value="lib_swt" />
+	<property name="classes.dir" value="${build.dir}/classes" />
+	<property name="jar.dir" value="${build.dir}/jar" />
+	<property name="res.dir" value="Universal FE Randomizer/res" />
+
+	<!-- Define the main class -->
+	<property name="actual-main-class" value="application.Main" />
+
+	<path id="base-classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar" />
+	</path>
+
+	<!-- Define the class path -->
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar" />
+		<fileset dir="${lib.deploy.dir}" includes="**/swt_4_7_windows.jar" />
+	</path>
+
+	<!-- Clean previously built files -->
+	<target name="clean">
+		<delete dir="${build.dir}" />
+	</target>
+
+	<!-- Compile the project -->
+	<target name="compile">
+		<mkdir dir="${classes.dir}" />
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" source="1.8" target="1.8" classpathref="classpath" includeantruntime="false" encoding="UTF-8" />
+	</target>
+
+	<macrodef name="createclasspath">
+		<attribute name="name" />
+		<attribute name="swtlib" />
+		<sequential>
+			<pathconvert property="@{name}.classpath" pathsep=" ">
+				<path refid="base-classpath" />
+				<fileset dir="${lib.deploy.dir}" includes="**/@{swtlib}.jar" />
+				<mapper>
+					<chainedmapper>
+						<flattenmapper />
+						<globmapper from="*.jar" to="*.jar" />
+					</chainedmapper>
+				</mapper>
+			</pathconvert>
+		</sequential>
+	</macrodef>
+
+	<!-- Define classpath and create the jar folder -->
+	<target name="pre_jar" depends="compile">
+		<!-- Windows 64bit -->
+		<createclasspath name="win64" swtlib="swt_4_7_windows" />
+		<!-- Linux 64bit -->
+		<createclasspath name="linux64" swtlib="swt_4_7_linux" />
+		<!-- MacOS 64bit -->
+		<createclasspath name="macos64" swtlib="swt_4_7_macOS" />
+
+		<mkdir dir="${jar.dir}" />
+	</target>
+
+	<macrodef name="createjar">
+		<attribute name="swtlib" />
+		<attribute name="swtclasspath" />
+		<sequential>
+			<jar destfile="${jar.dir}/${ant.project.name}_@{swtlib}.jar" basedir="${classes.dir}">
+				<manifest>
+					<attribute name="Main-Class" value="org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader" />
+					<attribute name="Rsrc-Main-Class" value="${actual-main-class}" />
+					<attribute name="Class-Path" value="." />
+					<attribute name="Rsrc-Class-Path" value="./ @{swtclasspath}" />
+				</manifest>
+
+				<zipgroupfileset dir="${lib.dir}" includes="**/jar-in-jar-loader.jar" />
+				<zipfileset dir="${lib.deploy.dir}" includes="**/@{swtlib}.jar" />
+				<zipfileset dir="${lib.dir}" includes="**/*.jar" excludes="**/jar-in-jar-loader.jar" />
+				<fileset dir="${res.dir}"/>
+			</jar>
+		</sequential>
+	</macrodef>
+
+	<!-- Create the jar files -->
+	<target name="jar" depends="pre_jar">
+		<!-- Linux 64bit -->
+		<createjar swtlib="swt_4_7_linux" swtclasspath="${linux64.classpath}" />
+		<!-- Windows 64bit -->
+		<createjar swtlib="swt_4_7_windows" swtclasspath="${win64.classpath}" />
+		<!-- MacOS 64bit -->
+		<createjar swtlib="swt_4_7_macOS" swtclasspath="${macos64.classpath}" />
+	</target>
+
+	<target name="clean-build" depends="clean,jar" />
+
+</project>

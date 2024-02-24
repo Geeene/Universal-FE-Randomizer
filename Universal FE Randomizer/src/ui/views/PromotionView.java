@@ -24,7 +24,7 @@ public class PromotionView extends YuneView<PromotionOptions> {
     private Button commonWeaponButton;
     private Button keepDamageTypeButton;
 
-    private PromotionOptions.Mode currentMode;
+    private PromotionOptions.Mode currentMode = PromotionOptions.Mode.STRICT;
     // FE6 Only
     private Button allowThiefPromotion;
     private Button keepThiefAbilities;

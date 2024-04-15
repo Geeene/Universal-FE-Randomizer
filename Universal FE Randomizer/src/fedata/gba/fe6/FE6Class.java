@@ -284,4 +284,28 @@ public class FE6Class extends GBAFEClassData {
 		wasModified = true;
 	}
 
+	public long getRainMoveCostPointer() {
+		throw new UnsupportedOperationException("FE6 has no Weather movement tables.");
+	}
+
+	public long getSnowMoveCostPointer() {
+		throw new UnsupportedOperationException("FE6 has no Weather movement tables.");
+	}
+
+	public long getMoveCostPointer() {
+		return readPointerFromData(0x34);
+	}
+
+	public long getTerrainAvoidPointer() {
+		return readPointerFromData(0x38);
+	}
+
+	public long getTerrainDefPointer() {
+		return readPointerFromData(0x3C);
+	}
+
+	public long getTerrainResPointer() {
+		return readPointerFromData(0x40);
+	}
+
 }

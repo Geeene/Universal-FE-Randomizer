@@ -15,7 +15,9 @@ public class PoolDistributor<T> {
 
 	public static PoolDistributor of(Collection c) {
 		PoolDistributor pd = new PoolDistributor();
-		pd.addAll(c);
+		for (Object item : c) {
+			pd.addItem(item);
+		}
 		return pd;
 	}
 

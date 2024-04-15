@@ -1,7 +1,10 @@
 package fedata.gba.general;
 
 import fedata.gba.AbstractGBAData;
+import fedata.general.FEBase;
+import fedata.general.FEBase.GameType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -129,6 +132,16 @@ public class TerrainTable extends AbstractGBAData {
          */
         public boolean isUniversal() {
             return UNIVERSAL.contains(this);
+        }
+
+        public static List<TerrainTableType> getClassBoundTypesByGame(GameType type) {
+            List<TerrainTableType> tables = new ArrayList<>(CLASS_BOUND);
+            if (GameType.FE6.equals(type)) {
+                tables.remove(MOVEMENT_SNOW);
+                tables.remove(MOVEMENT_RAIN);
+            }
+
+            return tables;
         }
     }
 

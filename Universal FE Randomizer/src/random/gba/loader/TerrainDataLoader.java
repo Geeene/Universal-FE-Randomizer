@@ -40,7 +40,7 @@ public class TerrainDataLoader {
         this.gameType = type;
         Collection<GBAFEClassData> allClasses = classData.getClassMap().values();
         dataLengthBytes = terrainDataLengthInBytes();
-        for (TerrainTableType tableType : TerrainTableType.CLASS_BOUND) {
+        for (TerrainTableType tableType : TerrainTableType.getClassBoundTypesByGame(type)) {
             List<TerrainTable> terrainDataOfType = allClasses.stream()
                     .map(e -> e.getTerrainPointerByType(tableType)) // Map each class to it's pointer for the current type
                     .distinct()// Filter out duplicates

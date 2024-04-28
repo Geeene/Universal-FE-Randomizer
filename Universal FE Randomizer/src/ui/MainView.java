@@ -62,7 +62,7 @@ public class MainView implements FileFlowDelegate {
      */
     public MainView(Display mainDisplay) {
         mainShell = new Shell(mainDisplay, SWT.SHELL_TRIM & ~SWT.MAX);
-        mainShell.setText("Yune: A Universal Fire Emblem Randomizer (v0.9.4 preview build 24th February 2024)");
+        mainShell.setText("Yune: A Universal Fire Emblem Randomizer (v0.9.4 preview build 28th April 2024)");
         mainShell.setImage(new Image(mainDisplay, Main.class.getClassLoader().getResourceAsStream("YuneIcon.png")));
         mainShell.setLayout(new FillLayout());
 

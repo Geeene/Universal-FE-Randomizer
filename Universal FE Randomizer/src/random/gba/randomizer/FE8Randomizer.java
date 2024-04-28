@@ -520,6 +520,7 @@ public class FE8Randomizer extends AbstractGBARandomizer {
     @Override
     protected void gameSpecificDiffCompilations() {
         fe8_paletteMapper.commitChanges(diffCompiler);
+        promotionData.compileDiffs(diffCompiler);
         fe8_summonerModule.validateSummoners(charData, new Random(SeedGenerator.generateSeedValue(seedString, 0)));
         fe8_summonerModule.commitChanges(diffCompiler, freeSpace);
     }

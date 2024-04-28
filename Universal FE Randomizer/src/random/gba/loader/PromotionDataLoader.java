@@ -32,7 +32,7 @@ public class PromotionDataLoader {
         }
     }
 
-    public void compileDiffs(DiffCompiler compiler, FileHandler handler) {
+    public void compileDiffs(DiffCompiler compiler) {
         for (PromotionBranch branch : promotionBranches.values()) {
             branch.commitChanges();
         }

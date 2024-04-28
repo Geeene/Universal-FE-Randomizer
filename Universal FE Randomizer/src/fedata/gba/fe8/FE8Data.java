@@ -483,7 +483,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				GREAT_KNIGHT_F, SUPER_RECRUIT, /*MANAKETE_F,*/ FALCON_KNIGHT, VALKYRIE, REVENANT, BONEWALKER, BONEWALKER_BOW, BAEL, MAUTHE_DOOG, TARVOS, MOGALL, GARGOYLE,
 				ENTOMBED, WIGHT, WIGHT_BOW, ELDER_BAEL, CYCLOPS, GWYLLGI, MAELDUIN, ARCH_MOGALL, GORGON, DEATHGOYLE, CYCLOPS_2, ELDER_BAEL_2));
 		
-		public static Set<CharacterClass> additionalClassesToPalletLoad = new HashSet<CharacterClass>(Arrays.asList(MANAKETE_F));
+		public static Set<CharacterClass> additionalClassesToPalletLoad = new HashSet<CharacterClass>(Arrays.asList(MANAKETE_F, NECROMANCER));
 		
 		// Leaving this empty for the time being. If it turns out to be an issue when hostile AI gets its hands on classes it doesn't know 
 		// how to deal with, we can add it back in.
@@ -2498,7 +2498,8 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			defaultPaletteForClass.put(CharacterClass.ROGUE.ID, ROGUE_RENNAC.info);
 			defaultPaletteForClass.put(CharacterClass.DANCER.ID, DANCER_TETHYS.info);
 			defaultPaletteForClass.put(CharacterClass.PIRATE.ID, PIRATE_ROSS.info);
-			
+			defaultPaletteForClass.put(CharacterClass.NECROMANCER.ID, DRUID_KNOLL.info);
+
 
 			defaultPaletteForClass.put(CharacterClass.SOLDIER.ID, SOLDIER_GENERIC.info);
 
@@ -2672,6 +2673,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 					break;
 				case SHAMAN:
 				case DRUID:
+				case NECROMANCER:
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {8, 9, 10}, new int[] {11, 12, 13, 14}, new int[] {});
 					break;
 				case SUMMONER:

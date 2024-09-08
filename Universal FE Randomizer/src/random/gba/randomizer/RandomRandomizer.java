@@ -16,6 +16,7 @@ import random.gba.loader.CharacterDataLoader;
 import random.gba.loader.ItemDataLoader;
 import random.general.PoolDistributor;
 import random.general.WeightedDistributor;
+import util.WhyDoesJavaNotHaveThese;
 
 public class RandomRandomizer {
 	static final int rngSalt = 27682;
@@ -51,75 +52,50 @@ public class RandomRandomizer {
 
 	public static void addRandomEnemyDrops(int chance, CharacterDataLoader charData, ItemDataLoader itemData, ChapterLoader chapterData, Random rng) {
 		GBAFEChapterData[] chapters = chapterData.allChapters();
-		WeightedDistributor<GBAFEItemData> firstQuarter = new WeightedDistributor<GBAFEItemData>();
-		for (GBAFEItemData item : itemData.commonDrops()) { firstQuarter.addItem(item, 90); }
-		for (GBAFEItemData item : itemData.uncommonDrops()) { firstQuarter.addItem(item, 9); }
-		for (GBAFEItemData item : itemData.rareDrops()) { firstQuarter.addItem(item, 1); }
-		for (int i = 0; i < chapters.length / 4; i++) {
+		List<WeightedDistributor<GBAFEItemData>> distributors = getDistributorsForDrops(itemData);
+
+		for (int i = 0; i < chapters.length; i++) {
 			GBAFEChapterData chapter = chapters[i];
 			for (GBAFEChapterUnitData unit : chapter.allUnits()) {
-				if (unit.isEnemy() && !charData.isBossCharacterID(unit.getCharacterNumber())) {
-					if (rng.nextInt(100) < chance) {
-						unit.setUnitToDropLastItem(true);
-						if (rng.nextInt(4) != 0) {
-							unit.giveItem(firstQuarter.getRandomItem(rng).getID());
-						}
-					}
+				if (!unit.isEnemy() || charData.isBossCharacterID(unit.getCharacterNumber())) {
+					continue;
+				}
+
+				if (rng.nextInt(100) >= chance) {
+					continue;
+				}
+
+				unit.setUnitToDropLastItem(true);
+				if (rng.nextInt(4) != 0) {
+					unit.giveItem(WhyDoesJavaNotHaveThese.clamp(Math.round(i / (chapters.length / 4)), 1,4) -1);
 				}
 			}
 		}
-		WeightedDistributor<GBAFEItemData> secondQuarter = new WeightedDistributor<GBAFEItemData>();
-		for (GBAFEItemData item : itemData.commonDrops()) { secondQuarter.addItem(item, 70); }
-		for (GBAFEItemData item : itemData.uncommonDrops()) { secondQuarter.addItem(item, 20); }
-		for (GBAFEItemData item : itemData.rareDrops()) { secondQuarter.addItem(item, 10); }
-		for (int i = chapters.length / 4; i < chapters.length / 2; i++) {
-			GBAFEChapterData chapter = chapters[i];
-			for (GBAFEChapterUnitData unit : chapter.allUnits()) {
-				if (unit.isEnemy() && !charData.isBossCharacterID(unit.getCharacterNumber())) {
-					if (rng.nextInt(100) < chance) {
-						unit.setUnitToDropLastItem(true);
-						if (rng.nextInt(4) != 0) {
-							unit.giveItem(secondQuarter.getRandomItem(rng).getID());
-						}
-					}
-				}
-			}
+	}
+
+	private static List<WeightedDistributor<GBAFEItemData>> getDistributorsForDrops(ItemDataLoader itemData) {
+		WeightedDistributor<GBAFEItemData> firstQuarter = new WeightedDistributor<>();
+		WeightedDistributor<GBAFEItemData> secondQuarter = new WeightedDistributor<>();
+		WeightedDistributor<GBAFEItemData> thirdQuarter = new WeightedDistributor<>();
+		WeightedDistributor<GBAFEItemData> fourthQuarter = new WeightedDistributor<>();
+		for (GBAFEItemData item : itemData.commonDrops()) {
+			firstQuarter.addItem(item, 90);
+			secondQuarter.addItem(item, 70);
+			thirdQuarter.addItem(item, 60);
+			fourthQuarter.addItem(item, 50);
 		}
-		
-		WeightedDistributor<GBAFEItemData> thirdQuarter = new WeightedDistributor<GBAFEItemData>();
-		for (GBAFEItemData item : itemData.commonDrops()) { thirdQuarter.addItem(item, 60); }
-		for (GBAFEItemData item : itemData.uncommonDrops()) { thirdQuarter.addItem(item, 30); }
-		for (GBAFEItemData item : itemData.rareDrops()) { thirdQuarter.addItem(item, 10); }
-		for (int i = chapters.length / 2; i < chapters.length * 3 / 4; i++) {
-			GBAFEChapterData chapter = chapters[i];
-			for (GBAFEChapterUnitData unit : chapter.allUnits()) {
-				if (unit.isEnemy() && !charData.isBossCharacterID(unit.getCharacterNumber())) {
-					if (rng.nextInt(100) < chance) {
-						unit.setUnitToDropLastItem(true);
-						if (rng.nextInt(4) != 0) {
-							unit.giveItem(thirdQuarter.getRandomItem(rng).getID());
-						}
-					}
-				}
-			}
+		for (GBAFEItemData item : itemData.uncommonDrops()) {
+			firstQuarter.addItem(item, 9);
+			secondQuarter.addItem(item, 20);
+			thirdQuarter.addItem(item, 30);
+			fourthQuarter.addItem(item, 30);
 		}
-		
-		WeightedDistributor<GBAFEItemData> fourthQuarter = new WeightedDistributor<GBAFEItemData>();
-		for (GBAFEItemData item : itemData.commonDrops()) { fourthQuarter.addItem(item, 50); }
-		for (GBAFEItemData item : itemData.uncommonDrops()) { fourthQuarter.addItem(item, 30); }
-		for (GBAFEItemData item : itemData.rareDrops()) { fourthQuarter.addItem(item, 20); }
-		for (int i = chapters.length * 3 / 4; i < chapters.length; i++) {
-			GBAFEChapterData chapter = chapters[i];
-			for (GBAFEChapterUnitData unit : chapter.allUnits()) {
-				if (unit.isEnemy() && !charData.isBossCharacterID(unit.getCharacterNumber())) {
-					if (rng.nextInt(100) < chance) {
-						unit.setUnitToDropLastItem(true);
-						if (rng.nextInt(4) != 0) {
-							unit.giveItem(fourthQuarter.getRandomItem(rng).getID());
-						}
-					}
-				}
-			}
+		for (GBAFEItemData item : itemData.rareDrops()) {
+			firstQuarter.addItem(item, 1);
+			secondQuarter.addItem(item, 10);
+			thirdQuarter.addItem(item, 10);
+			fourthQuarter.addItem(item, 20);
 		}
+		return Arrays.asList(firstQuarter, secondQuarter, thirdQuarter, fourthQuarter);
 	}
 }

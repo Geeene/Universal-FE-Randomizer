@@ -2,11 +2,7 @@ package random.gba.randomizer;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import fedata.gba.GBAFEChapterData;
 import fedata.gba.GBAFEChapterItemData;
@@ -988,14 +984,15 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 							null));
 
 			// See if we can apply their palettes to the class default.
+			Map<GBAFECharacterData, GBAFECharacterData> mapReference = characterMap == null ? new HashMap<>() : characterMap;
 			PaletteHelper.applyCharacterPaletteToSprite(GameType.FE7, sourceFileHandler,
-					characterMap != null ? characterMap.get(lyn) : lyn, lyn.getClassID(), paletteData, freeSpace,
+					mapReference.getOrDefault(lyn, lyn), lyn.getClassID(), paletteData, freeSpace,
 					diffCompiler);
 			PaletteHelper.applyCharacterPaletteToSprite(GameType.FE7, sourceFileHandler,
-					characterMap != null ? characterMap.get(eliwood) : eliwood, eliwood.getClassID(), paletteData,
+					mapReference.getOrDefault(eliwood, eliwood), eliwood.getClassID(), paletteData,
 					freeSpace, diffCompiler);
 			PaletteHelper.applyCharacterPaletteToSprite(GameType.FE7, sourceFileHandler,
-					characterMap != null ? characterMap.get(hector) : hector, hector.getClassID(), paletteData,
+					mapReference.getOrDefault(hector, hector), hector.getClassID(), paletteData,
 					freeSpace, diffCompiler);
 
 			// Finally, fix the weapon text.

@@ -42,6 +42,7 @@ public class CharacterShuffler {
 	private CharacterShufflingOptions options;
 	private ItemAssignmentOptions inventoryOptions;
 	private ItemDataLoader itemData;
+	private boolean somethingShuffled;
 
 	public CharacterShuffler(GameType type, CharacterDataLoader characterData, TextLoader textData, Random rng,
 							 FileHandler fileHandler, PortraitDataLoader portraitData, FreeSpaceManager freeSpace,
@@ -77,7 +78,9 @@ public class CharacterShuffler {
 			shuffleByForcedSlot(forcedSlotMapping);
 			shuffleRandomly(partitions.get(false), forcedSlotMapping.keySet());
 
-			GBATextReplacementService.applyChanges(textData);
+			if (somethingShuffled) {
+				GBATextReplacementService.applyChanges(textData);
+			}
 		}
 	}
 
@@ -171,6 +174,7 @@ public class CharacterShuffler {
 			// (g) give the Unit new items to use
 			ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
 		}
+		somethingShuffled = true;
 	}
 
 
@@ -325,7 +329,7 @@ public class CharacterShuffler {
 		characterPortraitData.setFacialFeatureCoordinates(facialFeaturesCoordinates);
 
 		// Write the Palette of the image
-		characterPortraitData.setNewPalette(PaletteUtil.getByteArrayFromString(chara.paletteString));
+		characterPortraitData.setNewPalette(PaletteUtil.getByteArrayFromString(paletteString));
 
 	}
 

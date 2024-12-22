@@ -527,7 +527,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 						NOMAD_F, NOMADTROOPER, NOMADTROOPER_F));
 		public static Set<CharacterClass> meleeOnlyClasses = new HashSet<CharacterClass>(Arrays.asList(LORD_ELIWOOD, MERCENARY, MYRMIDON, THIEF, SWORDMASTER, ASSASSIN, LORD_LYN, SWORDMASTER_F));
 		public static Set<CharacterClass> rangedOnlyClasses = new HashSet<CharacterClass>(Arrays.asList(ARCHER, NOMAD, SNIPER, ARCHER_F, SNIPER_F));
-		
+
 		public static Map<CharacterClass, CharacterClass> promotionMap = createPromotionMap();
 		private static Map<CharacterClass, CharacterClass> createPromotionMap() {
 			Map<CharacterClass, CharacterClass> map = new HashMap<CharacterClass, CharacterClass>();
@@ -536,23 +536,26 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			map.put(LORD_HECTOR, GREAT_LORD); 
 			map.put(MERCENARY, HERO);
 			map.put(MYRMIDON, SWORDMASTER);
+			map.put(MYRMIDON, SWORDMASTER_F);
 			map.put(FIGHTER, WARRIOR);
 			map.put(KNIGHT, GENERAL);
 			map.put(ARCHER, SNIPER);
+			map.put(ARCHER_F, SNIPER_F);
 			map.put(MONK, BISHOP);
+			map.put(CLERIC, BISHOP_F);
 			map.put(MAGE, SAGE);
+			map.put(MAGE_F, SAGE_F);
 			map.put(SHAMAN, DRUID);
 			map.put(CAVALIER, PALADIN);
+			map.put(CAVALIER, PALADIN_F);
 			map.put(NOMAD, NOMADTROOPER);
 			map.put(WYVERNKNIGHT, WYVERNLORD);
+			map.put(WYVERNKNIGHT, WYVERNLORD_F);
 			map.put(SOLDIER, GENERAL);
 			map.put(BRIGAND, BERSERKER);
 			map.put(PIRATE, BERSERKER);
 			map.put(THIEF, ASSASSIN);
 			map.put(CORSAIR, BERSERKER);
-			map.put(ARCHER_F, SNIPER_F);
-			map.put(CLERIC, BISHOP_F); 
-			map.put(MAGE_F, SAGE_F);
 			map.put(TROUBADOUR, VALKYRIE);
 			map.put(PEGASUSKNIGHT, FALCONKNIGHT);
 			return map;

@@ -159,6 +159,7 @@ public class CharacterShuffler {
 		for (GBAFECharacterData linkedSlot : characterData.linkedCharactersForCharacter(slot)) {
 			linkedSlot.setGrowths(crossGameData.growths);
 			linkedSlot.setConstitution(crossGameData.constitution);
+			linkedSlot.setIsLord(characterData.isLordCharacterID(slot.getID()));
 
 			// (e) Update the bases, and potentially auto level the Character to the level of the slot.
 			// Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
@@ -202,8 +203,6 @@ public class CharacterShuffler {
 			character.setLightRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[6], 0, 255));
 			character.setDarkRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[7], 0, 255));
 		}
-
-
 	}
 
 	/**

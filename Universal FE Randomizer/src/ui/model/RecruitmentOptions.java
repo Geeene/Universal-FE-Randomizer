@@ -31,8 +31,11 @@ public class RecruitmentOptions implements RecordableOption {
 	public final boolean includeSpecial;
 	
 	public final boolean includeExtras;
+	public final boolean keepDescriptions;
 
-	public RecruitmentOptions(GrowthAdjustmentMode growthMode, StatAdjustmentMode baseMode, BaseStatAutolevelType autolevel, ClassMode classMode, boolean lords, boolean thieves, boolean special, boolean crossGender, boolean includeExtras) {
+	public RecruitmentOptions(GrowthAdjustmentMode growthMode, StatAdjustmentMode baseMode,
+							  BaseStatAutolevelType autolevel, ClassMode classMode, boolean lords, boolean thieves,
+							  boolean special, boolean crossGender, boolean includeExtras, boolean keepDescriptions) {
 		this.growthMode = growthMode;
 		this.baseMode = baseMode;
 		this.autolevelMode = autolevel;
@@ -44,6 +47,7 @@ public class RecruitmentOptions implements RecordableOption {
 		
 		this.allowCrossGender = crossGender;
 		this.includeExtras = includeExtras;
+		this.keepDescriptions = keepDescriptions;
 	}
 
 	@Override

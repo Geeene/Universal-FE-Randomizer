@@ -14,7 +14,6 @@ import fedata.gba.fe7.FE7Data;
 import fedata.gba.fe8.FE8Data;
 import fedata.gba.fe8.FE8PaletteMapper;
 import fedata.gba.fe8.FE8PaletteMapper.SlotType;
-import fedata.gba.fe8.FE8PromotionManager;
 import fedata.gba.general.PaletteColor;
 import fedata.gba.general.PaletteInfo;
 import fedata.gba.general.PaletteV2;

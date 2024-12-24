@@ -645,6 +645,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, CharacterShuffler.rngSalt));
 			new CharacterShuffler(gameType, charData, textData, rng, sourceFileHandler, portraitData, freeSpace,
 					chapterData, classData, shufflingOptions, itemAssignmentOptions, itemData).shuffleCharacters();
+			paletteFixRequired = true;
 		}
 	}
 

@@ -125,7 +125,7 @@ public class CharacterShuffler {
 		DebugPrinter.log(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING, String.format("Shuffling Character %s into Slot %d, which was originally %s", crossGameData.name, slot.getID(), slot.displayString()));
 
 		// (a) Get a valid class in the target game for what was configured for the character
-		int targetClassId = GBACrossGameData.getEquivalentClass(type, crossGameData).getID();
+		int targetClassId = GBACrossGameData.getEquivalentClass(type, crossGameData, classData).getID();
 
 		if (targetClassId == 0) {
 			DebugPrinter.error(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING, String.format("Couldn't find an applicable class for character %s class %s%n", crossGameData.name,
@@ -133,10 +133,12 @@ public class CharacterShuffler {
 			return;
 		}
 
+		GBAFECharacterData slotReference = slot.createCopy(false);
+
 		// (b) initialize some variables needed later
 		GBAFEClassData targetClass = classData.classForID(targetClassId);
-		GBAFEClassData sourceClass = classData.classForID(slot.getClassID());
-		int slotLevel = slot.getLevel();
+		GBAFEClassData sourceClass = classData.classForID(slotReference.getClassID());
+		int slotLevel = slotReference.getLevel();
 
 		// (c) Insert the portrait for the current character into the rom and repoint the Portrait Data
 		try {
@@ -163,18 +165,38 @@ public class CharacterShuffler {
 
 			// (e) Update the bases, and potentially auto level the Character to the level of the slot.
 			// Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
-			targetClass = updateBases(linkedSlot, crossGameData, targetClassId,
-					targetClass, sourceClass, slotLevel);
+			targetClass = updateBases(textData,rng, classData, options, slotReference, crossGameData, targetClassId, targetClass, sourceClass, slotLevel);
 			targetClassId = targetClass.getID();
 
 			updateWeaponRanks(linkedSlot, crossGameData, sourceClass, targetClass, rng);
+			linkedSlot.setConstitution(crossGameData.constitution - targetClass.getCON());
+			linkedSlot.setIsLord(characterData.isLordCharacterID(slotReference.getID()));
+
+			GBAFECharacterData.Affinity resolvedAffinity = GBAFECharacterData.Affinity.affinityForString(crossGameData.affinity);
+			if (resolvedAffinity == GBAFECharacterData.Affinity.NONE) {
+				DebugPrinter.error("Invalid affinity detected for " + crossGameData.name + ": " + crossGameData.affinity);
+			} else {
+				linkedSlot.setAffinityValue(characterData.getAffinityValue(resolvedAffinity));
+			}
 
 			// (f) Update the class for all the slots of the character
 			updateUnitInChapter(linkedSlot, crossGameData, targetClassId);
 
 			// (g) give the Unit new items to use
 			ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
+
+			// (h) Update the battle palette, if possible.
+			linkedSlot.overrideBattleHairColor = crossGameData.battlePalette.getHairColors();
+			linkedSlot.overrideBattlePrimaryColor = crossGameData.battlePalette.getPrimaryColors();
+			linkedSlot.overrideBattleSecondaryColor = crossGameData.battlePalette.getSecondaryColors();
+			linkedSlot.overrideBattleTertiaryColor = crossGameData.battlePalette.getTertiaryColors();
+
 		}
+		slot.overrideBattleHairColor = crossGameData.battlePalette.getHairColors();
+		slot.overrideBattlePrimaryColor = crossGameData.battlePalette.getPrimaryColors();
+		slot.overrideBattleSecondaryColor = crossGameData.battlePalette.getSecondaryColors();
+		slot.overrideBattleTertiaryColor = crossGameData.battlePalette.getTertiaryColors();
+
 		somethingShuffled = true;
 	}
 
@@ -203,16 +225,32 @@ public class CharacterShuffler {
 			character.setLightRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[6], 0, 255));
 			character.setDarkRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[7], 0, 255));
 		}
+		
+		// Remove any weapon ranks not supported by the target class.
+		if (targetClass.getSwordRank() == 0) { character.setSwordRank(0); }
+		if (targetClass.getLanceRank() == 0) { character.setLanceRank(0); }
+		if (targetClass.getAxeRank() == 0) { character.setAxeRank(0); }
+		if (targetClass.getBowRank() == 0) { character.setBowRank(0); }
+		if (targetClass.getStaffRank() == 0) { character.setStaffRank(0); }
+		if (targetClass.getAnimaRank() == 0) { character.setAnimaRank(0); }
+		if (targetClass.getLightRank() == 0) { character.setLightRank(0); }
+		if (targetClass.getDarkRank() == 0) { character.setDarkRank(0); }
+
 	}
 
 	/**
 	 * Update the class and stats for the slot based on the configured personal bases and potentially autolevels and promotion bonuses
 	 */
-	private GBAFEClassData updateBases(GBAFECharacterData slot, GBACrossGameData chara, int targetClassId,
-									   GBAFEClassData targetClass, GBAFEClassData sourceClass, int slotLevel) {
-		if (ui.model.CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(options.getLevelingMode())) {
-			slot.setBases(chara.bases);
-		} else if (ui.model.CharacterShufflingOptions.ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())) {
+	private static GBAFEClassData updateBases(TextLoader textData, Random rng, ClassDataLoader classData,
+			CharacterShufflingOptions options, GBAFECharacterData slot, GBACrossGameData chara, int targetClassId,
+			GBAFEClassData targetClass, GBAFEClassData sourceClass, int slotLevel) {
+
+		// These are effective bases (personal + class)
+		GBAFEStatDto oldBases = chara.bases;
+
+		if (CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(options.getLevelingMode())) {
+			slot.setBases(oldBases.subtract(targetClass.getBases()));
+		} else if (CharacterShufflingOptions.ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())) {
 
 			boolean shouldBePromoted = classData.isPromotedClass(slot.getClassID());
 
@@ -228,11 +266,12 @@ public class CharacterShuffler {
 			slot.setClassID(targetClassId);
 
 			// Calculate the auto leveled personal bases
-			GBAFEStatDto newPersonalBases = GBASlotAdjustmentService.autolevel(chara.bases, chara.growths,
+			GBAFEStatDto newPersonalBases = GBASlotAdjustmentService.autolevel(oldBases, chara.growths,
 					adjustmentDAO.promoBonuses, adjustmentDAO.levelAdjustment, targetClass, DebugPrinter.Key.GBA_CHARACTER_SHUFFLING);
 
 			slot.setBases(newPersonalBases);
 		}
+
 		return targetClass;
 	}
 

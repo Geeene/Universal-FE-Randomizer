@@ -2755,6 +2755,19 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		return values;
 	}
 
+	public int affinityValueForAffinity(GBAFECharacterData.Affinity affinity) {
+		switch (affinity) {
+		case FIRE: return FE7Character.Affinity.FIRE.value;
+		case THUNDER: return FE7Character.Affinity.THUNDER.value;
+		case WIND: return FE7Character.Affinity.WIND.value;
+		case WATER: return FE7Character.Affinity.WATER.value;
+		case DARK: return FE7Character.Affinity.DARK.value;
+		case LIGHT: return FE7Character.Affinity.LIGHT.value;
+		case ANIMA: return FE7Character.Affinity.ANIMA.value;
+		default: return FE7Character.Affinity.NONE.value;
+		}
+	}
+
 	public int canonicalID(int characterID) {
 		return Character.canonicalIDForCharacterID(characterID);
 	}
@@ -3599,7 +3612,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	}
 
 	private final Set<Integer> excludedIndicies = generateExcludedIndiciesSet();
-	
+
 	public Set<Integer> getExcludedIndiciesFromNameUpdate() {
 		return excludedIndicies;
 	}
@@ -3617,7 +3630,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		
 		return indicies;
 	}
-	
+
 	@Override
 	public long getBaseAddress() {
 		return 0xC98F98;

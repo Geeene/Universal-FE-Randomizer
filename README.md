@@ -32,7 +32,7 @@ My main focus will be on the GBA FE Games.
     <td>Statbooster Randomizer</td>
     <td><a href='https://github.com/Geeene/Universal-FE-Randomizer/tree/RandomStatboosters'>link</a></td>
     <td>Done</td>
-    <td><a href='https://github.com/lushen124/Universal-FE-Randomizer/pull/406'> PR#406</a> Approved, not merged</td>
+    <td><a href='https://github.com/lushen124/Universal-FE-Randomizer/pull/406'> PR#406</a> Merged</td>
   </tr>
   <tr>
     <td>GBA Randomizer Refactor</td>
@@ -44,7 +44,7 @@ My main focus will be on the GBA FE Games.
     <td>GUI Rework</td>
     <td><a href='https://github.com/Geeene/Universal-FE-Randomizer/tree/GUI_Rework'>link</a></td>
     <td>Initial implementation works, outside feedback needed.</td>
-    <td><a href='https://github.com/lushen124/Universal-FE-Randomizer/pull/419'> PR#419</a> Open</td>
+    <td><a href='https://github.com/lushen124/Universal-FE-Randomizer/pull/419'> PR#419</a> Merged</td>
   </tr>
   <tr>
     <td>GBA Randomized Promotions</td>

@@ -73,7 +73,8 @@ public class CharacterShuffler {
 				availableChars.addAll(CharacterImporter.importCharacterDataFromFiles(includedCharacters));
 			}
 
-			Map<Boolean, List<GBACrossGameData>> partitions = availableChars.stream().collect(Collectors.partitioningBy(data -> data.forcedSlot != null));
+			Map<Boolean, List<GBACrossGameData>> partitions = availableChars.stream().filter(Objects::nonNull)
+					.collect(Collectors.partitioningBy(data -> data.forcedSlot != null));
 			Map<Integer, GBACrossGameData> forcedSlotMapping = partitions.get(true).stream().collect(Collectors.toMap(chara -> chara.forcedSlot, chara -> chara, (initial, replacement) -> initial));
 			shuffleByForcedSlot(forcedSlotMapping);
 			shuffleRandomly(partitions.get(false), forcedSlotMapping.keySet());
@@ -142,7 +143,9 @@ public class CharacterShuffler {
 
 		// (c) Insert the portrait for the current character into the rom and repoint the Portrait Data
 		try {
-			changePortrait(slot, crossGameData);
+			if (!changePortrait(slot, crossGameData)) {
+				return;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -308,7 +311,7 @@ public class CharacterShuffler {
 	 *                     replaced
 	 * @param chara        - the Character that will get randomized into the rom
 	 */
-	private void changePortrait(GBAFECharacterData character, GBACrossGameData chara) throws IOException {
+	private boolean changePortrait(GBAFECharacterData character, GBACrossGameData chara) throws IOException {
 		// Grab the Portrait Data (Pointers)
 		GBAFEPortraitData characterPortraitData = portraitData.getPortraitDataByFaceId(character.getFaceID());
 
@@ -333,6 +336,11 @@ public class CharacterShuffler {
 			mainPortrait = LZ77.compress(mainPortrait);
 		}
 
+		if (mainPortrait == null) {
+			DebugPrinter.error(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING, "Main Portrait for Character " + chara.name + " couldn't be loaded.");
+			return false;
+		}
+
 		// For some reason the Portrait must be byte aligned or it really messes with the rom..
 		long mainPortraitAddress = freeSpace.setValue(mainPortrait, character.getFaceID() + "_MainPortrait", true);
 		characterPortraitData.setMainPortraitPointer(WhyDoesJavaNotHaveThese.bytesFromAddress(mainPortraitAddress));
@@ -344,6 +352,11 @@ public class CharacterShuffler {
 			miniPortrait = LZ77.compress(miniPortrait);
 		}
 
+		if (miniPortrait == null) {
+			DebugPrinter.error(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING,"Mini Portrait for Character " + chara.name + " couldn't be loaded.");
+			return false;
+		}
+
 		long miniPortraitAddress = freeSpace.setValue(miniPortrait, character.getFaceID() + "_MiniPortrait", true);
 		characterPortraitData.setMiniPortraitPointer(WhyDoesJavaNotHaveThese.bytesFromAddress(miniPortraitAddress));
 
@@ -351,6 +364,10 @@ public class CharacterShuffler {
 		if (targetFormat.getMouthChunksSize() != null) {
 			byte[] mouthFrames = GBAImageCodec.getGBAPortraitGraphicsDataForImage(chara.portraitPath, palette,
 					targetFormat.getMouthChunks(), targetFormat.getMouthChunksSize());
+			if (mouthFrames == null) {
+				DebugPrinter.error(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING,"Mouth Frames for Character " + chara.name + " couldn't be loaded.");
+				return false;
+			}
 			long mouthFramesAddress = freeSpace.setValue(mouthFrames, character.getFaceID() + "_MouthFramesPortrait", true);
 			characterPortraitData.setMouthFramesPointer(WhyDoesJavaNotHaveThese.bytesFromAddress(mouthFramesAddress));
 		}
@@ -369,6 +386,7 @@ public class CharacterShuffler {
 		// Write the Palette of the image
 		characterPortraitData.setNewPalette(PaletteUtil.getByteArrayFromString(paletteString));
 
+		return true;
 	}
 
 }

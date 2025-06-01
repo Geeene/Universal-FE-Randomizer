@@ -18,6 +18,7 @@ public class RomInfoGroup extends YuneGroup {
     protected Label length;
     protected Label checksum;
     protected Button importSettings;
+    protected Button writeLogging;
     protected Button exportSettings;
     protected long crc32;
 
@@ -37,9 +38,10 @@ public class RomInfoGroup extends YuneGroup {
         // row 2
         length = new Label(group, SWT.NONE);
         checksum = new Label(group, SWT.NONE);
-        GridData checksumData = new GridData();
-        checksumData.horizontalSpan = 2;
-        checksum.setLayoutData(checksumData);
+        writeLogging = new Button(group, SWT.CHECK);
+        writeLogging.setText("Write logging to file?");
+
+
         exportSettings = new Button(group, SWT.PUSH);
         exportSettings.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, false));
         exportSettings.setText("Export Settings");
@@ -110,5 +112,9 @@ public class RomInfoGroup extends YuneGroup {
         // Now add the new ones
         importSettings.addListener(SWT.Selection, new ImportSettingsListener(mainView.mainShell, mainView, type));
         exportSettings.addListener(SWT.Selection, new ExportSettingsListener(mainView.mainShell, mainView, type));
+    }
+
+    public Button getWriteLogging() {
+        return writeLogging;
     }
 }

@@ -14,9 +14,7 @@ import random.general.RandomizerListener;
 import random.snes.fe4.randomizer.FE4Randomizer;
 import ui.general.MessageModal;
 import ui.general.ModalButtonListener;
-import util.Bundle;
-import util.DiffCompiler;
-import util.OptionRecorder;
+import util.*;
 import util.OptionRecorder.FE4OptionBundle;
 import util.OptionRecorder.FE9OptionBundle;
 import util.OptionRecorder.GBAOptionBundle;
@@ -188,6 +186,14 @@ public class RandomizeButtonListener implements Listener {
                 mainView.setProgressDialogPercentage((int) (progress * 100));
             }
         });
+
+        if (mainView.romInfo.getWriteLogging().getSelection()) {
+            try {
+                DebugPrinter.registerListener(new LoggingDebugListener(baseBundle.seed), "logFile");
+            } catch (IOException e) {
+                // do nothing for now
+            }
+        }
 
         randomizer.start();
         mainView.showModalProgressDialog();

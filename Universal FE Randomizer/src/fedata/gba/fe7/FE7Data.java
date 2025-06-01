@@ -458,8 +458,8 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		HERO(0x0C), SWORDMASTER(0x10), WARRIOR(0x13), GENERAL(0x16), SNIPER(0x1A), BISHOP(0x1E), SAGE(0x22), DRUID(0x26), PALADIN(0x2A), NOMADTROOPER(0x30), WYVERNLORD(0x36), 
 		BERSERKER(0x3B), ASSASSIN(0x3E),
 		
-		SWORDMASTER_F(0x11), SNIPER_F(0x1B), BISHOP_F(0x1F), SAGE_F(0x23), PALADIN_F(0x2B), VALKYRIE(0x2D), FALCONKNIGHT(0x33), WYVERNLORD_F(0x37), 
-		
+		SWORDMASTER_F(0x11), SNIPER_F(0x1B), BISHOP_F(0x1F), SAGE_F(0x23), PALADIN_F(0x2B), VALKYRIE(0x2D), FALCONKNIGHT(0x33), WYVERNLORD_F(0x37),
+
 		HERO_F(0x0D), // Doesn't exist naturally. May not work.
 		GENERAL_F(0x17), // Doesn't exist naturally. May not work.
 		DRUID_F(0x27), // Doesn't exist naturally. May not work.
@@ -536,7 +536,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			map.put(LORD_HECTOR, GREAT_LORD); 
 			map.put(MERCENARY, HERO);
 			map.put(MYRMIDON, SWORDMASTER);
-			map.put(MYRMIDON, SWORDMASTER_F);
+			map.put(MYRMIDON_F, SWORDMASTER_F);
 			map.put(FIGHTER, WARRIOR);
 			map.put(KNIGHT, GENERAL);
 			map.put(ARCHER, SNIPER);
@@ -547,10 +547,10 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			map.put(MAGE_F, SAGE_F);
 			map.put(SHAMAN, DRUID);
 			map.put(CAVALIER, PALADIN);
-			map.put(CAVALIER, PALADIN_F);
+			map.put(CAVALIER_F, PALADIN_F);
 			map.put(NOMAD, NOMADTROOPER);
 			map.put(WYVERNKNIGHT, WYVERNLORD);
-			map.put(WYVERNKNIGHT, WYVERNLORD_F);
+			map.put(WYVERNKNIGHT_F, WYVERNLORD_F);
 			map.put(SOLDIER, GENERAL);
 			map.put(BRIGAND, BERSERKER);
 			map.put(PIRATE, BERSERKER);
@@ -560,7 +560,25 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			map.put(PEGASUSKNIGHT, FALCONKNIGHT);
 			return map;
 		}
-		
+
+		public static Map<CharacterClass, CharacterClass> functionalEquivalentMap = createFuncinalEquivalentMap();
+		private static Map<CharacterClass, CharacterClass> createFuncinalEquivalentMap() {
+			Map<CharacterClass, CharacterClass> map = new HashMap<CharacterClass, CharacterClass>();
+			map.put(MYRMIDON_F, MYRMIDON);
+			map.put(MERCENARY_F, MERCENARY);
+			map.put(KNIGHT_F, KNIGHT);
+			map.put(SHAMAN_F, SHAMAN);
+			map.put(NOMAD_F, NOMAD_F);
+			map.put(CAVALIER_F, CAVALIER);
+			map.put(WYVERNKNIGHT_F, WYVERNKNIGHT);
+			map.put(THIEF_F, THIEF_F);
+			map.put(HERO_F, HERO);
+			map.put(GENERAL_F, GENERAL);
+			map.put(DRUID_F, DRUID);
+			map.put(NOMADTROOPER_F, NOMADTROOPER);
+			return map;
+		}
+
 		private static Boolean isClassPromoted(CharacterClass sourceClass) {
 			return allPromotedClasses.contains(sourceClass);
 		}
@@ -2872,13 +2890,21 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		for (CharacterClass baseClass : CharacterClass.promotionMap.keySet()) {
 			CharacterClass charClass = CharacterClass.promotionMap.get(baseClass);
 			if (charClass.ID == promotedClass.getID()) {
-				classList.add(baseClass);
+				classList.add(getClassOrEquivalentIfBroken(baseClass));
 			}
 		}
 		
 		return classList.toArray(new GBAFEClass[classList.size()]);
 	}
-	
+
+	private CharacterClass getClassOrEquivalentIfBroken(CharacterClass baseClass) {
+		if (CharacterClass.functionalEquivalentMap.containsKey(baseClass)) {
+			return CharacterClass.functionalEquivalentMap.get(baseClass);
+		}
+
+		return baseClass;
+	}
+
 	public boolean isFlier(GBAFEClass charClass) {
 		return CharacterClass.flyingClasses.contains(charClass);
 	}

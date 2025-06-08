@@ -162,6 +162,7 @@ public class CharacterShuffler {
 		}
 
 		for (GBAFECharacterData linkedSlot : characterData.linkedCharactersForCharacter(slot)) {
+			linkedSlot.prepareForClassRandomization();
 			linkedSlot.setGrowths(crossGameData.growths);
 			linkedSlot.setConstitution(crossGameData.constitution);
 			linkedSlot.setIsLord(characterData.isLordCharacterID(slot.getID()));

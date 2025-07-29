@@ -45,6 +45,15 @@ public class FE9Data {
 	
 	public static final int ChapterUnitEntrySize = 0x6C;
 	
+	// There's a Gecko code from PRDX4 who found how to make the weapon effectiveness 3x.
+	// Based on that, the code it modifies is at 0x1A9084. Looking at the vanilla game,
+	// we can find the same string of code in boot.dol. Modifying that should modify it
+	// permanently, though I haven't figured out how to read Gamecube ASM yet.
+	// I'm guessing the code change was from a shift left to a multiply 3.
+	public static final long TripleEffectivenessOffset = 0x1A5FE4;
+	public static final byte[] TripleEffectivenessOldValues = new byte[] { (byte)0x54, (byte)0x00, (byte)0x08, (byte)0x3C };
+	public static final byte[] TripleEffectivenessNewValues = new byte[] { (byte)0x1C, (byte)0x00, (byte)0x00, (byte)0x03 };
+	
 	public enum Character {
 		
 		NONE(null),
@@ -699,6 +708,9 @@ public class FE9Data {
 		// Sage added weapon disciplines
 		EQUIP_KNIFE("SID_EQUIPKNIFE"), EQUIP_STAFF("SID_EQRD"),
 		
+		// Unique to Reyson, which prevents him from using the Demi Band
+		DEMI_BAND_RESTRICTED("SID_EQREV_A"),
+		
 		// Normal Skills
 		PARAGON("SID_ELITE"), RENEWAL("SID_TURNREGENE"), CELERITY("SID_SWIFT"), RESOLVE("SID_BLAVE"), TEMPEST("SID_TEMPER"), SERENITY("SID_CALM"),
 		SAVIOR("SID_RESCUEP"), VANTAGE("SID_AMBUSH"), NIHIL("SID_GRASP"), WRATH("SID_ANGER"), GUARD("SID_DEFENCE"), MIRACLE("SID_PRAY"), 
@@ -990,7 +1002,7 @@ public class FE9Data {
 			FLUTTER("flutter"), // Seems to only be used for Vortex?
 			
 			// These are for the demi band. Not sure what each one does.
-			FORCE_LAGUZ_TRANSFORM("beastsamul"), STAT_REDUCTION("JH"), NON_ROYAL_LAGUZ_LOCK("eqrevA"),
+			FORCE_LAGUZ_TRANSFORM("beastsamul"), STAT_REDUCTION("JH"), DEMI_BAND_RESTRICTION("eqrevA"),
 			
 			MOVE_AGAIN("movtw"), HALVE_LAGUZ_DAMAGE("lycdamhalf"), IGNORE_LAGUZ_EFFECTIVENESS("lycsfxseal"), IGNORE_EFFECTIVE_DAMAGE("sfxseal"),
 			

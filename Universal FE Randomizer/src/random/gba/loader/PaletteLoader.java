@@ -498,7 +498,7 @@ public class PaletteLoader {
 		boolean canPromote = classData.canClassPromote(targetClassID) && needsPromotion;
 		
 		int characterID = character.getID();
-		int referenceID = reference.getID();
+		int referenceID = canonicalCharacterID(reference.getID());
 		
 		DebugPrinter.log(DebugPrinter.Key.PALETTE, "Enqueuing change for character " + charData.debugStringForCharacter(characterID) + " to class " + classData.debugStringForClass(targetClassID) + " using reference " + charData.debugStringForCharacter(referenceID));
 		
@@ -726,6 +726,20 @@ public class PaletteLoader {
 		for (GBAFECharacterData character : charData.canonicalPlayableCharacters(true)) {
 			String characterName = textData.getStringAtIndex(character.getNameIndex(), true);
 			Map<Integer, PaletteV2> palettesByClassID = referencePalettesV2.get(character.getID());
+			if (palettesByClassID == null) { continue; }
+			List<Integer> classIDs = palettesByClassID.keySet().stream().sorted().collect(Collectors.toList());
+			
+			for (int classID : classIDs) {
+				GBAFEClassData charClass = classData.classForID(classID);
+				String className = textData.getStringAtIndex(charClass.getNameIndex(), true);
+				boolean isFemale = classData.isFemale(classID);
+				if (isFemale) { className = className + " (F)"; }
+				rk.recordOriginalEntry(category, characterName, className, changelogStringForPalette(palettesByClassID.get(classID)));
+			}
+		}
+		for (GBAFECharacterData boss : charData.bossCharacters()) {
+			String characterName = textData.getStringAtIndex(boss.getNameIndex(), true);
+			Map<Integer, PaletteV2> palettesByClassID = referencePalettesV2.get(boss.getID());
 			if (palettesByClassID == null) { continue; }
 			List<Integer> classIDs = palettesByClassID.keySet().stream().sorted().collect(Collectors.toList());
 			

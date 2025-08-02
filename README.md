@@ -49,20 +49,21 @@ java -jar -XstartOnFirstThread Yune\ -\ MacOS.jar
 
 ### GTK
 
-I don't actually know that much about Linux, but this should work on any distro that supports GTK, which I believe is most of them. I also assume that if you are running Linux, you also know your way around things and you don't need a wrapper for a JAR file since most of you are probably using command line, so you can figure it out. For those that are running Linux but don't know how to run this, I can only say how I run it for testing, which is to (like the other OSes) install JRE with:
+You will need GTK which is in most linux distros, as well as a way of running a java file. This is why you install the jre. 
 
 ```
-$ sudo apt-get update
+sudo apt-get update
 ```
 
 ```
-$ sudo apt-get install default-jre
+sudo apt-get install default-jre
 ```
 
-And then run it with
+Go to the file location of the GTK(x86_64).jar jar file and then run it with
 
 ``` 
-$ java -jar Yune\ -\ GTK(x86_64).jar
+java -jar 'Yune - GTK(x86_64).jar'
+
 ```
 
 ...or something like that. Tested with Ubuntu 16.04.4.
@@ -70,7 +71,7 @@ $ java -jar Yune\ -\ GTK(x86_64).jar
 Also, you may need to `chmod` it so that it's runnable. That can be done with
 
 ```
-chmod 777 Yune\ -\ GTK(x86_64).jar
+chmod 777 'Yune\ -\ GTK(x86_64).jar'
 ```
 
 # Usage

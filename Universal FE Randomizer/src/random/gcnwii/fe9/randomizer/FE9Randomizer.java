@@ -206,10 +206,6 @@ public class FE9Randomizer extends Randomizer {
 			
 			// The thief class actually already has too many skills to fit another in its class data. We'll have to assign these manually
 			// in the chapter unit data.
-			
-			// Additionally, remove promotion ban from the Thief class.
-			FE9Class thief = classData.classWithID(FE9Data.CharacterClass.THIEF.getJID());
-			classData.setSID4ForClass(thief, null);
 		}
 		
 		// FE9 routinely uses chapter unit data to modify boss units stats, which isn't accounted for in the

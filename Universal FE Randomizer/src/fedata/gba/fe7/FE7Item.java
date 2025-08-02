@@ -8,6 +8,7 @@ import java.util.Random;
 
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFESpellAnimationCollection;
+import fedata.gba.fe6.FE6Data;
 import fedata.gba.fe7.FE7Data.Item.Ability1Mask;
 import fedata.gba.fe7.FE7Data.Item.Ability2Mask;
 import fedata.gba.fe7.FE7Data.Item.FE7WeaponRank;
@@ -49,6 +50,10 @@ public class FE7Item implements GBAFEItemData {
 		this.originalData = new byte[FE7Data.BytesPerItem];
 		this.data = new byte[FE7Data.BytesPerItem];
 		this.originalOffset = -1;
+	}
+	
+	public static int getIDFromItemData(byte[] itemData) {
+		return itemData[6] & 0xFF;
 	}
 	
 	public void initializeDisplayString(String debugString) {
@@ -137,6 +142,27 @@ public class FE7Item implements GBAFEItemData {
 	public String getAbility4Description(String delimiter) {
 		return "[0x" + Integer.toHexString(getAbility4()).toUpperCase() + "]";
 	}
+	
+	public boolean hasAbilityOrEffect(String abilityEffectString) {
+		FE7Data.Item.Ability1Mask ability1 = FE7Data.Item.Ability1Mask.maskForDisplayString(abilityEffectString);
+		if (ability1 != null) {
+			return ((byte)getAbility1() & (byte)ability1.ID) != 0;
+		}
+		FE7Data.Item.Ability2Mask ability2 = FE7Data.Item.Ability2Mask.maskForDisplayString(abilityEffectString);
+		if (ability2 != null) {
+			return ((byte)getAbility2() & (byte)ability2.ID) != 0;
+		}
+		FE7Data.Item.Ability3Mask ability3 = FE7Data.Item.Ability3Mask.maskForDisplayString(abilityEffectString);
+		if (ability3 != null) {
+			return ((byte)getAbility3() & (byte)ability3.ID) != 0;
+		}
+		FE7Data.Item.WeaponEffect effect = FE7Data.Item.WeaponEffect.effectForDisplayString(abilityEffectString);
+		if (effect != null) {
+			return ((byte)getWeaponEffect() == (byte)effect.ID);
+		}
+		
+		return false;
+	}
 
 	public long getStatBonusPointer() {
 		return (data[12] & 0xFF) | ((data[13] << 8) & 0xFF00) | ((data[14] << 16) & 0xFF0000) | ((data[15] << 24) & 0xFF000000) ;
@@ -205,6 +231,17 @@ public class FE7Item implements GBAFEItemData {
 	public int getMaxRange() {
 		return data[25] & 0x0F;
 	}
+	
+	public int getCostPerUse() {
+		return WhyDoesJavaNotHaveThese.intValueFromByteSubarray(data, 26, 2, true);
+	}
+	
+	public void setCostPerUse(int costPerUse) {
+		byte[] costData = WhyDoesJavaNotHaveThese.byteArrayFromLongValue(costPerUse, true, 2);
+		data[26] = costData[0];
+		data[27] = costData[1];
+		wasModified = true;
+ 	}
 
 	public WeaponRank getWeaponRank() {
 		int rank = data[28] & 0xFF;
@@ -219,6 +256,12 @@ public class FE7Item implements GBAFEItemData {
 				return WeaponRank.NONE;
 			}
 		}
+	}
+	
+	public void setWeaponRank(WeaponRank newRank) {
+		int rankValue = FE7Data.Item.FE7WeaponRank.rankFromGeneralRank(newRank).value;
+		data[28] = (byte)(rankValue & 0xFF);
+		wasModified = true;
 	}
 
 	public boolean hasWeaponEffect() {

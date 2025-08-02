@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import random.gba.randomizer.GrowthsRandomizer;
 import util.SeedGenerator;
+import util.DebugPrinter;
 import util.WhyDoesJavaNotHaveThese;
 
 public class PaletteColor implements Comparable<PaletteColor> {
@@ -45,6 +46,26 @@ public class PaletteColor implements Comparable<PaletteColor> {
 		double b = linearizeColor(color.blue);
 		
 		return (r* 0.2126) + (g * 0.71520) + (b * 0.0725);
+  }
+	
+	public static final Comparator<PaletteColor> highToLowBrightnessComparator = new Comparator<PaletteColor>() {
+		@Override
+		public int compare(PaletteColor o1, PaletteColor o2) {
+//			return o1.brightness < o2.brightness ? WhyDoesJavaNotHaveThese.ComparatorResult.FIRST_GREATER.returnValue() : WhyDoesJavaNotHaveThese.ComparatorResult.SECOND_GREATER.returnValue();
+			return (o2.getRedValue() + o2.getGreenValue() + o2.getBlueValue()) - (o1.getRedValue() + o1.getGreenValue() + o1.getBlueValue());
+		}
+	};
+	
+	public static PaletteColor colorFromHex(String hexString) {
+		if (hexString.startsWith("#")) {
+			hexString = hexString.substring(1);
+		}
+		
+	    int r = Integer.parseInt(hexString.substring(0, 2), 16);
+	    int g = Integer.parseInt(hexString.substring(2, 4), 16);
+	    int b = Integer.parseInt(hexString.substring(4, 6), 16);
+	    
+	    return new PaletteColor(r, g, b);
 	}
 	
 	public PaletteColor(byte[] colorTuple) {
@@ -118,6 +139,8 @@ public class PaletteColor implements Comparable<PaletteColor> {
 		red = (double) WhyDoesJavaNotHaveThese.clamp(8 * Integer.parseInt(rByte, 2), 0, 255) / 255.0;
 		green = (double) WhyDoesJavaNotHaveThese.clamp(8 * Integer.parseInt(gByte, 2), 0, 255) / 255.0;
 		blue = (double) WhyDoesJavaNotHaveThese.clamp(8 * Integer.parseInt(bByte, 2), 0, 255) / 255.0;
+		
+		calculateValuesWithRGB();
 	}
 
 	public boolean isSameAsColor(PaletteColor otherColor) {
@@ -135,17 +158,25 @@ public class PaletteColor implements Comparable<PaletteColor> {
 						getBlueValue() < 16 ? "0" + Integer.toHexString(getBlueValue()) : Integer.toHexString(getBlueValue()));
 	}
 	
-	public static PaletteColor[] coerceColors(PaletteColor[] colors, int numberOfColors) {
+	public static PaletteColor[] coerceColors(PaletteColor[] colors, int numberOfColors, boolean favorDarkerColors) {
 		if (numberOfColors == 0) { return new PaletteColor[] {}; }
 		
 		// Remove dupes first, if any.
 		List<PaletteColor> colorsArray = new ArrayList<PaletteColor>();
-		Set<String> uniqueColors = new HashSet<String>();
 		for (PaletteColor color : colors) {
-			if (uniqueColors.contains(color.toHexString())) { continue; }
-			uniqueColors.add(color.toHexString());
+			// Consider any color where the difference between the individual R G B values between two colors is less than
+			// or equal to 24 (one tick of 8 on each channel) to be "identical".
+			if (colorsArray.stream().anyMatch(current -> 
+			(Math.abs(color.getRedValue() - current.getRedValue()) + 
+					Math.abs(color.getGreenValue() - current.getGreenValue()) + 
+					Math.abs(color.getBlueValue() - current.getBlueValue()) <= 24))) {
+				DebugPrinter.log(DebugPrinter.Key.PALETTE, "Dropping color for being too similar to an existing color: " + color.toHexString());
+				continue;
+			}
 			colorsArray.add(color);
 		}
+		
+		colorsArray.sort(PaletteColor.highToLowBrightnessComparator);
 					
 		if (colorsArray.size() == numberOfColors) {
 			return colorsArray.toArray(new PaletteColor[colorsArray.size()]);
@@ -153,7 +184,7 @@ public class PaletteColor implements Comparable<PaletteColor> {
 		else if (colorsArray.size() > numberOfColors) {
 			PaletteColor[] uniqueColorArray = colorsArray.toArray(new PaletteColor[colorsArray.size()]);
 			if (colorsArray.size() == numberOfColors) { return uniqueColorArray; }
-			else if (colorsArray.size() > numberOfColors) { return reduceColors(uniqueColorArray, numberOfColors); }
+			else if (colorsArray.size() > numberOfColors) { return reduceColors(uniqueColorArray, numberOfColors, favorDarkerColors); }
 			else { 
 				if (colorsArray.isEmpty()) { return new PaletteColor[] {}; }
 				else if (colorsArray.size() == 1) {
@@ -254,7 +285,7 @@ public class PaletteColor implements Comparable<PaletteColor> {
 	
 	protected static PaletteColor lighterColor(PaletteColor referenceColor) {
 		double distanceToMax = 1.0 - referenceColor.brightness;
-		return new PaletteColor(referenceColor.hue, Math.max(referenceColor.saturation + 0.1, 0.0), Math.max(referenceColor.brightness + distanceToMax * 0.2, 0.0));
+		return new PaletteColor(referenceColor.hue, Math.max(referenceColor.saturation + 0.1, 0.0), Math.max(referenceColor.brightness + distanceToMax * 0.4, 0.0));
 	}
 	
 	private static PaletteColor[] interpolateColors(PaletteColor[] colors, int numberOfColors) {

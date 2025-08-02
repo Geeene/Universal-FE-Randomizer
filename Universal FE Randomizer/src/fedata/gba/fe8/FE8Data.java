@@ -8,13 +8,23 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFESpellAnimationCollection;
+import fedata.gba.general.*;
+import fedata.gba.GBAFECharacterData.Affinity;
+import fedata.gba.fe7.FE7Data.CharacterAndClassAbility1Mask;
+import fedata.gba.fe7.FE7Data.CharacterAndClassAbility2Mask;
+import fedata.gba.fe7.FE7Data.CharacterAndClassAbility3Mask;
+import fedata.gba.fe7.FE7Data.CharacterAndClassAbility4Mask;
+import fedata.gba.fe7.FE7Data.Item;
+import fedata.gba.fe7.FE7Data.Shops;
 import fedata.gba.general.CharacterNudge;
 import fedata.gba.general.GBAFEChapterMetadataChapter;
 import fedata.gba.general.GBAFECharacter;
@@ -24,7 +34,8 @@ import fedata.gba.general.GBAFEClassProvider;
 import fedata.gba.general.GBAFEItem;
 import fedata.gba.general.GBAFEItemProvider;
 import fedata.gba.general.GBAFEPromotionItem;
-import fedata.gba.general.GBAFETextProvider;
+import fedata.gba.general.GBAFEShop;
+import fedata.gba.general.GBAFEShopProvider;
 import fedata.gba.general.PaletteColor;
 import fedata.gba.general.PaletteInfo;
 import fedata.gba.general.WeaponRank;
@@ -33,9 +44,10 @@ import random.gba.loader.ItemDataLoader.AdditionalData;
 import random.gba.randomizer.shuffling.GBAFEShufflingDataProvider;
 import random.gba.randomizer.shuffling.data.GBAFEPortraitData;
 import util.AddressRange;
+import util.DebugPrinter;
 import util.WhyDoesJavaNotHaveThese;
 
-public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAFEItemProvider, GBAFEShufflingDataProvider, GBAFETextProvider {
+public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAFEItemProvider, GBAFEShufflingDataProvider, GBAFETextProvider, GBAFEStatboostProvider, GBAFEShopProvider {
 	public static final String FriendlyName = "Fire Emblem: The Sacred Stones";
 	public static final String GameCode = "BE8E";
 
@@ -113,6 +125,12 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	public static final int WorldMapEventItemSize = 4;
 	public static final int WorldMapEventCount = 58;
 	
+	// Fili Shield logic is a hard coded check against the effectiveness pointer of a weapon.
+	// This address it checks against is 0x88ADF2A, which can be found at the following offset
+	// and should be replaced if we create our own effectiveness pointers.
+	public static final long FlierEffectivenessPointer = 0x88ADF2AL;
+	public static final int FiliShieldEffectivenessCheckPointer = 0x16C74;
+	
 	// These are spaces confirmed free inside the natural ROM size (0xFFFFFF).
 	// It's somewhat limited, so let's not use these unless we absolutely have to (like for palettes).
 	public static final List<AddressRange> InternalFreeRange = createFreeRangeList();
@@ -128,21 +146,71 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	public static final GBAFECharacterProvider characterProvider = sharedInstance;
 	public static final GBAFEClassProvider classProvider = sharedInstance;
 	public static final GBAFEItemProvider itemProvider = sharedInstance;
+	public static final GBAFEStatboostProvider statboostProvider = sharedInstance;
 	public static final GBAFEShufflingDataProvider shufflingDataProvider = sharedInstance;
 	public static final GBAFETextProvider textProvider = sharedInstance;
+	public static final GBAFEShopProvider shopProvider = sharedInstance;
 	
 	public enum CharacterAndClassAbility1Mask {
 		USE_MOUNTED_AID(0x1), CANTO(0x2), STEAL(0x4), USE_LOCKPICKS(0x8),
 		DANCE(0x10), PLAY(0x20), CRIT15(0x40), BALLISTA(0x80);
 		
-		private int value;
+		public int ID;
 		
-		private CharacterAndClassAbility1Mask(int value) {
-			this.value = value;
+		private static Map<Integer, CharacterAndClassAbility1Mask> map = new HashMap<Integer, CharacterAndClassAbility1Mask>();
+		private static Map<CharacterAndClassAbility1Mask, String> displayStrings = new HashMap<CharacterAndClassAbility1Mask, String>();
+		
+		static {
+			for (CharacterAndClassAbility1Mask ability1 : CharacterAndClassAbility1Mask.values()) {
+				map.put(ability1.ID, ability1);
+				switch(ability1) {
+				case USE_MOUNTED_AID:
+					displayStrings.put(ability1, "Uses Mounted Aid (0x01)");
+					break;
+				case CANTO:
+					displayStrings.put(ability1, "Canto (0x02)");
+					break;
+				case STEAL:
+					displayStrings.put(ability1, "Has Steal Command (0x04)");
+					break;
+				case USE_LOCKPICKS:
+					displayStrings.put(ability1, "Can Use Lockpicks (0x08)");
+					break;
+				case DANCE:
+					displayStrings.put(ability1, "Has Dance Command (0x10)");
+					break;
+				case PLAY:
+					displayStrings.put(ability1, "Has Play Command (0x20)");
+					break;
+				case CRIT15:
+					displayStrings.put(ability1, "Critical +15 (0x40)");
+					break;
+				case BALLISTA:
+					displayStrings.put(ability1, "Can Use Ballistas (0x80)");
+					break;
+				default:
+					break;
+				}
+			}
 		}
 		
-		public int getValue() {
-			return value;
+		private CharacterAndClassAbility1Mask(final int id) { ID = id; }
+		
+		public static CharacterAndClassAbility1Mask valueOf(int maskID) {
+			return map.get(maskID);
+		}
+		
+		public String displayString() {
+			return CharacterAndClassAbility1Mask.displayStrings.get(this);
+		}
+		
+		public static CharacterAndClassAbility1Mask maskForDisplayString(String displayString) {
+			CharacterAndClassAbility1Mask mask = null;
+			try {
+				mask = displayStrings.keySet().stream().filter(ability -> displayString.equals(displayStrings.get(ability))).findFirst().get();
+			} catch (NoSuchElementException e) {}
+			
+			return mask;
 		}
 	}
 	
@@ -150,14 +218,62 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		PROMOTED(0x1), SUPPLY_DEPOT(0x2), HORSE_ICON(0x4), WYVERN_ICON(0x8),
 		PEGASUS_ICON(0x10), LORD(0x20), FEMALE(0x40), BOSS(0x80);
 		
-		private int value;
+		public int ID;
 		
-		private CharacterAndClassAbility2Mask(int value) {
-			this.value = value;
+		private static Map<Integer, CharacterAndClassAbility2Mask> map = new HashMap<Integer, CharacterAndClassAbility2Mask>();
+		private static Map<CharacterAndClassAbility2Mask, String> displayStrings = new HashMap<CharacterAndClassAbility2Mask, String>();
+		
+		static {
+			for (CharacterAndClassAbility2Mask ability2 : CharacterAndClassAbility2Mask.values()) {
+				map.put(ability2.ID, ability2);
+				switch (ability2) {
+				case PROMOTED:
+					displayStrings.put(ability2, "Promoted Class (0x01)");
+					break;
+				case SUPPLY_DEPOT:
+					displayStrings.put(ability2, "Is Convoy (0x02)");
+					break;
+				case HORSE_ICON:
+					displayStrings.put(ability2, "Shows Horse Icon (0x04)");
+					break;
+				case WYVERN_ICON:
+					displayStrings.put(ability2, "Shows Wyvern Icon (0x08)");
+					break;
+				case PEGASUS_ICON:
+					displayStrings.put(ability2, "Shows Pegasus Icon (0x10)");
+					break;
+				case LORD:
+					displayStrings.put(ability2, "Is Lord (0x20)");
+					break;
+				case FEMALE:
+					displayStrings.put(ability2, "Is Female (0x40)");
+					break;
+				case BOSS:
+					displayStrings.put(ability2, "Is Boss (0x80)");
+					break;
+				default:
+					break;
+				}
+			}
 		}
 		
-		public int getValue() {
-			return value;
+		private CharacterAndClassAbility2Mask(int id) { ID = id; }
+		
+		public static CharacterAndClassAbility2Mask valueOf(int maskID) {
+			return map.get(maskID);
+		}
+		
+		public String displayString() {
+			return CharacterAndClassAbility2Mask.displayStrings.get(this);
+		}
+		
+		public static CharacterAndClassAbility2Mask maskForDisplayString(String displayString) {
+			CharacterAndClassAbility2Mask mask = null;
+			try {
+				mask = displayStrings.keySet().stream().filter(ability -> displayStrings.equals(displayStrings.get(ability))).findFirst().get();
+			} catch (NoSuchElementException e) {}
+			
+			return mask;
 		}
 	}
 	
@@ -165,14 +281,62 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		UNUSED_WEAPON_LOCK(0x1), SHAMSHIR_LOCK(0x2), MONSTER_WEAPON_LOCK(0x4), MAX_LEVEL_10(0x8),
 		UNSELECTABLE(0x10), TRIANGLE_ATTACK(0x20), TRIANGLE_ATTACK_2(0x40), GLITCHES(0x80);
 		
-		private int value;
+		public int ID;
 		
-		private CharacterAndClassAbility3Mask(int value) {
-			this.value = value;
+		private static Map<Integer, CharacterAndClassAbility3Mask> map = new HashMap<Integer, CharacterAndClassAbility3Mask>();
+		private static Map<CharacterAndClassAbility3Mask, String> displayStrings = new HashMap<CharacterAndClassAbility3Mask, String>();
+		
+		static {
+			for (CharacterAndClassAbility3Mask ability3 : CharacterAndClassAbility3Mask.values()) {
+				map.put(ability3.ID, ability3);
+				switch (ability3) {
+				case UNUSED_WEAPON_LOCK:
+					displayStrings.put(ability3, "Lock - Unused (0x01)");
+					break;
+				case SHAMSHIR_LOCK:
+					displayStrings.put(ability3, "Lock - Myrmidon (0x02)");
+					break;
+				case MONSTER_WEAPON_LOCK:
+					displayStrings.put(ability3, "Lock - Monsters (0x04)");
+					break;
+				case MAX_LEVEL_10:
+					displayStrings.put(ability3, "Max Level is 10 (0x08)");
+					break;
+				case UNSELECTABLE:
+					displayStrings.put(ability3, "Cannot Be Selected (0x10)");
+					break;
+				case TRIANGLE_ATTACK:
+					displayStrings.put(ability3, "Pegasus Triangle Attack (0x20)");
+					break;
+				case TRIANGLE_ATTACK_2:
+					displayStrings.put(ability3, "Second Triangle Attack (0x40)");
+					break;
+				case GLITCHES:
+					displayStrings.put(ability3, "Do Not Use! (0x80)");
+					break;
+				default:
+					break;
+				}
+			}
 		}
 		
-		public int getValue() {
-			return value;
+		private CharacterAndClassAbility3Mask(final int id) { ID = id; }
+		
+		public static CharacterAndClassAbility3Mask valueOf(int maskID) {
+			return map.get(maskID);
+		}
+		
+		public String displayString() {
+			return CharacterAndClassAbility3Mask.displayStrings.get(this);
+		}
+		
+		public static CharacterAndClassAbility3Mask maskForDisplayString(String displayString) {
+			CharacterAndClassAbility3Mask mask = null;
+			try {
+				mask = displayStrings.keySet().stream().filter(ability -> displayString.equals(displayStrings.get(ability))).findFirst().get();
+			} catch (NoSuchElementException e) {}
+			
+			return mask;
 		}
 	}
 	
@@ -180,14 +344,62 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		UNKNOWN(0x1), LETHALITY(0x2), UNKNOWN_2(0x4), SUMMON(0x8),
 		EIRIKA_WEAPON_LOCK(0x10), EPHRAIM_WEAPON_LOCK(0x20), UNUSED_LYN_LOCK(0x40), UNUSED_ATHOS_LOCK(0x80);
 		
-		private int value;
+		public int ID;
 		
-		private CharacterAndClassAbility4Mask(int value) {
-			this.value = value;
+		private static Map<Integer, CharacterAndClassAbility4Mask> map = new HashMap<Integer, CharacterAndClassAbility4Mask>();
+		private static Map<CharacterAndClassAbility4Mask, String> displayStrings = new HashMap<CharacterAndClassAbility4Mask, String>();
+		
+		static {
+			for (CharacterAndClassAbility4Mask ability4 : CharacterAndClassAbility4Mask.values()) {
+				map.put(ability4.ID, ability4);
+				switch (ability4) {
+				case UNKNOWN:
+					displayStrings.put(ability4, "Unknown (0x01)");
+					break;
+				case LETHALITY:
+					displayStrings.put(ability4, "Can Trigger Lethality (0x02)");
+					break;
+				case UNKNOWN_2:
+					displayStrings.put(ability4, "Unknown (0x04)");
+					break;
+				case SUMMON:
+					displayStrings.put(ability4, "Is Summon (0x08)");
+					break;
+				case EIRIKA_WEAPON_LOCK:
+					displayStrings.put(ability4, "Lock - Eirika (0x10)");
+					break;
+				case EPHRAIM_WEAPON_LOCK:
+					displayStrings.put(ability4, "Lock - Ephraim (0x20)");
+					break;
+				case UNUSED_LYN_LOCK:
+					displayStrings.put(ability4, "Lock - Lyn (Unused) (0x40)");
+					break;
+				case UNUSED_ATHOS_LOCK:
+					displayStrings.put(ability4, "Lock - Athos (Unused) (0x80)");
+					break;
+				default:
+					break;
+				}
+			}
 		}
 		
-		public int getValue() {
-			return value;
+		private CharacterAndClassAbility4Mask(final int id) { ID = id; }
+		
+		public static CharacterAndClassAbility4Mask valueOf(int maskID) {
+			return map.get(maskID);
+		}
+		
+		public String displayString() {
+			return CharacterAndClassAbility4Mask.displayStrings.get(this);
+		}
+		
+		public static CharacterAndClassAbility4Mask maskForDisplayString(String displayString) {
+			CharacterAndClassAbility4Mask mask = null;
+			try {
+				mask = displayStrings.keySet().stream().filter(ability -> displayString.equals(displayStrings.get(ability))).findFirst().get();
+			} catch (NoSuchElementException e) {};
+			
+			return mask;
 		}
 	}
 	
@@ -471,6 +683,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		
 		public static Set<CharacterClass> allLordClasses = new HashSet<CharacterClass>(Arrays.asList(EIRIKA_LORD, EPHRAIM_LORD, EIRIKA_MASTER_LORD, EPHRAIM_MASTER_LORD));
 		public static Set<CharacterClass> allThiefClasses = new HashSet<CharacterClass>(Arrays.asList(THIEF, ASSASSIN, ROGUE));
+		public static Set<CharacterClass> allVillageDestroyingClasses = new HashSet<CharacterClass>(Arrays.asList(THIEF, ROGUE, BRIGAND, PIRATE));
 		public static Set<CharacterClass> allSpecialClasses = new HashSet<CharacterClass>(Arrays.asList(DANCER, MANAKETE_F));
 		
 		public static Set<CharacterClass> allTraineeClasses = new HashSet<CharacterClass>(Arrays.asList(TRAINEE, PUPIL, RECRUIT));
@@ -779,6 +992,10 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		public Boolean isThief() {
 			return CharacterClass.allThiefClasses.contains(this);
 		}
+		
+		public Boolean canDestroyVillages() {
+			return CharacterClass.allVillageDestroyingClasses.contains(this);
+		}
 
 		public Boolean isFemale() {
 			return CharacterClass.allFemaleClasses.contains(this);
@@ -1016,10 +1233,39 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			public int ID;
 			
 			private static Map<Integer, Ability1Mask> map = new HashMap<Integer, Ability1Mask>();
+			private static Map<Ability1Mask, String> displayStrings = new HashMap<Ability1Mask, String>();
 			
 			static {
 				for (Ability1Mask ability : Ability1Mask.values()) {
 					map.put(ability.ID, ability);
+					switch (ability) {
+					case WEAPON:
+						displayStrings.put(ability, "Is Weapon (0x01)");
+						break;
+					case MAGIC:
+						displayStrings.put(ability, "Is Magic (0x02)");
+						break;
+					case STAFF:
+						displayStrings.put(ability, "Is Staff (0x04)");
+						break;
+					case UNBREAKABLE:
+						displayStrings.put(ability, "Unbreakable (0x08)");
+						break;
+					case UNSELLABLE:
+						displayStrings.put(ability, "Unsellable (0x10)");
+						break;
+					case BRAVE:
+						displayStrings.put(ability, "Brave (0x20)");
+						break;
+					case MAGIC_DAMAGE:
+						displayStrings.put(ability, "Magic Damage (0x40)");
+						break;
+					case UNCOUNTERABLE:
+						displayStrings.put(ability, "Uncounterable (0x80)");
+						break;
+					default:
+						break;
+					}
 				}
 			}
 			
@@ -1027,6 +1273,15 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			
 			public static Ability1Mask valueOf(int val) {
 				return map.get(val);
+			}
+			
+			public static Ability1Mask maskForDisplayString(String string) {
+				Ability1Mask mask = null;
+				try {
+					mask = displayStrings.keySet().stream().filter(ability -> string.equals(displayStrings.get(ability))).findFirst().get();
+				} catch (NoSuchElementException e) {}
+				
+				return mask;
 			}
 			
 			public static String stringOfActiveAbilities(int abilityValue, String delimiter) {
@@ -1039,15 +1294,44 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		}
 		
 		public enum Ability2Mask {
-			NONE(0x00), REVERSE_WEAPON_TRIANGLE(0x01), MONSTER_LOCK(0x04), UNUSED_WEAPON_LOCK(0x08),
-			MYRMIDON_LOCK(0x10), FILI_SHIELD_EFFECT(0x40), HOPLON_GUARD_EFFECT(0x80);
+			NONE(0x00), REVERSE_WEAPON_TRIANGLE(0x01), UNKNOWN (0x02), MONSTER_LOCK(0x04), UNUSED_WEAPON_LOCK(0x08),
+			MYRMIDON_LOCK(0x10), UNKNOWN_2(0x20), FILI_SHIELD_EFFECT(0x40), HOPLON_GUARD_EFFECT(0x80);
 			public int ID;
 			
 			private static Map<Integer, Ability2Mask> map = new HashMap<Integer, Ability2Mask>();
+			private static Map<Ability2Mask, String> displayStrings = new HashMap<Ability2Mask, String>();
 			
 			static {
 				for (Ability2Mask ability : Ability2Mask.values()) {
 					map.put(ability.ID, ability);
+					switch (ability) {
+					case REVERSE_WEAPON_TRIANGLE:
+						displayStrings.put(ability, "Reverse Triangle (0x01)");
+						break;
+					case UNKNOWN:
+						displayStrings.put(ability, "Unknown (0x02)");
+						break;
+					case MONSTER_LOCK:
+						displayStrings.put(ability, "Lock - Monster (0x04)");
+						break;
+					case UNUSED_WEAPON_LOCK:
+						displayStrings.put(ability, "Lock - Unused (0x08)");
+						break;
+					case MYRMIDON_LOCK:
+						displayStrings.put(ability, "Lock - Myrmidon (0x10)");
+						break;
+					case UNKNOWN_2:
+						displayStrings.put(ability, "Unknown (0x20)");
+						break;
+					case FILI_SHIELD_EFFECT:
+						displayStrings.put(ability, "Fili Shield (0x40)");
+						break;
+					case HOPLON_GUARD_EFFECT:
+						displayStrings.put(ability, "Hoplon Guard (0x80)");
+						break;
+					default:
+						break;
+					}
 				}
 			}
 			
@@ -1055,6 +1339,15 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			
 			public static Ability2Mask valueOf(int val) {
 				return map.get(val);
+			}
+			
+			public static Ability2Mask maskForDisplayString(String string) {
+				Ability2Mask mask = null;
+				try {
+					mask = displayStrings.keySet().stream().filter(ability -> string.equals(displayStrings.get(string))).findFirst().get();
+				} catch (NoSuchElementException e) {}
+				
+				return mask;
 			}
 			
 			public static String stringOfActiveAbilities(int abilityValue, String delimiter) {
@@ -1068,15 +1361,44 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		
 		public enum Ability3Mask {
 			NONE(0x00), UNUSABLE(0x01), NEGATE_DEFENSE(0x02), EIRIKA_LOCK(0x04), EPHRAIM_LOCK(0x08),
-			UNUSED_LYN_LOCK(0x10), UNUSED_WEAPON_LOCK(0x20);
+			UNUSED_LYN_LOCK(0x10), UNUSED_WEAPON_LOCK(0x20), UNKNOWN(0x40), UNKNOWN_2(0x80);
 			
 			public int ID;
 			
 			private static Map<Integer, Ability3Mask> map = new HashMap<Integer, Ability3Mask>();
+			private static Map<Ability3Mask, String> displayStrings = new HashMap<Ability3Mask, String>();
 			
 			static {
 				for (Ability3Mask ability : Ability3Mask.values()) {
 					map.put(ability.ID, ability);
+					switch (ability) {
+					case UNUSABLE:
+						displayStrings.put(ability, "Unusable (0x01)");
+						break;
+					case NEGATE_DEFENSE:
+						displayStrings.put(ability, "Negate Defense (0x02)");
+						break;
+					case EIRIKA_LOCK:
+						displayStrings.put(ability, "Lock - Eirika (0x04)");
+						break;
+					case EPHRAIM_LOCK:
+						displayStrings.put(ability, "Lock - Ephraim (0x08)");
+						break;
+					case UNUSED_LYN_LOCK:
+						displayStrings.put(ability, "Lock - Unused (0x10)");
+						break;
+					case UNUSED_WEAPON_LOCK:
+						displayStrings.put(ability, "Lock - Unused (0x20)");
+						break;
+					case UNKNOWN:
+						displayStrings.put(ability, "Unknown (0x40)");
+						break;
+					case UNKNOWN_2:
+						displayStrings.put(ability, "Unknown (0x80)");
+						break;
+					default:
+						break;
+					}
 				}
 			}
 			
@@ -1084,6 +1406,15 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			
 			public static Ability3Mask valueOf(int val) {
 				return map.get(val);
+			}
+			
+			public static Ability3Mask maskForDisplayString(String string) {
+				Ability3Mask mask = null;
+				try {
+					mask = displayStrings.keySet().stream().filter(ability -> string.equals(displayStrings.get(ability))).findFirst().get();
+				} catch (NoSuchElementException e) {}
+				
+				return mask;
 			}
 			
 			public static String stringOfActiveAbilities(int abilityValue, String delimiter) {
@@ -1101,10 +1432,30 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			public int ID;
 			
 			private static Map<Integer, WeaponEffect> map = new HashMap<Integer, WeaponEffect>();
+			private static Map<WeaponEffect, String> displayStrings = new HashMap<WeaponEffect, String>();
 			
 			static {
 				for (WeaponEffect effect : WeaponEffect.values()) {
 					map.put(effect.ID, effect);
+					switch (effect) {
+					case POISON:
+						displayStrings.put(effect, "Poison (0x01)");
+						break;
+					case STEALS_HP:
+						displayStrings.put(effect, "Steals HP (0x02)");
+						break;
+					case HALVES_HP:
+						displayStrings.put(effect, "Halves HP (0x03)");
+						break;
+					case DEVIL:
+						displayStrings.put(effect, "Devil (0x04)");
+						break;
+					case PETRIFY:
+						displayStrings.put(effect, "Petrify (0x05)");
+						break;
+					default:
+						break;
+					}
 				}
 			}
 			
@@ -1112,6 +1463,15 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			
 			public static WeaponEffect valueOf(int val) {
 				return map.get(val);
+			}
+			
+			public static WeaponEffect effectForDisplayString(String string) {
+				WeaponEffect effect = null;
+				try {
+					effect = displayStrings.keySet().stream().filter(eff -> string.equals(displayStrings.get(eff))).findFirst().get();
+				} catch (NoSuchElementException e) {}
+				
+				return effect;
 			}
 			
 			public static String stringOfActiveEffect(int effectValue) {
@@ -1211,8 +1571,9 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				POISON_BOW, KILLER_BOW, BRAVE_BOW, LONG_BOW, BEACON_BOW, THUNDER, BOLTING, SHINE, PURGE, LUNA, NOSFERATU, ECLIPSE, SHADOWSHOT, POISON_CLAW, LETHAL_TALON, STONE));
 		public static Set<Item> promoSet = new HashSet<Item>(Arrays.asList(SHADOWKILLER, BRIGHT_LANCE, FIENDCLEAVER, BEACON_BOW));
 		
-		// These must be of lower rank than the siege tomes set, and each weapon type needs to have an equivalent analogue.
-		public static Set<Item> siegeReplacementSet = new HashSet<Item>(Arrays.asList(NOSFERATU, DIVINE, ELFIRE, DEMON_SURGE));
+		// This list is anything that can replace a siege tome. It can be a higher rank, since we'll filter that out later if needed.
+		public static Set<Item> siegeReplacementSet = new HashSet<Item>(Arrays.asList(NOSFERATU, DIVINE, ELFIRE, DEMON_SURGE, CRIMSON_EYE, FENRIR, FIMBULVETR, AURA));
+		public static Set<Item> tomeRangeReplacementSet = new HashSet<Item>(Arrays.asList(LIGHT_BRAND, RUNE_SWORD, WIND_SWORD, JAVELIN, SPEAR, SHORT_SPEAR, HAND_AXE, TOMAHAWK, HATCHET, LONG_BOW));
 		
 		public static Set<Item> killerSet = new HashSet<Item>(Arrays.asList(KILLING_EDGE, SHAMSHIR, KILLER_LANCE, KILLER_AXE, KILLER_BOW));
 		public static Set<Item> effectiveSet = new HashSet<Item>(Arrays.asList(RAPIER, ARMORSLAYER, WYRMSLAYER, ZANBATO, SHADOWKILLER, HORSESLAYER, REGINLEIF, BRIGHT_LANCE, DRAGONSPEAR, HEAVY_SPEAR,
@@ -1227,6 +1588,9 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		public static Set<Item> allBasicWeapons = new HashSet<Item>(Arrays.asList(IRON_SWORD, IRON_LANCE, IRON_AXE, IRON_BOW, FIRE, LIGHTNING, FLUX, ROTTEN_CLAW, FIERY_FANG, EVIL_EYE));
 		public static Set<Item> allSteelWeapons = new HashSet<Item>(Arrays.asList(STEEL_SWORD, STEEL_LANCE, STEEL_AXE, STEEL_BOW, THUNDER));
 		public static Set<Item> allBasicThrownWeapons = new HashSet<Item>(Arrays.asList(JAVELIN, HAND_AXE));
+		
+		public static Set<Item> vendorItems = new HashSet<Item>(Arrays.asList(CHEST_KEY, DOOR_KEY, LOCKPICK, VULNERARY, PURE_WATER, ANTITOXIN, TORCH));
+		public static Set<Item> legendaryWeapons = new HashSet<Item>(Arrays.asList(AUDHULMA, VIDOFNIR, GARM, NIDHOGG, LATONA, EXCALIBUR, IVALDI, GLEIPNIR, NAGLFAR));
 		
 		public static Set<Item> basicItemsOfType(WeaponType type) {
 			Set<Item> set = new HashSet<Item>();
@@ -1944,6 +2308,8 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		
 		public CharacterClass[] blacklistedClasses() {
 			switch(this) {
+			case CHAPTER_2:
+				return new CharacterClass[] {CharacterClass.BRIGAND}; // Give Ross/Garcia a chance so that they don't get mobbed by fliers.
 			case CHAPTER_5X:
 				return new CharacterClass[] {CharacterClass.WYVERN_RIDER, CharacterClass.WYVERN_RIDER_F}; // The cutscene after the chapter has wyvern riders flying on screen. Keep those the same.
 			case CHAPTER_6:
@@ -2205,6 +2571,174 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			default:
 				return 0;
 			}
+		}
+	}
+	
+	public enum Shops implements GBAFEShop {
+		
+		CHAPTER_2_ARMORY(0x9E8884L, 0x9ED7CCL),
+		CHAPTER_5_ARMORY(0x9E8BB0L, 0x9ED7D8L),
+		CHAPTER_5_VENDOR(0x9E8BBCL, 0x9ED7EEL),
+		CHAPTER_9A_ARMORY(0x9E9108L, 0x9ED80EL),
+		CHAPTER_9A_VENDOR(0x9E90CCL, 0x9ED7F8L),
+		CHAPTER_10B_ARMORY(0x9EA434L, 0x9ED8CAL),
+		CHAPTER_10B_VENDOR(0x9EA440L, 0x9ED8E2L),
+		CHAPTER_12A_VENDOR(0x9E948CL, 0x9ED826L),
+		CHAPTER_12B_VENDOR(0x9EA67CL, 0x9ED8FAL),
+		CHAPTER_14A_SECRET(0x9E9730L, 0x9ED83EL),
+		CHAPTER_14B_SECRET(0x9EA9ECL, 0x9ED912L),
+		CHAPTER_15A_VENDOR(0x9E992CL, 0x9ED860L),
+		CHAPTER_15B_VENDOR(0x9EAC1CL, 0x9ED934L),
+		CHAPTER_17A_ARMORY(0x9E9C58L, 0x9ED894L),
+		CHAPTER_17A_VENDOR(0x9E9C4CL, 0x9ED87AL),
+		CHAPTER_17B_ARMORY(0x9EAF6CL, 0x9ED968L),
+		CHAPTER_17B_VENDOR(0x9EAF60L, 0x9ED94EL),
+		CHAPTER_19A_SECRET(0x9E9EB8L, 0x9ED8B8L),
+		CHAPTER_19B_SECRET(0x9EB1CCL, 0x9ED98CL),
+		
+		// Map Shops
+		BETHROEN_ARMORY(0x20629CL, 0xA3F00EL),
+		BETHROEN_VENDOR(0x2062A0L, 0xA3F0D2L),
+		CAER_PELYN_VENDOR(0x206220L, 0xA3F0B4L),
+		GRADO_SECRET(0x206324L, 0xA3F1B8L),
+		IDE_ARMORY(0x2060FCL, 0xA3EFB8L),
+		JEHANNA_SECRET(0x206304L, 0xA3F18EL),
+		JEHANNA_VENDOR(0x206320L, 0xA3F10AL),
+		NARUBE_RIVER_ARMORY(0x20635CL, 0xA3F032L),
+		NARUBE_RIVER_VENDOR(0x206360L, 0xA3F12AL),
+		PORT_KIRIS_ARMORY(0x2061DCL, 0xA3EFEAL),
+		PORT_KIRIS_VENDOR(0x2061E0L, 0xA3F096L),
+		RAUSTEN_ARMORY(0x20639CL, 0xA3F050L),
+		RAUSTEN_SECRET(0x2063A4L, 0xA3F1E8L),
+		RAUSTEN_VENDOR(0x2063A0L, 0xA3F144L),
+		SERAFEW_ARMORY(0x20615CL, 0xA3EFCEL),
+		SERAFEW_VENDOR(0x206160L, 0xA3F082L),
+		TAIZEL_VENDOR(0x2062C0L, 0xA3F0EEL)
+		;
+		
+		long pointerOffset;
+		long originalShopAddress;
+		
+		private Shops(final long pointerOffset, final long originalShopList) {
+			this.pointerOffset = pointerOffset;
+			this.originalShopAddress = originalShopList;
+		}
+		
+		public static Set<Shops> allVendors() {
+			return new HashSet<Shops>(Arrays.asList(CHAPTER_5_VENDOR, CHAPTER_9A_VENDOR, CHAPTER_10B_VENDOR, CHAPTER_12A_VENDOR, CHAPTER_12B_VENDOR, CHAPTER_15A_VENDOR, CHAPTER_15B_VENDOR, CHAPTER_17A_VENDOR, CHAPTER_17B_VENDOR,
+					BETHROEN_VENDOR, CAER_PELYN_VENDOR, JEHANNA_VENDOR, NARUBE_RIVER_VENDOR, PORT_KIRIS_VENDOR, RAUSTEN_VENDOR, SERAFEW_VENDOR, TAIZEL_VENDOR));
+		}
+		
+		public static Set<Shops> allArmories() {
+			return new HashSet<Shops>(Arrays.asList(CHAPTER_2_ARMORY, CHAPTER_5_ARMORY, CHAPTER_9A_ARMORY, CHAPTER_10B_ARMORY, CHAPTER_17A_ARMORY, CHAPTER_17B_ARMORY, BETHROEN_ARMORY, IDE_ARMORY, NARUBE_RIVER_ARMORY, PORT_KIRIS_ARMORY,
+					RAUSTEN_ARMORY, SERAFEW_ARMORY));
+		}
+		
+		public static Set<Shops> allSecretShops() {
+			return new HashSet<Shops>(Arrays.asList(CHAPTER_14A_SECRET, CHAPTER_14B_SECRET, CHAPTER_19A_SECRET, CHAPTER_19B_SECRET, GRADO_SECRET, JEHANNA_SECRET, RAUSTEN_SECRET));
+		}
+		
+		public static Set<Shops> allMapShops() {
+			return new HashSet<Shops>(Arrays.asList(BETHROEN_ARMORY, BETHROEN_VENDOR, CAER_PELYN_VENDOR, GRADO_SECRET, IDE_ARMORY, JEHANNA_SECRET, JEHANNA_VENDOR, NARUBE_RIVER_ARMORY, NARUBE_RIVER_VENDOR, PORT_KIRIS_ARMORY, PORT_KIRIS_VENDOR,
+					RAUSTEN_ARMORY, RAUSTEN_VENDOR, RAUSTEN_SECRET, SERAFEW_ARMORY, SERAFEW_VENDOR, TAIZEL_VENDOR));
+		}
+		
+		public static List<Shops> inOrderOfAppearance() {
+			return Arrays.asList(CHAPTER_2_ARMORY, IDE_ARMORY,
+					CHAPTER_5_ARMORY, CHAPTER_5_VENDOR, SERAFEW_ARMORY, SERAFEW_VENDOR,
+					CHAPTER_9A_ARMORY, CHAPTER_9A_VENDOR, PORT_KIRIS_ARMORY, PORT_KIRIS_VENDOR,
+					CHAPTER_10B_ARMORY, CHAPTER_10B_VENDOR, BETHROEN_ARMORY, BETHROEN_VENDOR,
+					CHAPTER_12A_VENDOR, CAER_PELYN_VENDOR,
+					CHAPTER_12B_VENDOR, TAIZEL_VENDOR,
+					CHAPTER_14A_SECRET, JEHANNA_SECRET,
+					CHAPTER_14B_SECRET, GRADO_SECRET,
+					CHAPTER_15A_VENDOR, CHAPTER_15B_VENDOR, JEHANNA_VENDOR,
+					CHAPTER_17A_ARMORY, CHAPTER_17B_ARMORY, CHAPTER_17A_VENDOR, CHAPTER_17B_VENDOR, NARUBE_RIVER_ARMORY, NARUBE_RIVER_VENDOR,
+					CHAPTER_19A_SECRET,
+					CHAPTER_19B_SECRET,
+					RAUSTEN_ARMORY,
+					RAUSTEN_VENDOR, RAUSTEN_SECRET);
+		}
+		
+		public GameStage getGameStage() {
+			switch (this) {
+			case CHAPTER_2_ARMORY:
+			case IDE_ARMORY:
+			case CHAPTER_5_ARMORY:
+			case CHAPTER_5_VENDOR:
+			case SERAFEW_ARMORY:
+			case SERAFEW_VENDOR:
+				return GameStage.EARLY;
+			case CHAPTER_9A_ARMORY:
+			case CHAPTER_9A_VENDOR:
+			case PORT_KIRIS_ARMORY:
+			case PORT_KIRIS_VENDOR:
+			case CHAPTER_10B_ARMORY:
+			case CHAPTER_10B_VENDOR:
+			case BETHROEN_ARMORY:
+			case BETHROEN_VENDOR:
+			case CHAPTER_12A_VENDOR:
+			case CAER_PELYN_VENDOR:
+			case CHAPTER_12B_VENDOR:
+			case TAIZEL_VENDOR:
+			case CHAPTER_14A_SECRET:
+			case JEHANNA_SECRET:
+			case CHAPTER_14B_SECRET:
+			case GRADO_SECRET:
+				return GameStage.MID;
+			case CHAPTER_15A_VENDOR:
+			case CHAPTER_15B_VENDOR:
+			case JEHANNA_VENDOR:
+			case CHAPTER_17A_ARMORY:
+			case CHAPTER_17B_ARMORY:
+			case CHAPTER_17A_VENDOR:
+			case CHAPTER_17B_VENDOR:
+			case NARUBE_RIVER_ARMORY:
+			case NARUBE_RIVER_VENDOR:
+			case CHAPTER_19A_SECRET:
+			case CHAPTER_19B_SECRET:
+			case RAUSTEN_ARMORY:
+			case RAUSTEN_VENDOR:
+			case RAUSTEN_SECRET:
+				return GameStage.LATE;
+			}
+			
+			return GameStage.LATE;
+		}
+		
+		public Set<GBAFEShop> groupedShops() {
+			switch (this) {
+			case BETHROEN_ARMORY:
+			case IDE_ARMORY:
+			case NARUBE_RIVER_ARMORY:
+			case PORT_KIRIS_ARMORY:
+			case RAUSTEN_ARMORY:
+			case SERAFEW_ARMORY:
+				return new HashSet<GBAFEShop>(Arrays.asList(BETHROEN_ARMORY, IDE_ARMORY, NARUBE_RIVER_ARMORY, PORT_KIRIS_ARMORY, RAUSTEN_ARMORY, SERAFEW_ARMORY));
+			case BETHROEN_VENDOR:
+			case CAER_PELYN_VENDOR:
+			case JEHANNA_VENDOR:
+			case NARUBE_RIVER_VENDOR:
+			case PORT_KIRIS_VENDOR:
+			case RAUSTEN_VENDOR:
+			case SERAFEW_VENDOR:
+			case TAIZEL_VENDOR:
+				return new HashSet<GBAFEShop>(Arrays.asList(BETHROEN_VENDOR, CAER_PELYN_VENDOR, JEHANNA_VENDOR, NARUBE_RIVER_VENDOR, PORT_KIRIS_VENDOR, RAUSTEN_VENDOR, SERAFEW_VENDOR, TAIZEL_VENDOR));
+			case JEHANNA_SECRET:
+			case GRADO_SECRET:
+			case RAUSTEN_SECRET:
+				return new HashSet<GBAFEShop>(Arrays.asList(JEHANNA_SECRET, GRADO_SECRET, RAUSTEN_SECRET));
+			default:
+				return new HashSet<GBAFEShop>(Arrays.asList(this));
+			}
+		}
+		
+		public long getPointerOffset() {
+			return pointerOffset;
+		}
+		
+		public long getOriginalShopAddress() {
+			return originalShopAddress;
 		}
 	}
 	
@@ -2526,13 +3060,13 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7, 8}, new int[] {9, 10, 11}, new int[] {12, 13, 14});
 					break;
 				case EIRIKA_MASTER_LORD:
-					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7}, new int[] {9, 10, 11}, new int[] {12, 13, 14});
+					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7, 8}, new int[] {9, 10, 11}, new int[] {12, 13, 14});
 					break;
 				case EPHRAIM_LORD:
-					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7, 8}, new int[] {}, new int[] {9, 10}, new int[] {12, 13, 14});
+					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7, 8}, new int[] {12, 13, 14}, new int[] {9, 10}, new int[] {});
 					break;
 				case EPHRAIM_MASTER_LORD:
-					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7}, new int[] {}, new int[] {9, 10}, new int[] {});
+					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7}, new int[] {12, 13, 14}, new int[] {9, 10}, new int[] {});
 					break;
 				case TRAINEE:
 				case TRAINEE_2:
@@ -2612,10 +3146,13 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				case SWORDMASTER_F:
 				case ARCHER:
 				case ARCHER_F:
-				case MONK:
+        case MONK:
 				case PRIEST:
 				case CLERIC:
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7}, new int[] {11, 12, 13, 14}, new int[] {});
+					break;
+				case ARCHER_F:
+					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7}, new int[] {11, 12, 13, 14}, new int[] {8, 9});
 					break;
 				case FIGHTER:
 				case BRIGAND:
@@ -2670,8 +3207,10 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {7, 6}, new int[] {11, 12, 9, 13, 10, 14}, new int[] {});
 					break;
 				case MAGE:
-				case MAGE_F:
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7}, new int[] {12, 13, 14}, new int[] {8, 9, 10});
+					break;
+				case MAGE_F:
+					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7}, new int[] {12, 13, 14}, new int[] {8, 9, 10});
 					break;
 				case SAGE:
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7}, new int[] {11, 12, 13, 14}, new int[] {8, 9, 10});
@@ -2937,6 +3476,19 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		
 		return values;
 	}
+	
+	public int affinityValueForAffinity(GBAFECharacterData.Affinity affinity) {
+		switch (affinity) {
+		case FIRE: return FE8Character.Affinity.FIRE.value;
+		case THUNDER: return FE8Character.Affinity.THUNDER.value;
+		case WIND: return FE8Character.Affinity.WIND.value;
+		case WATER: return FE8Character.Affinity.WATER.value;
+		case LIGHT: return FE8Character.Affinity.LIGHT.value;
+		case DARK: return FE8Character.Affinity.DARK.value;
+		case ANIMA: return FE8Character.Affinity.ANIMA.value;
+		default: return FE8Character.Affinity.NONE.value;
+		}
+	}
 
 	public int canonicalID(int characterID) {
 		return Character.canonicalIDForCharacterID(characterID);
@@ -3033,6 +3585,8 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			}
 		}
 		
+		classList.sort(GBAFEClass.idComparator);
+		
 		return classList.toArray(new GBAFEClass[classList.size()]);
 	}
 	
@@ -3044,6 +3598,8 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				classList.add(baseClass);
 			}
 		}
+		
+		classList.sort(GBAFEClass.idComparator);
 		
 		return classList.toArray(new GBAFEClass[classList.size()]);
 	}
@@ -3161,6 +3717,22 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		return charClass;
 	}
 	
+	public List<String> charClassAbility1Flags() {
+		return Arrays.asList(CharacterAndClassAbility1Mask.values()).stream().map(ability -> ability.displayString()).filter(string -> string != null).collect(Collectors.toList());
+	}
+	
+	public List<String> charClassAbility2Flags() {
+		return Arrays.asList(CharacterAndClassAbility2Mask.values()).stream().map(ability -> ability.displayString()).filter(string -> string != null).collect(Collectors.toList());
+	}
+	
+	public List<String> charClassAbility3Flags() {
+		return Arrays.asList(CharacterAndClassAbility3Mask.values()).stream().map(ability -> ability.displayString()).filter(string -> string != null).collect(Collectors.toList());
+	}
+	
+	public List<String> charClassAbility4Flags() {
+		return Arrays.asList(CharacterAndClassAbility4Mask.values()).stream().map(ability -> ability.displayString()).filter(string -> string != null).collect(Collectors.toList());
+	}
+	
 	// Item Provider Methods
 
 	public long itemTablePointer() {
@@ -3255,8 +3827,27 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		return new HashSet<GBAFEItem>(equalRankWeapons);
 	}
 	
+	public Set<GBAFEItem> weaponsOfRank(WeaponRank rank) {
+		return new HashSet<GBAFEItem>(Item.weaponsOfRank(rank));
+	}
+	
 	public Set<GBAFEItem> healingStaves(WeaponRank maxRank) {
-		Set<Item> staves = Item.allHealingStaves;
+		Set<Item> staves = new HashSet<Item>(Item.allHealingStaves);
+		if (maxRank.isLowerThan(WeaponRank.S)) {
+			staves.removeAll(Item.allSRank);
+		}
+		if (maxRank.isLowerThan(WeaponRank.A)) {
+			staves.removeAll(Item.allARank);
+		}
+		if (maxRank.isLowerThan(WeaponRank.B)) {
+			staves.removeAll(Item.allBRank);
+		}
+		if (maxRank.isLowerThan(WeaponRank.C)) {
+			staves.removeAll(Item.allCRank);
+		}
+		if (maxRank.isLowerThan(WeaponRank.D)) {
+			staves.removeAll(Item.allDRank);
+		}
 		return new HashSet<GBAFEItem>(staves);
 	}
 	
@@ -3270,7 +3861,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		return new HashSet<GBAFEItem>(Item.allPotentialRewards);
 	}
 	
-	public Set<GBAFEItem> relatedItemsToItem(GBAFEItemData itemData) {
+	public Set<GBAFEItem> relatedItemsToItem(GBAFEItemData itemData, boolean excludeBasic) {
 		if (itemData == null) { return new HashSet<GBAFEItem>(); }
 		Item item = Item.valueOf(itemData.getID());
 		if (item == null) { return new HashSet<GBAFEItem>(); }
@@ -3281,6 +3872,9 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			relatedWeapons.addAll(Item.weaponsOfRank(item.getRank()));
 			relatedWeapons.addAll(Item.weaponsOfType(item.getType()));
 			relatedWeapons.removeAll(Item.allSRank);
+			if (excludeBasic) {
+				relatedWeapons.removeAll(Item.allBasicWeapons);
+			}
 			relatedItems = relatedWeapons;
 		} else if (item.isStatBooster()) {
 			relatedItems = new HashSet<GBAFEItem>(Item.allStatBoosters);
@@ -3506,7 +4100,9 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		Set<GBAFEItem> usableSet = new HashSet<GBAFEItem>(itemsUsableByClass);
 		
 		final WeaponRank effectiveRank = rank;
-		itemsUsableByClass.removeIf(weapon -> (effectiveRank.isLowerThan(weapon.getRank()))); // Remove anything that's higher the weapon passed in.
+		// Only allow weapons of surrounding ranks. That is to say, if we're replacing a D rank weapon, let the pool be made up of any weapon between E and C.
+		Set<WeaponRank> allowableRanks = WeaponRank.surroundingRanks(item.getRank());
+		itemsUsableByClass.removeIf(weapon -> allowableRanks.contains(weapon.getRank()) == false);
 		
 		if (strict) {
 			Set<GBAFEItem> usableByRank = new HashSet<GBAFEItem>(itemsUsableByClass);
@@ -3522,6 +4118,10 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 					usableSiegeReplacements.retainAll(Item.siegeReplacementSet);
 					itemsUsableByClass.addAll(usableSiegeReplacements);
 				}
+			} else if (Item.allRangedWeapons.contains(item) && !Collections.disjoint(Item.tomeRangeReplacementSet, itemsUsableByClass)) {
+				// Is a ranged weapon, but not in the ranged set. This is probably a tome. If we need range, try ranged swords/lances/axes/bows.
+				DebugPrinter.log(DebugPrinter.Key.STRICT_WEAPON_ASSIGNMENT, "Has range, but no special range (probably a tome).");
+				itemsUsableByClass.retainAll(Item.tomeRangeReplacementSet);
 			} else if (Item.poisonSet.contains(item) && !Collections.disjoint(Item.poisonSet, itemsUsableByClass)) {
 				itemsUsableByClass.retainAll(Item.poisonSet);
 			} else if (Item.effectiveSet.contains(item) && !Collections.disjoint(Item.effectiveSet, itemsUsableByClass)) {
@@ -3548,7 +4148,9 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		// Try to match the rank.
 		Set<GBAFEItem> matchRank = new HashSet<GBAFEItem>(itemsUsableByClass);
 		matchRank.removeIf(weapon -> (weapon.getRank() != effectiveRank));
-		if (!matchRank.isEmpty()) { return matchRank; }
+		if (!matchRank.isEmpty() && matchRank.stream().allMatch(rankMatchingItem -> Item.allStaves.contains(rankMatchingItem)) == false) {
+			return matchRank;
+		}
 		
 		return itemsUsableByClass;
 	}
@@ -3595,6 +4197,88 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		return new HashSet<GBAFEItem>(Item.rareDrops);
 	}
 	
+	public Set<GBAFEItem> vendorItems(boolean rare) {
+		Set<GBAFEItem> items = new HashSet<GBAFEItem>(Item.vendorItems);
+		if (rare) {
+			items.add(Item.ELIXIR);
+			items.add(Item.CHEST_KEY_5);
+		}
+		
+		return items;
+	}
+	
+	public Set<GBAFEItem> secretItems() {
+		Set<GBAFEItem> items = new HashSet<GBAFEItem>();
+		items.addAll(Item.allPromotionItems);
+		items.addAll(Item.killerSet);
+		items.addAll(Item.braveSet);
+		items.addAll(Item.reaverSet);
+		items.addAll(Item.allSiegeTomes);
+		items.add(Item.ELIXIR);
+		items.add(Item.RESCUE);
+		items.add(Item.FORTIFY);
+		items.add(Item.PHYSIC);
+		items.add(Item.RAPIER);
+		items.add(Item.REGINLEIF);
+		items.add(Item.WIND_SWORD);
+		items.add(Item.LIGHT_BRAND);
+		items.removeAll(Item.allMonsterWeapons);
+		return items;
+	}
+	
+	public Set<GBAFEItem> rareSecretItems() {
+		Set<GBAFEItem> items = new HashSet<GBAFEItem>();
+		items.addAll(Item.allStatBoosters);
+		items.add(Item.HAMMERNE);
+		items.add(Item.WARP);
+		items.add(Item.RUNE_SWORD);
+		items.removeAll(Item.allMonsterWeapons);
+		return items;
+	}
+	
+	public Set<GBAFEItem> disallowedWeaponsInShops() {
+		return new HashSet<GBAFEItem>(Item.legendaryWeapons);
+	}
+	
+	public GBAFEItem legendaryWeaponOfType(WeaponType type, boolean isLord) {
+		switch (type) {
+		case SWORD:
+			return isLord ? Item.SIEGLINDE : Item.AUDHULMA;
+		case LANCE:
+			return isLord ? Item.SIEGMUND : Item.VIDOFNIR;
+		case AXE:
+			return Item.GARM;
+		case BOW:
+			return Item.NIDHOGG;
+		case ANIMA:
+			return Item.EXCALIBUR;
+		case LIGHT:
+			return Item.IVALDI;
+		case DARK:
+			return Item.GLEIPNIR;
+		case STAFF:
+			return Item.LATONA;
+		default:
+			return null;
+		}
+	}
+	
+	public List<String> itemAbility1Flags() {
+		return Arrays.asList(Item.Ability1Mask.values()).stream().map(mask -> Item.Ability1Mask.displayStrings.get(mask)).filter(string -> string != null).collect(Collectors.toList());
+	}
+	
+	public List<String> itemAbility2Flags() {
+		return Arrays.asList(Item.Ability2Mask.values()).stream().map(mask -> Item.Ability2Mask.displayStrings.get(mask)).filter(string -> string != null).collect(Collectors.toList());
+	}
+	
+	public List<String> itemAbility3Flags() {
+		return Arrays.asList(Item.Ability3Mask.values()).stream().map(mask -> Item.Ability3Mask.displayStrings.get(mask)).filter(string -> string != null).collect(Collectors.toList());
+	}
+	
+	public List<String> weaponEffectFlags() {
+		return Arrays.asList(Item.WeaponEffect.values()).stream().map(effect -> Item.WeaponEffect.displayStrings.get(effect)).filter(string -> string != null).collect(Collectors.toList());
+	}
+	
 	public String statBoostStringForWeapon(GBAFEItem weapon) {
 		if (weapon == Item.EXCALIBUR || weapon == Item.GARM) { return "+5 Speed"; }
 		if (weapon == Item.GLEIPNIR) { return "+5 Skill"; }
@@ -3619,8 +4303,8 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		return null;
 	}
 	
-	public GBAFEItemData itemDataWithData(byte[] data, long offset, int itemID) {
-		FE8Item item = new FE8Item(data, offset, itemID);
+	public GBAFEItemData itemDataWithData(byte[] data, long offset) {
+		FE8Item item = new FE8Item(data, offset);
 		Item fe8Item = Item.valueOf(item.getID());
 		if (fe8Item != null) {
 			item.initializeDisplayString(fe8Item.toString());
@@ -3861,7 +4545,6 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		return new FE8SpellAnimationCollection(data, offset);
 	}
 
-	@Override
 	public long portraitDataTableAddress() {
 		return 0x8ACBC4;
 	}
@@ -3951,5 +4634,46 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		indicies.add(0x36F); // Killer Lance
 		
 		return indicies;
+	}
+	
+	@Override
+	public long getBaseAddress() {
+		return 0x8AEEC4;
+	}
+
+	private List<Integer> statboosterIndicies = Arrays.asList(2, 3, 4, 5, 6, 7, 8, 9, 10);
+
+	@Override
+	public boolean isStatboosterIndex(int i) {
+		return statboosterIndicies.contains(i);
+	}
+
+	@Override
+	public int getNumberEntries() {
+		return 23;
+	}
+	
+	public Set<GBAFEShop> allShops() {
+		return new HashSet<GBAFEShop>(Arrays.asList(Shops.values()));
+	}
+	
+	public Set<GBAFEShop> allVendors() {
+		return new HashSet<GBAFEShop>(Shops.allVendors());
+	}
+	
+	public Set<GBAFEShop> allArmories() {
+		return new HashSet<GBAFEShop>(Shops.allArmories());
+	}
+	
+	public Set<GBAFEShop> allSecretShops() {
+		return new HashSet<GBAFEShop>(Shops.allSecretShops());
+	}
+	
+	public List<GBAFEShop> orderedShops() {
+		return new ArrayList<GBAFEShop>(Shops.inOrderOfAppearance());
+	}
+	
+	public Boolean isMapShop(GBAFEShop shop) {
+		return Shops.allMapShops().contains(shop);
 	}
 }

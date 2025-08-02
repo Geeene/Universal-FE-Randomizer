@@ -1,36 +1,13 @@
 package random.gba.randomizer;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.stream.Collectors;
-
-import fedata.gba.GBAFEChapterData;
-import fedata.gba.GBAFEChapterItemData;
-import fedata.gba.GBAFEChapterUnitData;
-import fedata.gba.GBAFECharacterData;
-import fedata.gba.GBAFEClassData;
-import fedata.gba.GBAFEItemData;
-import fedata.gba.GBAFEWorldMapData;
-import fedata.gba.GBAFEWorldMapSpriteData;
+import fedata.gba.*;
 import fedata.gba.fe6.FE6Data;
 import fedata.gba.fe6.FE6SpellAnimationCollection;
 import fedata.gba.fe7.FE7Data;
 import fedata.gba.fe7.FE7SpellAnimationCollection;
-import fedata.gba.fe8.FE8Data;
-import fedata.gba.fe8.FE8PaletteMapper;
-import fedata.gba.fe8.FE8PromotionManager;
-import fedata.gba.fe8.FE8SpellAnimationCollection;
-import fedata.gba.fe8.FE8SummonerModule;
+import fedata.gba.fe8.*;
 import fedata.gba.general.GBAFEChapterMetadataChapter;
 import fedata.gba.general.GBAFEChapterMetadataData;
-import fedata.gba.general.GBAFEClass;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
 import fedata.general.FEBase;
@@ -38,42 +15,25 @@ import fedata.general.FEBase.GameType;
 import io.DiffApplicator;
 import io.FileHandler;
 import io.UPSPatcher;
+import random.gba.loader.*;
 import io.UPSPatcherStatusListener;
-import random.gba.loader.ChapterLoader;
-import random.gba.loader.CharacterDataLoader;
-import random.gba.loader.ClassDataLoader;
-import random.gba.loader.ItemDataLoader;
-import random.gba.loader.PaletteLoader;
-import random.gba.loader.PortraitDataLoader;
-import random.gba.loader.TextLoader;
-import random.gba.randomizer.shuffling.CharacterShuffler;
 import random.gba.loader.ItemDataLoader.AdditionalData;
+import random.gba.randomizer.shuffling.CharacterShuffler;
 import random.general.Randomizer;
-import ui.model.BaseOptions;
-import ui.model.CharacterShufflingOptions;
+import ui.model.*;
 import ui.model.CharacterShufflingOptions.ShuffleLevelingMode;
-import ui.model.ClassOptions;
-import ui.model.EnemyOptions;
-import ui.model.GrowthOptions;
-import ui.model.ItemAssignmentOptions;
-import ui.model.MiscellaneousOptions;
-import ui.model.MiscellaneousOptions.ExperienceRate;
-import ui.model.OtherCharacterOptions;
-import ui.model.RecruitmentOptions;
-import ui.model.WeaponOptions;
 import ui.model.EnemyOptions.BossStatMode;
 import ui.model.ItemAssignmentOptions.ShopAdjustment;
 import ui.model.ItemAssignmentOptions.WeaponReplacementPolicy;
-import util.DebugPrinter;
-import util.Diff;
-import util.DiffCompiler;
-import util.FileReadHelper;
-import util.FindAndReplace;
-import util.FreeSpaceManager;
-import util.GBAImageCodec;
-import util.SeedGenerator;
-import util.WhyDoesJavaNotHaveThese;
+import util.*;
 import util.recordkeeper.RecordKeeper;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class GBARandomizer extends Randomizer {
 	
@@ -89,19 +49,25 @@ public class GBARandomizer extends Randomizer {
 	private ClassOptions classes;
 	private WeaponOptions weapons;
 	private OtherCharacterOptions otherCharacterOptions;
+	private StatboosterOptions statboosterOptions;
 	private EnemyOptions enemies;
-	private MiscellaneousOptions miscOptions;
+	private GameMechanicOptions miscOptions;
+	private RewardOptions rewardOptions;
 	private RecruitmentOptions recruitOptions;
 	private ItemAssignmentOptions itemAssignmentOptions;
 	private CharacterShufflingOptions shufflingOptions;
+	private PrfOptions prfs;
+	private ShopOptions shopOptions;
 	
 	private CharacterDataLoader charData;
 	private ClassDataLoader classData;
+	private StatboostLoader statboostData;
 	private ChapterLoader chapterData;
 	private ItemDataLoader itemData;
 	private PaletteLoader paletteData;
 	private TextLoader textData;
 	private PortraitDataLoader portraitData;
+	private ShopLoader shopData;
 	
 	private boolean needsPaletteFix;
 	private Map<GBAFECharacterData, GBAFECharacterData> characterMap; // valid with random recruitment. Maps slots to reference character.
@@ -121,8 +87,9 @@ public class GBARandomizer extends Randomizer {
 
 	public GBARandomizer(String sourcePath, String targetPath, FEBase.GameType gameType, DiffCompiler diffs, 
 			GrowthOptions growths, BaseOptions bases, ClassOptions classes, WeaponOptions weapons,
-			OtherCharacterOptions other, EnemyOptions enemies, MiscellaneousOptions otherOptions,
-			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, CharacterShufflingOptions shufflingOptions, String seed) {
+			OtherCharacterOptions other, EnemyOptions enemies, GameMechanicOptions otherOptions,
+			RecruitmentOptions recruit, ItemAssignmentOptions itemAssign, CharacterShufflingOptions shufflingOptions, StatboosterOptions statboosterOptions, 
+			RewardOptions rewards, PrfOptions prfs, ShopOptions shopOptions, String seed) {
 		super();
 		this.sourcePath = sourcePath;
 		this.targetPath = targetPath;
@@ -139,7 +106,11 @@ public class GBARandomizer extends Randomizer {
 		miscOptions = otherOptions;
 		recruitOptions = recruit;
 		itemAssignmentOptions = itemAssign;
+		this.statboosterOptions = statboosterOptions;
 		this.shufflingOptions = shufflingOptions;
+		this.rewardOptions = rewards;
+		this.prfs = prfs;
+		this.shopOptions = shopOptions;
 		if (itemAssignmentOptions == null) { itemAssignmentOptions = new ItemAssignmentOptions(WeaponReplacementPolicy.ANY_USABLE, ShopAdjustment.NO_CHANGE, false, false); }
 		
 		this.gameType = gameType;
@@ -213,22 +184,27 @@ public class GBARandomizer extends Randomizer {
 		charData.recordCharacters(recordKeeper, true, classData, itemData, textData);
 		classData.recordClasses(recordKeeper, true, classData, textData);
 		itemData.recordWeapons(recordKeeper, true, classData, textData, handler);
+		itemData.recordItems(recordKeeper, true, textData, handler);
 		chapterData.recordChapters(recordKeeper, true, charData, classData, itemData, textData);
+		shopData.recordShopData(recordKeeper, true, itemData, textData);
 		
 		paletteData.recordReferencePalettes(recordKeeper, charData, classData, textData);
+		statboostData.recordInitial(recordKeeper, itemData, statboosterOptions);
 		
 		makePreliminaryAdjustments();
 		
 		updateStatusString("Randomizing...");
-		try { shuffleCharactersIfNecessary(seed);} catch(Exception e) {notifyError("Encountered error while shuffling in Characters.\n\n" + e.getClass().getSimpleName() + "\n\nStackTrace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; }
-		updateProgress(0.40);
 		try { randomizeRecruitmentIfNecessary(seed); } catch (Exception e) { notifyError("Encountered error while randomizing recruitment.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; }
+		updateProgress(0.40);
+		try { shuffleCharactersIfNecessary(seed);} catch(Exception e) {notifyError("Encountered error while shuffling in Characters.\n\n" + e.getClass().getSimpleName() + "\n\nStackTrace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; }
 		updateProgress(0.45);
 		try { randomizeClassesIfNecessary(seed); } catch (Exception e) { notifyError("Encountered error while randomizing classes.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; } 
 		updateProgress(0.50);
 		try { randomizeBasesIfNecessary(seed); } catch (Exception e) { notifyError("Encountered error while randomizing bases.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; }
 		updateProgress(0.55);
 		try { randomizeWeaponsIfNecessary(seed); } catch (Exception e) { notifyError("Encountered error while randomizing weapons.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; }
+		updateProgress(0.58);
+		try { randomizeShopsIfNessary(seed); } catch (Exception e) { notifyError("Encountered error while randomizing shops.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n",  Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; }
 		updateProgress(0.60);
 		try { randomizeOtherCharacterTraitsIfNecessary(seed); } catch (Exception e) { notifyError("Encountered error while randomizing other character traits.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; }
 		updateProgress(0.65);
@@ -236,6 +212,8 @@ public class GBARandomizer extends Randomizer {
 		updateProgress(0.70);
 		try { randomizeOtherThingsIfNecessary(seed); } catch (Exception e) { notifyError("Encountered error while randomizing miscellaneous settings.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; } // i.e. Miscellaneous options.
 		updateProgress(0.75);
+		try { randomizeStatboostersIfNecessary(seed); } catch (Exception e) { notifyError("Encountered error while randomizing miscellaneous settings.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; } // i.e. Miscellaneous options.
+		updateProgress(0.70);
 		try { randomizeGrowthsIfNecessary(seed); } catch (Exception e) { notifyError("Encountered error while randomizing growths.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; }
 		updateProgress(0.90);
 		try { makeFinalAdjustments(seed); } catch (Exception e) { notifyError("Encountered error while making final adjustments.\n\n" + e.getClass().getSimpleName() + "\n\nStack Trace:\n\n" + String.join("\n", Arrays.asList(e.getStackTrace()).stream().map(element -> (element.toString())).limit(5).collect(Collectors.toList()))); return; }
@@ -245,9 +223,11 @@ public class GBARandomizer extends Randomizer {
 		chapterData.compileDiffs(diffCompiler);
 		classData.compileDiffs(diffCompiler, handler, freeSpace);
 		itemData.compileDiffs(diffCompiler, handler);
+		shopData.compileDiffs(diffCompiler);
 		paletteData.compileDiffs(diffCompiler);
 		textData.commitChanges(freeSpace, diffCompiler);
 		portraitData.compileDiffs(diffCompiler);
+		statboostData.compileDiffs(diffCompiler);
 		
 		if (gameType == GameType.FE8) {
 			fe8_paletteMapper.commitChanges(diffCompiler);
@@ -295,7 +275,10 @@ public class GBARandomizer extends Randomizer {
 		charData.recordCharacters(recordKeeper, false, classData, itemData, textData);
 		classData.recordClasses(recordKeeper, false, classData, textData);
 		itemData.recordWeapons(recordKeeper, false, classData, textData, targetFileHandler);
+		itemData.recordItems(recordKeeper, false, textData, targetFileHandler);
 		chapterData.recordChapters(recordKeeper, false, charData, classData, itemData, textData);
+		statboostData.recordUpdated(recordKeeper, itemData, statboosterOptions);
+		shopData.recordShopData(recordKeeper, false, itemData, textData);
 		
 		if (gameType == FEBase.GameType.FE8) {
 			paletteData.recordUpdatedFE8Palettes(recordKeeper, charData, classData, textData);
@@ -366,9 +349,15 @@ public class GBARandomizer extends Randomizer {
 		updateStatusString("Loading Item Data...");
 		updateProgress(0.25);
 		itemData = new ItemDataLoader(FE7Data.itemProvider, handler, freeSpace);
+		updateStatusString("Loading Shop Data...");
+		updateProgress(0.27);
+		shopData = new ShopLoader(FE7Data.shopProvider, FE7Data.itemProvider, itemData, handler, freeSpace);
 		updateStatusString("Loading Palette Data...");
 		updateProgress(0.30);
 		paletteData = new PaletteLoader(FEBase.GameType.FE7, handler, charData, classData);
+		updateStatusString("Loading Statboost Data...");
+		updateProgress(0.31);
+		statboostData = new StatboostLoader(FE7Data.statboostProvider, handler);
 		
 		handler.clearAppliedDiffs();
 	}
@@ -401,9 +390,16 @@ public class GBARandomizer extends Randomizer {
 		updateStatusString("Loading Item Data...");
 		updateProgress(0.25);
 		itemData = new ItemDataLoader(FE6Data.itemProvider, handler, freeSpace);
+		updateStatusString("Loading Shop Data...");
+		updateProgress(0.27);
+		shopData = new ShopLoader(FE6Data.shopProvider, FE6Data.itemProvider, itemData, handler, freeSpace);
 		updateStatusString("Loading Palette Data...");
 		updateProgress(0.30);
 		paletteData = new PaletteLoader(FEBase.GameType.FE6, handler, charData, classData);
+		updateStatusString("Loading Statboost Data...");
+		updateProgress(0.31);
+		statboostData = new StatboostLoader(FE6Data.statboostProvider, handler);
+		
 		
 		handler.clearAppliedDiffs();
 	}
@@ -439,9 +435,15 @@ public class GBARandomizer extends Randomizer {
 		updateStatusString("Loading Item Data...");
 		updateProgress(0.25);
 		itemData = new ItemDataLoader(FE8Data.itemProvider, handler, freeSpace);
+		updateStatusString("Loading Shop Data...");
+		updateProgress(0.27);
+		shopData = new ShopLoader(FE8Data.shopProvider, FE8Data.itemProvider, itemData, handler, freeSpace);
 		updateStatusString("Loading Palette Data...");
 		updateProgress(0.30);
 		paletteData = new PaletteLoader(FEBase.GameType.FE8, handler, charData, classData);
+		updateStatusString("Loading Statboost Data...");
+		updateProgress(0.31);
+		statboostData = new StatboostLoader(FE8Data.statboostProvider, handler);
 		
 		updateStatusString("Loading Summoner Module...");
 		updateProgress(0.35);
@@ -458,7 +460,9 @@ public class GBARandomizer extends Randomizer {
 	public void shuffleCharactersIfNecessary(String seed) {
 		if(shufflingOptions != null && shufflingOptions.isShuffleEnabled()) {
 			Random rng = new Random(SeedGenerator.generateSeedValue(seed, GrowthsRandomizer.rngSalt));
-			CharacterShuffler.shuffleCharacters(gameType, charData, textData, rng, handler, portraitData, freeSpace, chapterData, classData, shufflingOptions, itemAssignmentOptions, itemData);
+			CharacterShuffler shuffler = new CharacterShuffler(gameType, charData, textData, rng, handler, portraitData, freeSpace, chapterData, classData, shufflingOptions, itemAssignmentOptions, itemData);
+			shuffler.shuffleCharacters();
+			needsPaletteFix = true;
 		}
 	}
 	
@@ -478,6 +482,10 @@ public class GBARandomizer extends Randomizer {
 				updateStatusString("Randomizing growths...");
 				GrowthsRandomizer.fullyRandomizeGrowthsWithRange(growths.fullOption.minValue, growths.fullOption.maxValue, growths.adjustHP, charData, rng);
 				break;
+			case SMART:
+				updateStatusString("Smart Randomizing growths...");
+				GrowthsRandomizer.smartRandomizeGrowths(charData, classData, rng);
+				break;
 			}
 		}
 	}
@@ -493,6 +501,10 @@ public class GBARandomizer extends Randomizer {
 			case DELTA:
 				updateStatusString("Applying random deltas to growths...");
 				BasesRandomizer.randomizeBasesByRandomDelta(bases.deltaOption.variance, charData, classData, rng);
+				break;
+			case SMART:
+				updateStatusString("Smart Randomizing bases...");
+				BasesRandomizer.smartRandomizeBases(charData, classData, chapterData, rng);
 				break;
 			}
 		}
@@ -551,6 +563,14 @@ public class GBARandomizer extends Randomizer {
 		}
 	}
 	
+	private void randomizeShopsIfNessary(String seed) {
+		if (shopOptions != null) {
+			updateStatusString("Randomizing Shops...");
+			Random rng = new Random(SeedGenerator.generateSeedValue(seed, ShopRandomizer.rngSalt));
+			ShopRandomizer.randomizeShops(shopData, itemData, false, false, shopOptions.shopSize.minValue, shopOptions.shopSize.maxValue, rng);
+		}
+	}
+	
 	private void randomizeOtherCharacterTraitsIfNecessary(String seed) {
 		if (otherCharacterOptions != null) {
 			if (otherCharacterOptions.movementOptions != null) {
@@ -603,15 +623,20 @@ public class GBARandomizer extends Randomizer {
 		}
 	}
 	
+	private void randomizeStatboostersIfNecessary(String seed) {
+		Random rng = new Random(SeedGenerator.generateSeedValue(seed, StatboosterRandomizer.SALT));
+		StatboosterRandomizer.randomize(statboosterOptions, statboostData, itemData, textData, rng);
+	}
+	
 	private void randomizeOtherThingsIfNecessary(String seed) {
-		if (miscOptions != null) {
-			if (miscOptions.randomizeRewards) {
+		if (rewardOptions != null) {
+			if (rewardOptions.randomizeRewards) {
 				updateStatusString("Randomizing rewards...");
 				Random rng = new Random(SeedGenerator.generateSeedValue(seed, RandomRandomizer.rngSalt));
 				RandomRandomizer.randomizeRewards(itemData, chapterData, itemAssignmentOptions.assignPromoWeapons, rng);
 			}
-			
-			if (miscOptions.enemyDropChance > 0) {
+
+			if (rewardOptions.enemyDropChance > 0) {
 				if (gameType == GameType.FE7) {
 					// Change the code at 0x17826 from
 					// 20 68 61 68 80 6A 89 6A 08 43 80 21 09 05 08 40
@@ -620,23 +645,24 @@ public class GBARandomizer extends Randomizer {
 					// This will allow us to set the 4th AI bit for units to drop the last item if
 					// the 0x40 bit is set.
 					diffCompiler.addDiff(new Diff(0x17826, 16,
-							new byte[] {(byte)0x20, (byte)0x1C, (byte)0x41, (byte)0x30,
-									(byte)0x00, (byte)0x78, (byte)0x40, (byte)0x21,
-									(byte)0x08, (byte)0x40, (byte)0x00, (byte)0x00,
-									(byte)0x00, (byte)0x00, (byte)0x00, (byte)0x00
-									
+							new byte[]{(byte) 0x20, (byte) 0x1C, (byte) 0x41, (byte) 0x30,
+									(byte) 0x00, (byte) 0x78, (byte) 0x40, (byte) 0x21,
+									(byte) 0x08, (byte) 0x40, (byte) 0x00, (byte) 0x00,
+									(byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
+
 							},
-							new byte[] {(byte)0x20, (byte)0x68, (byte)0x61, (byte)0x68,
-									(byte)0x80, (byte)0x6A, (byte)0x89, (byte)0x6A,
-									(byte)0x08, (byte)0x43, (byte)0x80, (byte)0x21,
-									(byte)0x09, (byte)0x05, (byte)0x08, (byte)0x40
+							new byte[]{(byte) 0x20, (byte) 0x68, (byte) 0x61, (byte) 0x68,
+									(byte) 0x80, (byte) 0x6A, (byte) 0x89, (byte) 0x6A,
+									(byte) 0x08, (byte) 0x43, (byte) 0x80, (byte) 0x21,
+									(byte) 0x09, (byte) 0x05, (byte) 0x08, (byte) 0x40
 							}));
 				}
 				updateStatusString("Adding drops...");
 				Random rng = new Random(SeedGenerator.generateSeedValue(seed, RandomRandomizer.rngSalt + 1));
-				RandomRandomizer.addRandomEnemyDrops(miscOptions.enemyDropChance, charData, itemData, chapterData, rng);
+				RandomRandomizer.addRandomEnemyDrops(rewardOptions.enemyDropChance, charData, itemData, chapterData, rng);
 			}
-			
+		}
+		if (miscOptions != null) {
 			if (miscOptions.randomizeFogOfWar) {
 				Random rng = new Random(SeedGenerator.generateSeedValue(seed, RandomRandomizer.rngSalt + 2));
 				for (GBAFEChapterMetadataChapter chapter : chapterData.getMetadataChapters()) {
@@ -682,7 +708,7 @@ public class GBARandomizer extends Randomizer {
 		// Some characters have discrepancies between character data and chapter data. We'll try to address that before we get to any modifications.
 		charData.applyLevelCorrectionsIfNecessary();
 		
-		itemData.prepareForRandomization();
+		itemData.prepareForRandomization(gameType, diffCompiler);
 	}
 	
 	private void makeFinalAdjustments(String seed) {
@@ -693,6 +719,7 @@ public class GBARandomizer extends Randomizer {
 		// Fix the palettes based on final classes.
 		if (needsPaletteFix) {
 			PaletteHelper.synchronizePalettes(gameType, recruitOptions != null ? recruitOptions.includeExtras : false, charData, classData, paletteData, characterMap, freeSpace);
+			charData.commit();
 		}
 		
 		// Fix promotions so that forcing a promoted unit to promote again doesn't demote them.
@@ -729,21 +756,14 @@ public class GBARandomizer extends Randomizer {
 			emblemBow.setEffectivenessPointer(itemData.flierEffectPointer());
 		}
 		
+		// Allow FE6 to be able to use hard mode without needing clear data.
+		if (gameType == GameType.FE6) {
+			diffCompiler.addDiff(new Diff(FE6Data.HardModeHackOffset, FE6Data.HardModeHackNewData.length, FE6Data.HardModeHackNewData, FE6Data.HardModeHackOriginalData));
+		}
+		
 		// Hack in mode select without needing clear data for FE7.
 		if (gameType == GameType.FE7) {
-			try {
-				InputStream stream = UPSPatcher.class.getClassLoader().getResourceAsStream("FE7ClearSRAM.bin");
-				byte[] bytes = new byte[0x6F];
-				stream.read(bytes);
-				stream.close();
-				
-				long offset = freeSpace.setValue(bytes, "FE7 Hardcoded SRAM", true);
-				long pointer = freeSpace.setValue(WhyDoesJavaNotHaveThese.bytesFromAddress(offset), "FE7 Hardcoded SRAM Pointer", true);
-				diffCompiler.addDiff(new Diff(FE7Data.HardcodedSRAMHeaderOffset, 4, WhyDoesJavaNotHaveThese.bytesFromAddress(pointer), WhyDoesJavaNotHaveThese.bytesFromAddress(FE7Data.DefaultSRAMHeaderPointer)));
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			diffCompiler.addDiff(new Diff(FE7Data.ModeSelectHackOffset, FE7Data.ModeSelectHackNewData.length, FE7Data.ModeSelectHackNewData, FE7Data.ModeSelectHackOriginalData));
 			
 			// Fix up the portraits in mode select, since they're hardcoded.
 			// Only necessary if we randomized recruitment.
@@ -862,7 +882,7 @@ public class GBARandomizer extends Randomizer {
 				for (GBAFEChapterUnitData chapterUnit : chapter.allUnits()) {
 					FE8Data.CharacterClass charClass = FE8Data.CharacterClass.valueOf(chapterUnit.getStartingClass());
 					if (FE8Data.CharacterClass.allTraineeClasses.contains(charClass)) {
-						chapterUnit.giveItems(new int[] {FE8Data.Item.HEAVEN_SEAL.ID});
+						chapterUnit.giveItems(new int[] {FE8Data.Item.HEAVEN_SEAL.ID}, itemData);
 					}
 				}
 			}
@@ -918,7 +938,7 @@ public class GBARandomizer extends Randomizer {
 							GBAFECharacterData character = charData.characterWithID(chapterUnit.getCharacterNumber());
 							GBAFEItemData healingStaff = itemData.getRandomHealingStaff(itemData.rankForValue(character.getStaffRank()), rng);
 							if (healingStaff != null) {
-								chapterUnit.giveItem(healingStaff.getID());
+								chapterUnit.giveItems(new int[] {healingStaff.getID()}, itemData);
 							}
 						}
 					}
@@ -1140,6 +1160,12 @@ public class GBARandomizer extends Randomizer {
 			
 			roy.setClassID(newRoyClass.getID());
 			
+			// We need to update the class lookup routine to take into account this new ID, since it's beyond
+			// the normal bounds of the IDs the game searches through during his promotion scene.
+			if (newRoyClass.getID() > (byte)0x3F) {
+				diffCompiler.addDiff(new Diff(FE6Data.ClassLookupMaxIndexOffset, 1, new byte[] { (byte)((newRoyClass.getID() + 1) & 0xFF) }, new byte[] { (byte)0x3F }));	
+			}
+			
 			// Add his new class to any effectiveness tables.
 			List<AdditionalData> effectivenesses = itemData.effectivenessArraysForClassID(oldRoyClassID);
 			for (AdditionalData effectiveness : effectivenesses) {
@@ -1147,6 +1173,15 @@ public class GBARandomizer extends Randomizer {
 			}
 			
 			// Incidentally, Roy doesn't need a promotion item, because his promotion is entirely scripted without any items.
+			// We do need to make sure the weapon that's forced on him during promotion is one he can use though. Otherwise, the game will crash.
+			GBAFEItemData bindingBlade = itemData.itemWithID(FE6Data.Item.BINDING_BLADE.ID);
+			if (newRoyClass.canUseWeapon(bindingBlade) == false) {
+				GBAFEItemData legendaryWeapon = itemData.legendaryWeaponForClass(newRoyClass, true, gameType);
+				if (legendaryWeapon == null) {
+					legendaryWeapon = itemData.basicItemOfType(newRoyClass.getWeaponRanks(true, gameType).getHighestRank());
+				}
+				diffCompiler.addDiff(new Diff(FE6Data.RoyPromotionForcedEquippedItemOffset, 1, new byte[] { (byte)(legendaryWeapon.getID()) }, new byte[] { (byte)0x0F} ));
+			}
 			
 			for (GBAFEChapterData chapter : chapterData.allChapters()) {
 				for (GBAFEChapterUnitData unit : chapter.allUnits()) {
@@ -1304,8 +1339,8 @@ public class GBARandomizer extends Randomizer {
 			}
 		}
 		
-		if ((classes != null && classes.createPrfs) || (recruitOptions != null && recruitOptions.createPrfs)) {
-			boolean unbreakablePrfs = ((classes != null && classes.unbreakablePrfs) || (recruitOptions != null && recruitOptions.unbreakablePrfs));
+		if (prfs != null && prfs.createPrfs) {
+			boolean unbreakablePrfs = prfs.unbreakablePrfs;
 
 			// Create new PRF weapons.
 			if (gameType == GameType.FE6) {
@@ -1395,27 +1430,40 @@ public class GBARandomizer extends Randomizer {
 							break;
 						}
 						
-						// Make sure the old lord class, if anybody randomizes into it, can't use this weapon.
-						GBAFEClassData oldLordClass = classData.classForID(FE6Data.CharacterClass.LORD.ID);
-						oldLordClass.removeLordLocks();
-						GBAFEClassData oldPromotedLordClass = classData.classForID(FE6Data.CharacterClass.MASTER_LORD.ID);
-						oldPromotedLordClass.removeLordLocks();
+						if (selectedType == WeaponType.SWORD) {
+							// Make sure the old lord class, if anybody randomizes into it, can't use this weapon.
+							GBAFEClassData oldLordClass = classData.classForID(FE6Data.CharacterClass.LORD.ID);
+							oldLordClass.removeLordLocks();
+							GBAFEClassData oldPromotedLordClass = classData.classForID(FE6Data.CharacterClass.MASTER_LORD.ID);
+							oldPromotedLordClass.removeLordLocks();
+							
+							// Make sure Roy himself can.
+							// For FE6, use the Eckesachs lock. The rapier lock is still valid for the normal Roy Lord class.
+							// This is safe so long as we're not giving out Eckesachs to anybody randomly.
+							roy.enableWeaponLock(FE6Data.CharacterAndClassAbility3Mask.ECKESACHS_LOCK.ID);	
+						} else {
+							// There shouldn't be any need to remove the old lock since Lord is Sword-locked.
+							// So if this isn't a sword, then we can safely just use the same lock again.
+							// Do make sure Roy can use it though.
+							roy.enableWeaponLock(FE6Data.CharacterAndClassAbility3Mask.RAPIER_LOCK.ID);
+							// If we go down this route, Rapier must have a rank though.
+							GBAFEItemData bindingBlade = itemData.itemWithID(FE6Data.Item.BINDING_BLADE.ID); 
+							bindingBlade.setWeaponRank(WeaponRank.E);
+							bindingBlade.commitChanges();
+						}
 						
-						// Make sure Roy himself can.
-						roy.enableWeaponLock(FE6Data.CharacterAndClassAbility3Mask.RAPIER_LOCK.getValue());
 						
 						for (GBAFEChapterData chapter : chapterData.allChapters()) {
 							for (GBAFEChapterUnitData unit : chapter.allUnits()) {
 								// Give Roy the weapon when he shows up.
 								if (unit.getCharacterNumber() == roy.getID()) {
-									unit.giveItem(itemToReplace.getID());
+									unit.giveItems(new int[] {itemToReplace.getID()}, itemData);
 								}
 								
 								// Replace any Rapiers with iron swords, since we need to reuse the same lock.
 								if (unit.hasItem(FE6Data.Item.RAPIER.ID)) {
 									unit.removeItem(FE6Data.Item.RAPIER.ID);
-									unit.giveItem(FE6Data.Item.IRON_SWORD.ID);
-								}
+									unit.giveItems(new int[] {FE6Data.Item.IRON_SWORD.ID}, itemData);								}
 							}
 						}
 					}
@@ -1586,18 +1634,18 @@ public class GBARandomizer extends Randomizer {
 					if (lynSelectedType == WeaponType.SWORD) {
 						athosLockUsed = true;
 						newWeapon.setAbility3(FE7Data.Item.Ability3Mask.ATHOS_LOCK.ID);
-						lyn.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.getValue());
-						lynTutorial.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.getValue());
+						lyn.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.ID);
+						lynTutorial.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.ID);
 					} else if (lynSelectedType == WeaponType.BOW) {
 						eliwoodLockUsed = true;
 						newWeapon.setAbility3(FE7Data.Item.Ability3Mask.ELIWOOD_LOCK.ID);
-						lyn.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ELIWOOD_LOCK.getValue());
-						lynTutorial.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ELIWOOD_LOCK.getValue());
+						lyn.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ELIWOOD_LOCK.ID);
+						lynTutorial.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ELIWOOD_LOCK.ID);
 					} else {
 						lynLockUsed = true;
 						newWeapon.setAbility3(FE7Data.Item.Ability3Mask.LYN_LOCK.ID);
-						lyn.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.getValue());
-						lynTutorial.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.getValue());
+						lyn.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.ID);
+						lynTutorial.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.ID);
 					}
 					
 					itemData.addNewItem(newWeapon);
@@ -1642,7 +1690,7 @@ public class GBARandomizer extends Randomizer {
 						for (GBAFEChapterUnitData unit : chapter.allUnits()) {
 							if (unit.getCharacterNumber() == lyn.getID()) {
 								unit.removeItem(referenceWeapon.getID());
-								unit.giveItem(newWeapon.getID());
+								unit.giveItems(new int[] {newWeapon.getID()}, itemData);
 							}
 						}
 					}
@@ -1667,47 +1715,47 @@ public class GBARandomizer extends Randomizer {
 						if (!athosLockUsed) {
 							athosLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.ATHOS_LOCK.ID);
-							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.getValue());
+							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.ID);
 						} else {
 							// We only have the unused lock left.
 							unusedLockUsed = true;
 							newWeapon.setAbility2(FE7Data.Item.Ability2Mask.UNUSED_WEAPON_LOCK.ID);
-							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.getValue());
+							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.ID);
 						}
 					} else if (eliwoodSelectedType == WeaponType.LANCE) {
 						if (!lynLockUsed) {
 							lynLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.LYN_LOCK.ID);
-							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.getValue());
+							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.ID);
 						} else if (!athosLockUsed) {
 							athosLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.ATHOS_LOCK.ID);
-							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.getValue());
+							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.ID);
 						} else {
 							unusedLockUsed = true;
 							newWeapon.setAbility2(FE7Data.Item.Ability2Mask.UNUSED_WEAPON_LOCK.ID);
-							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.getValue());
+							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.ID);
 						}
 					} else {
 						if (!eliwoodLockUsed) {
 							eliwoodLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.ELIWOOD_LOCK.ID);
-							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ELIWOOD_LOCK.getValue());
+							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ELIWOOD_LOCK.ID);
 						} else if (!lynLockUsed) {
 							lynLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.LYN_LOCK.ID);
-							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.getValue());
+							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.ID);
 						} else if (!athosLockUsed && // Athos lock cannot be used with any tome.
 								eliwoodSelectedType != WeaponType.ANIMA && 
 								eliwoodSelectedType != WeaponType.DARK && 
 								eliwoodSelectedType != WeaponType.LIGHT) {
 							athosLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.ATHOS_LOCK.ID);
-							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.getValue());
+							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.ID);
 						} else {
 							unusedLockUsed = true;
 							newWeapon.setAbility2(FE7Data.Item.Ability2Mask.UNUSED_WEAPON_LOCK.ID);
-							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.getValue());
+							eliwood.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.ID);
 						}
 					}
 					
@@ -1745,7 +1793,7 @@ public class GBARandomizer extends Randomizer {
 						for (GBAFEChapterUnitData unit : chapter.allUnits()) {
 							if (unit.getCharacterNumber() == eliwood.getID()) {
 								unit.removeItem(referenceWeapon.getID());
-								unit.giveItem(newWeapon.getID());
+								unit.giveItems(new int[] {newWeapon.getID()}, itemData);
 							}
 						}
 					}
@@ -1770,38 +1818,38 @@ public class GBARandomizer extends Randomizer {
 						if (!athosLockUsed) {
 							athosLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.ATHOS_LOCK.ID);
-							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.getValue());
+							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.ID);
 						} else if (!unusedLockUsed) {
 							unusedLockUsed = true;
 							newWeapon.setAbility2(FE7Data.Item.Ability2Mask.UNUSED_WEAPON_LOCK.ID);
-							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.getValue());
+							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.ID);
 						} else {
 							// GG. Just use Hector lock.
 							newWeapon.setAbility2(FE7Data.Item.Ability3Mask.HECTOR_LOCK.ID);
-							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.HECTOR_LOCK.getValue());
+							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.HECTOR_LOCK.ID);
 						}
 					} else if (hectorSelectedType == WeaponType.AXE) {
 						if (!lynLockUsed) {
 							lynLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.LYN_LOCK.ID);
-							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.getValue());
+							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.LYN_LOCK.ID);
 						} else if (!athosLockUsed) {
 							athosLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.ATHOS_LOCK.ID);
-							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.getValue());
+							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ATHOS_LOCK.ID);
 						} else if (!eliwoodLockUsed) {
 							eliwoodLockUsed = true;
 							newWeapon.setAbility3(FE7Data.Item.Ability3Mask.ELIWOOD_LOCK.ID);
-							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ELIWOOD_LOCK.getValue());
+							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.ELIWOOD_LOCK.ID);
 						} else { // There's no way we used 4 locks with two characters.
 							unusedLockUsed = true;
 							newWeapon.setAbility2(FE7Data.Item.Ability2Mask.UNUSED_WEAPON_LOCK.ID);
-							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.getValue());
+							hector.enableWeaponLock(FE7Data.CharacterAndClassAbility3Mask.UNUSED_WEAPON_LOCK.ID);
 						}
 					} else {
 						hectorLockUsed = true;
 						newWeapon.setAbility3(FE7Data.Item.Ability3Mask.HECTOR_LOCK.ID);
-						hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.HECTOR_LOCK.getValue());
+						hector.enableWeaponLock(FE7Data.CharacterAndClassAbility4Mask.HECTOR_LOCK.ID);
 					}
 					
 					itemData.addNewItem(newWeapon);
@@ -1838,7 +1886,7 @@ public class GBARandomizer extends Randomizer {
 						for (GBAFEChapterUnitData unit : chapter.allUnits()) {
 							if (unit.getCharacterNumber() == hector.getID()) {
 								unit.removeItem(referenceWeapon.getID());
-								unit.giveItem(newWeapon.getID());
+								unit.giveItems(new int[] {newWeapon.getID()}, itemData);
 							}
 						}
 					}
@@ -1982,8 +2030,8 @@ public class GBARandomizer extends Randomizer {
 					}
 					
 					// Make sure Eirika herself can. She'll use the unused Lyn Lock.
-					eirika.enableWeaponLock(FE8Data.CharacterAndClassAbility4Mask.EIRIKA_WEAPON_LOCK.getValue());
-					itemToReplace.setAbility3(FE8Data.Item.Ability3Mask.EIRIKA_LOCK.ID);
+					eirika.enableWeaponLock(FE8Data.CharacterAndClassAbility4Mask.UNUSED_LYN_LOCK.ID);
+					itemToReplace.setAbility3(FE8Data.Item.Ability3Mask.UNUSED_LYN_LOCK.ID);
 					
 					// Eirika will get her weapon from Seth.
 					GBAFEChapterData prologue = chapterData.chapterWithID(FE8Data.ChapterPointer.PROLOGUE.chapterID);
@@ -2037,7 +2085,7 @@ public class GBARandomizer extends Randomizer {
 					}
 					
 					// Make sure Ephraim himself can. He'll use the unused Athos Lock.
-					ephraim.enableWeaponLock(FE8Data.CharacterAndClassAbility4Mask.UNUSED_ATHOS_LOCK.getValue());
+					ephraim.enableWeaponLock(FE8Data.CharacterAndClassAbility4Mask.UNUSED_ATHOS_LOCK.ID);
 					itemToReplace.setAbility3(FE8Data.Item.Ability3Mask.UNUSED_WEAPON_LOCK.ID);
 					
 					// Ephraim starts with his weapon.
@@ -2045,7 +2093,7 @@ public class GBARandomizer extends Randomizer {
 					for (GBAFEChapterUnitData unit : ch5x.allUnits()) {
 						if (unit.getCharacterNumber() == ephraim.getID()) {
 							unit.removeItem(FE8Data.Item.REGINLEIF.ID);
-							unit.giveItem(itemToReplace.getID());
+							unit.giveItems(new int[] {itemToReplace.getID()}, itemData);
 						}
 					}
 				}
@@ -2314,6 +2362,9 @@ public class GBARandomizer extends Randomizer {
 			case FULL:
 				rk.addHeaderItem("Randomize Growths", "Full (" + growths.fullOption.minValue + "% ~ " + growths.fullOption.maxValue + "%)");	
 				break;
+			case SMART:
+				rk.addHeaderItem("Randomize Growths", "Smart");
+				break;
 			}
 			
 			rk.addHeaderItem("Adjust HP Growths", growths.adjustHP ? "YES" : "NO");
@@ -2328,6 +2379,9 @@ public class GBARandomizer extends Randomizer {
 				break;
 			case DELTA:
 				rk.addHeaderItem("Randomize Bases", "Delta (+/- " + bases.deltaOption.variance + ")");
+				break;
+			case SMART:
+				rk.addHeaderItem("Randomize Bases", "Smart");
 				break;
 			}
 		} else {
@@ -2538,13 +2592,15 @@ public class GBARandomizer extends Randomizer {
 				rk.addHeaderItem("Improve Boss Weapons", "NO");
 			}
 		}
-		if(miscOptions != null) {
-			if (miscOptions.randomizeRewards) {
+		if (rewardOptions != null) {
+			if (rewardOptions.randomizeRewards) {
 				rk.addHeaderItem("Randomize Rewards", "YES");
 			} else {
 				rk.addHeaderItem("Randomize Rewards", "NO");
 			}
-			
+		}
+		if(miscOptions != null) {
+
 			if (miscOptions.singleRNMode) {
 				rk.addHeaderItem("Enable Single RN", "YES");
 			} else {
@@ -2641,16 +2697,31 @@ public class GBARandomizer extends Randomizer {
 			rk.addHeaderItem("Assign Poison Weapons", itemAssignmentOptions.assignPoisonWeapons ? "YES" : "NO");
 		}
 		
+
 		if(shufflingOptions != null) {
-			StringBuilder sb = new StringBuilder();
-			sb.append(String.format("Leveling Mode: %s", shufflingOptions.getLevelingMode() == ShuffleLevelingMode.AUTOLEVEL ? "autolevel characters": "leave characters unchanged")).append("<br>");
-			sb.append(String.format("Shuffle chance: %d%%", shufflingOptions.getChance())).append("<br>");
-			sb.append(shufflingOptions.shouldChangeDescription() ? "Description will be changed" : "Description will be left unchanged").append("<br>");
-			sb.append("Included configurations:<br>");
-			for (String s : shufflingOptions.getIncludedShuffles()) {
-				sb.append(s).append("<br>");
+			if (shufflingOptions.isShuffleEnabled()) {
+				StringBuilder sb = new StringBuilder();
+				sb.append(String.format("Leveling Mode: %s", shufflingOptions.getLevelingMode() == ShuffleLevelingMode.AUTOLEVEL ? "autolevel characters": "leave characters unchanged")).append("<br>");
+				sb.append(String.format("Shuffle chance: %d%%", shufflingOptions.getChance())).append("<br>");
+				sb.append(shufflingOptions.shouldChangeDescription() ? "Description will be changed" : "Description will be left unchanged").append("<br>");
+				sb.append("Included configurations:<br>");
+				for (String s : shufflingOptions.getIncludedShuffles()) {
+					sb.append(s).append("<br>");
+				}
+				rk.addHeaderItem("Character Shuffling", sb.toString());
+			} else {
+				rk.addHeaderItem("Character Shuffling", "NO");
 			}
-			rk.addHeaderItem("Character Shuffling", sb.toString());
+		}
+		
+		if (statboosterOptions != null) {
+			statboosterOptions.record(rk);
+		}
+		
+		if (shopOptions != null) {
+			rk.addHeaderItem("Randomize Shops", "YES (" + shopOptions.shopSize.minValue + " ~ " + shopOptions.shopSize.maxValue + " items)");
+		} else {
+			rk.addHeaderItem("Randomize Shops", "NO");
 		}
 		
 		return rk;

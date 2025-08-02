@@ -13,78 +13,6 @@ import random.gba.loader.ItemDataLoader.AdditionalData;
 
 public interface GBAFEItemProvider {
 	
-	public static class WeaponRanks {
-		public final WeaponRank swordRank;
-		public final WeaponRank lanceRank;
-		public final WeaponRank axeRank;
-		public final WeaponRank bowRank;
-		public final WeaponRank animaRank;
-		public final WeaponRank lightRank;
-		public final WeaponRank darkRank;
-		public final WeaponRank staffRank;
-		
-		public WeaponRanks(GBAFECharacterData character, GBAFEClassData characterClass, GBAFEItemProvider provider) {
-			if (characterClass == null) {
-				swordRank = provider.rankWithValue(character.getSwordRank());
-				lanceRank = provider.rankWithValue(character.getLanceRank());
-				axeRank = provider.rankWithValue(character.getAxeRank());
-				bowRank = provider.rankWithValue(character.getBowRank());
-				animaRank = provider.rankWithValue(character.getAnimaRank());
-				lightRank = provider.rankWithValue(character.getLightRank());
-				darkRank = provider.rankWithValue(character.getDarkRank());
-				staffRank = provider.rankWithValue(character.getStaffRank());
-			} else {
-				swordRank = provider.rankWithValue(character.getSwordRank()) == WeaponRank.NONE ? provider.rankWithValue(characterClass.getSwordRank()) : provider.rankWithValue(character.getSwordRank());
-				lanceRank = provider.rankWithValue(character.getLanceRank()) == WeaponRank.NONE ? provider.rankWithValue(characterClass.getLanceRank()) : provider.rankWithValue(character.getLanceRank());
-				axeRank = provider.rankWithValue(character.getAxeRank()) == WeaponRank.NONE ? provider.rankWithValue(characterClass.getAxeRank()) : provider.rankWithValue(character.getAxeRank());
-				bowRank = provider.rankWithValue(character.getBowRank()) == WeaponRank.NONE ? provider.rankWithValue(characterClass.getBowRank()) : provider.rankWithValue(character.getBowRank());
-				animaRank = provider.rankWithValue(character.getAnimaRank()) == WeaponRank.NONE ? provider.rankWithValue(characterClass.getAnimaRank()) : provider.rankWithValue(character.getAnimaRank());
-				lightRank = provider.rankWithValue(character.getLightRank()) == WeaponRank.NONE ? provider.rankWithValue(characterClass.getLightRank()) : provider.rankWithValue(character.getLightRank());
-				darkRank = provider.rankWithValue(character.getDarkRank()) == WeaponRank.NONE ? provider.rankWithValue(characterClass.getDarkRank()) : provider.rankWithValue(character.getDarkRank());
-				staffRank = provider.rankWithValue(character.getStaffRank()) == WeaponRank.NONE ? provider.rankWithValue(characterClass.getStaffRank()) : provider.rankWithValue(character.getStaffRank());
-			}
-		}
-		
-		public WeaponRanks(GBAFEClassData characterClass, GBAFEItemProvider provider) {
-			swordRank = provider.rankWithValue(characterClass.getSwordRank());
-			lanceRank = provider.rankWithValue(characterClass.getLanceRank());
-			axeRank = provider.rankWithValue(characterClass.getAxeRank());
-			bowRank = provider.rankWithValue(characterClass.getBowRank());
-			animaRank = provider.rankWithValue(characterClass.getAnimaRank());
-			lightRank = provider.rankWithValue(characterClass.getLightRank());
-			darkRank = provider.rankWithValue(characterClass.getDarkRank());
-			staffRank = provider.rankWithValue(characterClass.getStaffRank());
-		}
-		
-		public List<WeaponType> getTypes() {
-			List<WeaponType> types = new ArrayList<WeaponType>();
-			if (swordRank != WeaponRank.NONE) { types.add(WeaponType.SWORD); }
-			if (lanceRank != WeaponRank.NONE) { types.add(WeaponType.LANCE); }
-			if (axeRank != WeaponRank.NONE) { types.add(WeaponType.AXE); }
-			if (bowRank != WeaponRank.NONE) { types.add(WeaponType.BOW); }
-			if (lightRank != WeaponRank.NONE) { types.add(WeaponType.LIGHT); }
-			if (darkRank != WeaponRank.NONE) { types.add(WeaponType.DARK); }
-			if (animaRank != WeaponRank.NONE) { types.add(WeaponType.ANIMA); }
-			if (staffRank != WeaponRank.NONE) { types.add(WeaponType.STAFF); }
-			return types;
-		}
-		
-		public WeaponRank rankForType(WeaponType type) {
-			switch (type) {
-			case SWORD: return swordRank;
-			case LANCE: return lanceRank;
-			case AXE: return axeRank;
-			case BOW: return bowRank;
-			case ANIMA: return animaRank;
-			case LIGHT: return lightRank;
-			case DARK: return darkRank;
-			case STAFF: return staffRank;
-			default:
-				return WeaponRank.NONE;
-			}
-		}
-	}
-	
 	public long itemTablePointer();
 	public int numberOfItems();
 	public int bytesPerItem();
@@ -104,10 +32,11 @@ public interface GBAFEItemProvider {
 	public Set<GBAFEItem> weaponsWithEffectiveness();
 	public Set<GBAFEItem> weaponsOfTypeUpToRank(WeaponType type, WeaponRank rank, Boolean rangedOnly, Boolean requiresMelee);
 	public Set<GBAFEItem> weaponsOfTypeAndEqualRank(WeaponType type, WeaponRank rank, Boolean rangedOnly, Boolean requiresMelee, Boolean allowLower);
+	public Set<GBAFEItem> weaponsOfRank(WeaponRank rank);
 	public Set<GBAFEItem> healingStaves(WeaponRank maxRank);
 	public Set<GBAFEItem> prfWeaponsForClassID(int classID);
 	public Set<GBAFEItem> allPotentialChestRewards();
-	public Set<GBAFEItem> relatedItemsToItem(GBAFEItemData item);
+	public Set<GBAFEItem> relatedItemsToItem(GBAFEItemData item, boolean excludeBasic);
 	public Set<GBAFEItem> weaponsLockedToClass(int classID);
 	public Set<GBAFEItem> weaponsForClass(int classID);
 	public Set<GBAFEItem> basicWeaponsForClass(int classID);
@@ -118,6 +47,8 @@ public interface GBAFEItemProvider {
 	public Set<GBAFEItem> itemKitForSpecialClass(int classID, Random rng);
 	public Set<GBAFEItem> playerOnlyWeapons();
 	
+	public GBAFEItem legendaryWeaponOfType(WeaponType type, boolean isLord);
+	
 	public Set<GBAFEItem> promoWeapons();
 	public Set<GBAFEItem> poisonWeapons();
 	
@@ -125,12 +56,33 @@ public interface GBAFEItemProvider {
 	public Set<GBAFEItem> uncommonDrops();
 	public Set<GBAFEItem> rareDrops();
 	
+	public Set<GBAFEItem> disallowedWeaponsInShops();
+	
+	public List<String> itemAbility1Flags();
+	public List<String> itemAbility2Flags();
+	public List<String> itemAbility3Flags();
+	
+	public List<String> weaponEffectFlags();
+	
+	// Not sure if I want to define shop randomization pools explicitly or via rules using defined sets of items.
+	// For now, I've settled on defining early/mid/late using weapon ranks instead of being more specific. If it turns out
+	// we need more control, then we can re-introduce these.
+	
+//	public Set<GBAFEItem> earlyShops();
+//	public Set<GBAFEItem> midShops();
+//	public Set<GBAFEItem> lateShops();
+//	
+//	public Set<GBAFEItem> armoryItems();
+	public Set<GBAFEItem> vendorItems(boolean rare); // Rare items are less likely for early game.
+	public Set<GBAFEItem> secretItems(); // More interesting weapons and promotional items.
+	public Set<GBAFEItem> rareSecretItems(); // Should include things like statboosters or things that would be a bit much for normal secret shops.
+	
 	public String statBoostStringForWeapon(GBAFEItem weapon);
 	public String effectivenessStringForWeapon(GBAFEItem weapon, Boolean shortString);
 	
 	public AdditionalData effectivenessPointerType(long effectivenessPtr);
 	
-	public GBAFEItemData itemDataWithData(byte[] data, long offset, int itemID); // itemID is required for FE8
+	public GBAFEItemData itemDataWithData(byte[] data, long offset);
 	
 	public List<GBAFEClass> knightCavEffectivenessClasses();
 	public List<GBAFEClass> knightEffectivenessClasses();

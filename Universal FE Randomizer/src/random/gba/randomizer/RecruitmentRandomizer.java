@@ -218,7 +218,14 @@ public class RecruitmentRandomizer {
 		
 		// Process every mapped character.
 		// The fill should always be reference data, so it will not have changed from earlier substitutions.
-		for (GBAFECharacterData slot : characterMap.keySet()) {
+		List<GBAFECharacterData> orderedKeys = new ArrayList<GBAFECharacterData>(characterMap.keySet());
+		orderedKeys.sort(new Comparator<GBAFECharacterData>() {
+			@Override
+			public int compare(GBAFECharacterData o1, GBAFECharacterData o2) {
+				return o1.getID() < o2.getID() ? -1 : (o1.getID() > o2.getID() ? 1 : 0);
+			}
+		});
+		for (GBAFECharacterData slot : orderedKeys) {
 			GBAFECharacterData fill = characterMap.get(slot);
 			if (fill != null) {
 				// Track the text changes before we change anything.
@@ -445,7 +452,7 @@ public class RecruitmentRandomizer {
 			int levelsToAdd = adjustmentDAO.levelAdjustment;
 			promoBonuses =  adjustmentDAO.promoBonuses;
 			
-			setSlotClass(inventoryOptions, linkedSlot, targetClass, characterData, classData, itemData, textData, chapterData, rng);
+			setSlotClass(inventoryOptions, linkedSlot, targetClass, characterData, classData, itemData, textData, chapterData, type, rng);
 			
 			GBAFEStatDto targetGrowths;
 			switch(options.growthMode) {
@@ -510,129 +517,11 @@ public class RecruitmentRandomizer {
 		}
 	}
 	
-	private static void transferWeaponRanks(GBAFECharacterData target, GBAFEClassData sourceClass, GBAFEClassData targetClass, ItemDataLoader itemData, Random rng) {
-		
-		Map<WeaponType, Integer> rankMap = new HashMap<WeaponType, Integer>();
-		
-		rankMap.put(WeaponType.SWORD, sourceClass.getSwordRank());
-		rankMap.put(WeaponType.LANCE, sourceClass.getLanceRank());
-		rankMap.put(WeaponType.AXE, sourceClass.getAxeRank());
-		rankMap.put(WeaponType.BOW, sourceClass.getBowRank());
-		rankMap.put(WeaponType.ANIMA, sourceClass.getAnimaRank());
-		rankMap.put(WeaponType.LIGHT, sourceClass.getLightRank());
-		rankMap.put(WeaponType.DARK, sourceClass.getDarkRank());
-		rankMap.put(WeaponType.STAFF, sourceClass.getStaffRank());
-		
-		rankMap.put(WeaponType.SWORD, target.getSwordRank());
-		rankMap.put(WeaponType.LANCE, target.getLanceRank());
-		rankMap.put(WeaponType.AXE, target.getAxeRank());
-		rankMap.put(WeaponType.BOW, target.getBowRank());
-		rankMap.put(WeaponType.ANIMA, target.getAnimaRank());
-		rankMap.put(WeaponType.LIGHT, target.getLightRank());
-		rankMap.put(WeaponType.DARK, target.getDarkRank());
-		rankMap.put(WeaponType.STAFF, target.getStaffRank());
-		
-		List<Integer> rankValues = new ArrayList<Integer>(rankMap.values().stream().filter(rankValue -> (rankValue != 0)).sorted(new Comparator<Integer>() {
-			@Override
-			public int compare(Integer o1, Integer o2) {
-				return Integer.compare(o1, o2);
-			}
-		}).collect(Collectors.toList()));
-		
-		if (rankValues.isEmpty()) {
-			target.setSwordRank(targetClass.getSwordRank());
-			target.setLanceRank(targetClass.getLanceRank());
-			target.setAxeRank(targetClass.getAxeRank());
-			target.setBowRank(targetClass.getBowRank());
-			target.setAnimaRank(targetClass.getAnimaRank());
-			target.setLightRank(targetClass.getLightRank());
-			target.setDarkRank(targetClass.getDarkRank());
-			target.setStaffRank(targetClass.getStaffRank());
-		
-			return;
-		}
-		
-		int targetWeaponUsage = 0;
-		if (targetClass.getSwordRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getLanceRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getAxeRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getBowRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getLightRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getDarkRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getAnimaRank() > 0) { targetWeaponUsage++; }
-		if (targetClass.getStaffRank() > 0) { targetWeaponUsage++; }
-		
-		while (rankValues.size() > targetWeaponUsage) {
-			rankValues.remove(0); // Remove the lowest rank if we're filling less weapons than we have to work with.
-		}
-		
-		if (targetClass.getSwordRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setSwordRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setSwordRank(0); }
-		if (targetClass.getLanceRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setLanceRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setLanceRank(0); }
-		if (targetClass.getAxeRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setAxeRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setAxeRank(0); }
-		if (targetClass.getBowRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setBowRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setBowRank(0); }
-		if (targetClass.getAnimaRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setAnimaRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setAnimaRank(0); }
-		if (targetClass.getLightRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setLightRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setLightRank(0); }
-		if (targetClass.getDarkRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			if (itemData.weaponRankFromValue(randomRankValue) == WeaponRank.E) {
-				// Dark magic floors on D. There's no E rank dark magic.
-				randomRankValue = itemData.weaponRankValueForRank(WeaponRank.D);
-			}
-			target.setDarkRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setDarkRank(0); }
-		if (targetClass.getStaffRank() > 0) {
-			int randomRankValue = rankValues.get(rng.nextInt(rankValues.size()));
-			target.setStaffRank(randomRankValue);
-			if (rankValues.size() > 1) {
-				rankValues.remove((Integer)randomRankValue);
-			}
-		} else { target.setStaffRank(0); }
-	}
-	
-	private static void setSlotClass(ItemAssignmentOptions inventoryOptions, GBAFECharacterData slot, GBAFEClassData targetClass, CharacterDataLoader characterData, ClassDataLoader classData, ItemDataLoader itemData, TextLoader textData, ChapterLoader chapterData, Random rng) {
+	private static void setSlotClass(ItemAssignmentOptions inventoryOptions, GBAFECharacterData slot, GBAFEClassData targetClass, CharacterDataLoader characterData, ClassDataLoader classData, ItemDataLoader itemData, TextLoader textData, ChapterLoader chapterData, GameType type, Random rng) {
 		int oldClassID = slot.getClassID();
 		GBAFEClassData originalClass = classData.classForID(oldClassID);
 		slot.setClassID(targetClass.getID());
-		transferWeaponRanks(slot, originalClass, targetClass, itemData, rng);
+		GBASlotAdjustmentService.transferWeaponRanks(slot, originalClass, targetClass, type, rng);
 		ItemAssignmentService.assignNewItems(characterData, slot, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
 	}
 }

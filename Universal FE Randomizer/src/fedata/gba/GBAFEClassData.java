@@ -2,10 +2,13 @@ package fedata.gba;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 import fedata.gba.fe7.FE7Data;
 import fedata.gba.general.WeaponRank;
+import fedata.gba.general.WeaponRanks;
 import fedata.gba.general.WeaponType;
+import fedata.general.FEBase.GameType;
 import fedata.general.FEPrintableData;
 import util.WhyDoesJavaNotHaveThese;
 
@@ -56,6 +59,10 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 
 	public int getTargetPromotionID() {
 		return data[5] & 0xFF;
+	}
+	
+	public int getWalkingSpeed() {
+		return data[7] & 0xFF;
 	}
 
 	public void setTargetPromotionID(int promotionTargetClassID) {
@@ -135,6 +142,16 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	
 	public GBAFEStatDto getGrowths() {
 		return new GBAFEStatDto(getHPGrowth(), getSTRGrowth(), getSKLGrowth(), getSPDGrowth(), getDEFGrowth(), getRESGrowth(), getLCKGrowth());
+	}
+	
+	// Defense growths are generally lower than offense growths, so this helps to adjust that slightly.
+	public List<GBAFEStatDto.Stat> getGrowthStatOrder(boolean adjustDefenses) {
+		GBAFEStatDto growths = getGrowths();
+		if (adjustDefenses) {
+			growths.def += 5;
+			growths.res += 5;
+		}
+		return growths.orderedStats();
 	}
 	
 	public int getBaseHP() {
@@ -286,6 +303,11 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	public int getPromoRES() {
 		return data[39] & 0xFF;
 	}
+	
+	public int getPromoCON() {
+		// This is still the delta between new and old, even in the newer games.
+		return 0;
+	}
 
 	public int getSwordRank() {
 		return data[44] & 0xFF;
@@ -379,6 +401,10 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 		wasModified = true;
 	}
 
+	public WeaponRanks getWeaponRanks(boolean roundToNearest, GameType type) {
+		return new WeaponRanks(this, roundToNearest, type);
+	}
+
 	public int getBaseRankValue() {
 		int rankValue = 255;
 		
@@ -423,6 +449,74 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 	public int getCON() {
 		return data[17] & 0xFF;
 	}
+	
+	public int getClassPower() {
+		return data[26] & 0xFF;
+	}
+	
+	public int getAbility1() {
+		return data[40] & 0xFF;
+	}
+	
+	public int getAbility2() {
+		return data[41] & 0xFF;
+	}
+	
+	public int getAbility3() {
+		return data[42] & 0xFF;
+	}
+	
+	public int getAbility4() {
+		return data[43] & 0xFF;
+	}
+	
+	public long getBattleAnimationPointer() {
+		byte[] pointer = WhyDoesJavaNotHaveThese.subArray(data, 52, 4);
+		long offset = WhyDoesJavaNotHaveThese.longValueFromByteArray(pointer, true);
+		return offset;
+	}
+	
+	public long getMovementTypePointer() {
+		byte[] pointer = WhyDoesJavaNotHaveThese.subArray(data, 56, 4);
+		long offset = WhyDoesJavaNotHaveThese.longValueFromByteArray(pointer, true);
+		return offset;
+	}
+	
+	public Long getRainMovementPointer() {
+		byte[] pointer = WhyDoesJavaNotHaveThese.subArray(data, 60, 4);
+		long offset = WhyDoesJavaNotHaveThese.longValueFromByteArray(pointer, true);
+		return offset;
+	}
+	
+	public Long getSnowMovementPointer() {
+		byte[] pointer = WhyDoesJavaNotHaveThese.subArray(data, 64, 4);
+		long offset = WhyDoesJavaNotHaveThese.longValueFromByteArray(pointer, true);
+		return offset;
+	}
+	
+	public long getTerrainAvoidBonusPointer() {
+		byte[] pointer = WhyDoesJavaNotHaveThese.subArray(data, 68, 4);
+		long offset = WhyDoesJavaNotHaveThese.longValueFromByteArray(pointer, true);
+		return offset;
+	}
+	
+	public long getTerrainDefenseBonusPointer() {
+		byte[] pointer = WhyDoesJavaNotHaveThese.subArray(data, 72, 4);
+		long offset = WhyDoesJavaNotHaveThese.longValueFromByteArray(pointer, true);
+		return offset;
+	}
+	
+	public long getTerrainResistanceBonusPointer() {
+		byte[] pointer = WhyDoesJavaNotHaveThese.subArray(data, 76, 4);
+		long offset = WhyDoesJavaNotHaveThese.longValueFromByteArray(pointer, true);
+		return offset;
+	}
+	
+	public long getTerrainUnknownBonusPointer() {
+		byte[] pointer = WhyDoesJavaNotHaveThese.subArray(data, 80, 4);
+		long offset = WhyDoesJavaNotHaveThese.longValueFromByteArray(pointer, true);
+		return offset;
+	}
 
 	public Boolean canUseWeapon(GBAFEItemData weapon) {
 		if (weapon == null) { return false; }
@@ -455,4 +549,7 @@ public abstract class GBAFEClassData extends AbstractGBAData implements FEPrinta
 		data[43] &= 0x0F;
 		wasModified = true;
 	}
+	
+	public abstract boolean hasAbility(String abilityString);
+	public abstract boolean isPromotedClass();
 }

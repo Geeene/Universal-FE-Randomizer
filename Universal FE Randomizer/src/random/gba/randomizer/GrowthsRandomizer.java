@@ -1,14 +1,91 @@
 package random.gba.randomizer;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import fedata.gba.GBAFECharacterData;
+import fedata.gba.GBAFEClassData;
+import fedata.gba.GBAFEStatDto;
+import fedata.gba.GBAFEStatDto.Stat;
 import random.gba.loader.CharacterDataLoader;
+import random.gba.loader.ClassDataLoader;
+import random.general.NormalDistributor;
+import random.general.NormalDistributor.Bucket;
 import util.WhyDoesJavaNotHaveThese;
 
 public class GrowthsRandomizer {
 	
 	static final int rngSalt = 124;
+	
+	// This method attempts to generate growths that are more in line with
+	// what growths usually look like as opposed to leaving it all up to
+	// random chance. There is still some random chance, but each stat
+	// area has a pre-defined range of what is considered a "good growth"
+	// vs a "bad growth". The random-ness comes in which stats are given
+	// a good growth and which stats are given a bad growth.
+	public static void smartRandomizeGrowths(CharacterDataLoader charactersData, ClassDataLoader classData, Random rng) {
+		GBAFECharacterData[] allPlayableCharacters = charactersData.playableCharacters();
+		
+		charactersData.commit();
+		
+		NormalDistributor unpromotedHpDistributor = new NormalDistributor(45, 100, 5);
+		NormalDistributor unpromotedPowDistributor = new NormalDistributor(15, 70, 5);
+		NormalDistributor unpromotedSklDistributor = new NormalDistributor(15, 70, 5);
+		NormalDistributor unpromotedSpdDistributor = new NormalDistributor(15, 70, 5);
+		NormalDistributor unpromotedLckDistributor = new NormalDistributor(15, 70, 5);
+		NormalDistributor unpromotedDefDistributor = new NormalDistributor(15, 45, 5);
+		NormalDistributor unpromotedResDistributor = new NormalDistributor(15, 45, 5);
+		
+		// Promoted units generally get less growths, so adjust that at the distributor level.
+		NormalDistributor promotedHpDistributor = new NormalDistributor(35, 80, 5);
+		NormalDistributor promotedPowDistributor = new NormalDistributor(10, 50, 5);
+		NormalDistributor promotedSklDistributor = new NormalDistributor(10, 50, 5);
+		NormalDistributor promotedSpdDistributor = new NormalDistributor(10, 50, 5);
+		NormalDistributor promotedLckDistributor = new NormalDistributor(10, 50, 5);
+		NormalDistributor promotedDefDistributor = new NormalDistributor(5, 30, 5);
+		NormalDistributor promotedResDistributor = new NormalDistributor(5, 30, 5);
+		
+		for (GBAFECharacterData character : allPlayableCharacters) {
+			if (character.wasModified()) {
+				continue;
+			}
+			
+			// Determine the character's class strengths based on the class growths.
+			// They're low, but they should be relatively consistent to how the
+			// class behaves.
+			GBAFEClassData charClass = classData.classForID(character.getClassID());
+
+			boolean isPromoted = classData.isPromotedClass(charClass.getID());
+			NormalDistributor hpDistributor = isPromoted ? promotedHpDistributor : unpromotedHpDistributor;
+			NormalDistributor powDistributor = isPromoted ? promotedPowDistributor : unpromotedPowDistributor;
+			NormalDistributor sklDistributor = isPromoted ? promotedSklDistributor : unpromotedSklDistributor;
+			NormalDistributor spdDistributor = isPromoted ? promotedSpdDistributor : unpromotedSpdDistributor;
+			NormalDistributor lckDistributor = isPromoted ? promotedLckDistributor : unpromotedLckDistributor;
+			NormalDistributor defDistributor = isPromoted ? promotedDefDistributor : unpromotedDefDistributor;
+			NormalDistributor resDistributor = isPromoted ? promotedResDistributor : unpromotedResDistributor;
+			
+			List<GBAFEStatDto.Stat> statOrder = charClass.getGrowthStatOrder(true);
+			// The highest two stats for the class are guaranteed to be at least average. (index 0 or 1)
+			// The lowest two stats for the class cannot be excellent or good. (index 5 or 6)
+			statOrder.remove(Stat.HP); // HP excluded
+			
+			int newHPGrowth = hpDistributor.getRandomValue(rng, NormalDistributor.allBuckets);
+			int newSTRGrowth = powDistributor.getRandomValue(rng, statOrder.indexOf(Stat.POW) < 2 ? NormalDistributor.topBuckets : (statOrder.indexOf(Stat.POW) >= 5 ? NormalDistributor.bottomBuckets : NormalDistributor.allBuckets));
+			int newSKLGrowth = sklDistributor.getRandomValue(rng, statOrder.indexOf(Stat.SKL) < 2 ? NormalDistributor.topBuckets : (statOrder.indexOf(Stat.SKL) >= 5 ? NormalDistributor.bottomBuckets : NormalDistributor.allBuckets));
+			int newSPDGrowth = spdDistributor.getRandomValue(rng, statOrder.indexOf(Stat.SPD) < 2 ? NormalDistributor.topBuckets : (statOrder.indexOf(Stat.SPD) >= 5 ? NormalDistributor.bottomBuckets : NormalDistributor.allBuckets));
+			int newLCKGrowth = lckDistributor.getRandomValue(rng, statOrder.indexOf(Stat.LCK) < 2 ? NormalDistributor.topBuckets : (statOrder.indexOf(Stat.LCK) >= 5 ? NormalDistributor.bottomBuckets : NormalDistributor.allBuckets));
+			int newDEFGrowth = defDistributor.getRandomValue(rng, statOrder.indexOf(Stat.DEF) < 2 ? NormalDistributor.topBuckets : (statOrder.indexOf(Stat.DEF) >= 5 ? NormalDistributor.bottomBuckets : NormalDistributor.allBuckets));
+			int newRESGrowth = resDistributor.getRandomValue(rng, statOrder.indexOf(Stat.RES) < 2 ? NormalDistributor.topBuckets : (statOrder.indexOf(Stat.RES) >= 5 ? NormalDistributor.bottomBuckets : NormalDistributor.allBuckets));
+			
+			GBAFEStatDto newGrowths = new GBAFEStatDto(newHPGrowth, newSTRGrowth, newSKLGrowth, newSPDGrowth, newDEFGrowth, newRESGrowth, newLCKGrowth);
+			character.setGrowths(newGrowths);
+			
+			for (GBAFECharacterData thisCharacter : charactersData.linkedCharactersForCharacter(character)) {
+				thisCharacter.setGrowths(newGrowths);
+			}
+		}
+	}
 	
 	public static void randomizeGrowthsByRedistribution(int variance, int min, int max, boolean adjustHP, CharacterDataLoader charactersData, Random rng) {
 		GBAFECharacterData[] allPlayableCharacters = charactersData.playableCharacters();

@@ -1,27 +1,35 @@
 package random.gba.loader;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFESpellAnimationCollection;
+import fedata.gba.fe6.FE6Data;
+import fedata.gba.fe6.FE6Data.Item;
+import fedata.gba.fe7.FE7Data;
+import fedata.gba.fe8.FE8Data;
 import fedata.gba.general.GBAFEClass;
 import fedata.gba.general.GBAFEItem;
 import fedata.gba.general.GBAFEItemProvider;
-import fedata.gba.general.GBAFEItemProvider.WeaponRanks;
+import fedata.gba.general.WeaponRanks;
 import fedata.gba.general.GBAFEPromotionItem;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
+import fedata.general.FEBase.GameType;
 import io.FileHandler;
 import util.AddressRange;
 import util.ByteArrayBuilder;
@@ -64,6 +72,36 @@ public class ItemDataLoader {
 	private Map<Integer, List<GBAFEPromotionItem>> promotionItemsForClassIDs;
 	
 	public static final String RecordKeeperCategoryWeaponKey = "Weapons";
+	public static final String RecordKeeperCategoryItemKey = "Items";
+	
+	public static ItemDataLoader createReadDataLoader(GBAFEItemProvider provider, FileHandler handler) {
+		return new ItemDataLoader(provider, handler);
+	}
+	
+	private ItemDataLoader(GBAFEItemProvider provider, FileHandler handler) {
+		this.provider = provider;
+		
+		long baseAddress = FileReadHelper.readAddress(handler, provider.itemTablePointer());
+		originalTableOffset = baseAddress;
+		long currentAddress = baseAddress;
+		int itemID = -1;
+		do {
+			byte[] itemData = handler.readBytesAtOffset(currentAddress, provider.bytesPerItem());
+			GBAFEItemData item = provider.itemDataWithData(itemData, currentAddress);
+			itemID = item.getID();
+			if (itemID != 0 && itemID != 0xFF) {
+				if (itemMap.containsKey(itemID)) {
+					System.err.println("ItemID already exists! ItemID = 0x" + Integer.toHexString(itemID) + ". Skipping...");
+				} else {
+					itemMap.put(itemID, item);
+				}
+			} else if (itemMap.isEmpty()) {
+				// The first item is usually ID 0, which we don't want to include, but we want this loop to continue.
+				itemID = -1;
+			}
+			currentAddress += provider.bytesPerItem();
+		} while (itemID != 0 && itemID != 0xFF);
+	}
 	
 	public ItemDataLoader(GBAFEItemProvider provider, FileHandler handler, FreeSpaceManager freeSpace) {
 		super();
@@ -78,7 +116,7 @@ public class ItemDataLoader {
 			
 			long offset = baseAddress + (provider.bytesPerItem() * item.getID());
 			byte[] itemData = handler.readBytesAtOffset(offset, provider.bytesPerItem());
-			itemMap.put(item.getID(), provider.itemDataWithData(itemData, offset, item.getID()));
+			itemMap.put(item.getID(), provider.itemDataWithData(itemData, offset));
 		}
 		
 		long spellAnimationBaseAddress = FileReadHelper.readAddress(handler, provider.spellAnimationTablePointer());
@@ -166,7 +204,7 @@ public class ItemDataLoader {
 		}
 	}
 	
-	public void prepareForRandomization() {
+	public void prepareForRandomization(GameType type, DiffCompiler diffCompiler) {
 		// Translate existing effectiveness pointers to our new ones.
 		for (GBAFEItemData itemData : itemMap.values()) {
 			long ptr = itemData.getEffectivenessPointer();
@@ -178,6 +216,30 @@ public class ItemDataLoader {
 				newPtr += 0x8000000L;
 				itemData.setEffectivenessPointer(newPtr);
 			}
+		}
+		
+		// Delphi/Fili Shield uses a hard coded pointer check. Since we create
+		// a new effectiveness pointer for fliers, we need to overwrite that check
+		// too.
+		int delphiPointer = 0;
+		long oldAddress = 0;
+		long flierEffectivenessAddress = offsetsForAdditionalData.get(AdditionalData.FLIERS_EFFECT);
+		if (type == GameType.FE6) {
+			oldAddress = FE6Data.FlierEffectivenessPointer;
+			delphiPointer = FE6Data.DelphiShieldEffectivenessCheckPointer;
+		} else if (type == GameType.FE7) {
+			oldAddress = FE7Data.FlierEffectivenessPointer;
+			delphiPointer = FE7Data.DelphiShieldEffectivenessCheckPointer;
+		} else if (type == GameType.FE8) {
+			oldAddress = FE8Data.FlierEffectivenessPointer;
+			delphiPointer = FE8Data.FiliShieldEffectivenessCheckPointer;
+		}
+		
+		if (delphiPointer != 0) {
+			diffCompiler.addDiff(new Diff(delphiPointer, 
+					4, 
+					WhyDoesJavaNotHaveThese.byteArrayFromLongValue(flierEffectivenessAddress + 0x8000000L, true, 4), 
+					WhyDoesJavaNotHaveThese.byteArrayFromLongValue(oldAddress, true, 4)));
 		}
 	}
 	
@@ -348,15 +410,147 @@ public class ItemDataLoader {
 	}
 	
 	public WeaponRanks ranksForCharacter(GBAFECharacterData character, GBAFEClassData charClass) {
-		return new WeaponRanks(character, charClass, provider);
+		return new WeaponRanks(character, charClass);
 	}
 	
-	public WeaponRanks ranksForClass(GBAFEClassData charClass) {
-		return new WeaponRanks(charClass, provider);
+	public WeaponRanks ranksForClass(GBAFEClassData charClass, GameType type) {
+		return new WeaponRanks(charClass, true, type);
 	}
 	
 	public GBAFEItemData[] getAllWeapons() {
 		return feItemsFromItemSet(provider.allWeapons());
+	}
+	
+	public GBAFEItemData[] getAllItems() {
+		return feItemsFromItemSet(new HashSet<GBAFEItem>(Arrays.asList(provider.allItems())));
+	}
+	
+	public List<GBAFEItemData> getItemList() {
+		return itemMap.values().stream().sorted(new Comparator<GBAFEItemData>() {
+			@Override
+			public int compare(GBAFEItemData o1, GBAFEItemData o2) {
+				return o1.getID() - o2.getID();
+			}
+		}).collect(Collectors.toList());
+	}
+	
+	public List<GBAFEItemData> earlyGameArmory() {
+		List<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.SWORD, WeaponRank.E, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LANCE, WeaponRank.E, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.AXE, WeaponRank.E, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.BOW, WeaponRank.E, false, false, false))));
+		return items;
+	}
+	
+	public List<GBAFEItemData> midGameArmory() {
+		List<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.SWORD, WeaponRank.D, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LANCE, WeaponRank.D, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.AXE, WeaponRank.D, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.BOW, WeaponRank.D, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.SWORD, WeaponRank.C, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LANCE, WeaponRank.C, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.AXE, WeaponRank.C, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.BOW, WeaponRank.C, false, false, false))));
+		return items;
+	}
+	
+	public List<GBAFEItemData> lateGameArmory() {
+		List<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.SWORD, WeaponRank.B, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LANCE, WeaponRank.B, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.AXE, WeaponRank.B, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.BOW, WeaponRank.B, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.SWORD, WeaponRank.A, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LANCE, WeaponRank.A, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.AXE, WeaponRank.A, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.BOW, WeaponRank.A, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.SWORD, WeaponRank.S, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LANCE, WeaponRank.S, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.AXE, WeaponRank.S, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.BOW, WeaponRank.S, false, false, false))));
+		items.removeAll(Arrays.asList(feItemsFromItemSet(provider.disallowedWeaponsInShops())));
+		return items;
+	}
+	
+	public List<GBAFEItemData> earlyGameVendor() {
+		List<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.ANIMA, WeaponRank.E, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LIGHT, WeaponRank.E, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.DARK, WeaponRank.D, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.STAFF, WeaponRank.E, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.vendorItems(false))));
+		return items;
+	}
+	
+	public List<GBAFEItemData> midGameVendor() {
+		List<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.ANIMA, WeaponRank.D, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LIGHT, WeaponRank.D, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.DARK, WeaponRank.D, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.STAFF, WeaponRank.D, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.ANIMA, WeaponRank.C, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LIGHT, WeaponRank.C, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.DARK, WeaponRank.C, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.STAFF, WeaponRank.C, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.vendorItems(true))));
+		return items;
+	}
+	
+	public List<GBAFEItemData> lateGameVendor() {
+		List<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.ANIMA, WeaponRank.B, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LIGHT, WeaponRank.B, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.DARK, WeaponRank.B, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.STAFF, WeaponRank.B, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.ANIMA, WeaponRank.A, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LIGHT, WeaponRank.A, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.DARK, WeaponRank.A, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.STAFF, WeaponRank.A, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.ANIMA, WeaponRank.S, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.LIGHT, WeaponRank.S, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.DARK, WeaponRank.S, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.weaponsOfTypeAndEqualRank(WeaponType.STAFF, WeaponRank.S, false, false, false))));
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.vendorItems(true))));
+		items.removeAll(Arrays.asList(feItemsFromItemSet(provider.disallowedWeaponsInShops())));
+		return items;
+	}
+	
+	public List<GBAFEItemData> secretItems() {
+		List<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.secretItems())));
+		return items;
+	}
+	
+	public List<GBAFEItemData> rareSecretItems() {
+		List<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
+		items.addAll(Arrays.asList(feItemsFromItemSet(provider.rareSecretItems())));
+		return items;
+	}
+	
+	public List<String> ability1Flags() {
+		return provider.itemAbility1Flags();
+	}
+	
+	public List<String> ability2Flags() {
+		return provider.itemAbility2Flags();
+	}
+	
+	public List<String> ability3Flags() {
+		return provider.itemAbility3Flags();
+	}
+	
+	public List<String> effectFlags() {
+		return provider.weaponEffectFlags();
+	}
+	
+	public boolean itemHasFlagByDisplayString(String displayString, GBAFEItemData item) {
+		return item.hasAbilityOrEffect(displayString);
+	}
+	
+	public boolean isMagic(GBAFEItemData item) {
+		return item.getType() == WeaponType.ANIMA || item.getType() == WeaponType.DARK || item.getType() == WeaponType.LIGHT;
 	}
 	
 	public long[] possibleStatBoostAddresses() {
@@ -509,8 +703,8 @@ public class ItemDataLoader {
 		return feItemsFromItemSet(provider.rareDrops());
 	}
 	
-	public GBAFEItemData[] relatedItems(int itemID) {
-		return feItemsFromItemSet(provider.relatedItemsToItem(itemMap.get(itemID)));
+	public GBAFEItemData[] relatedItems(int itemID, boolean excludeBasic) {
+		return feItemsFromItemSet(provider.relatedItemsToItem(itemMap.get(itemID), excludeBasic));
 	}
 	
 	public GBAFEItemData[] lockedWeaponsToClass(int classID) {
@@ -538,26 +732,36 @@ public class ItemDataLoader {
 	}
 	
 	public GBAFEItemData getRandomHealingStaff(WeaponRank maxRank, Random rng) {
-		Set<GBAFEItem> healingStaves = provider.healingStaves(maxRank);
-		GBAFEItem[] staves = healingStaves.toArray(new GBAFEItem[healingStaves.size()]);
-		return itemMap.get(staves[rng.nextInt(staves.length)].getID());
+		List<GBAFEItem> healingStaves = new ArrayList<GBAFEItem>(provider.healingStaves(maxRank));
+		healingStaves.sort(new Comparator<GBAFEItem>() {
+			@Override
+			public int compare(GBAFEItem o1, GBAFEItem o2) {
+				return o1.getID() - o2.getID();
+			}
+		});
+		return itemMap.get(healingStaves.get(rng.nextInt(healingStaves.size())).getID());
 	}
 	
 	public GBAFEItemData getBasicWeaponForCharacter(GBAFECharacterData character, Boolean ranged, Boolean mustAttack, Random rng) {
 		int classID = character.getClassID();
-		Set<GBAFEItem> weapons = provider.basicWeaponsForClass(classID);
-		GBAFEItem[] weaponArray = weapons.toArray(new GBAFEItem[weapons.size()]);
-		if (weapons.size() == 1) { return itemMap.get(weaponArray[0].getID()); }
+		List<GBAFEItem> weapons = new ArrayList<GBAFEItem>(provider.basicWeaponsForClass(classID));
+		weapons.sort(new Comparator<GBAFEItem>() {
+			@Override
+			public int compare(GBAFEItem o1, GBAFEItem o2) {
+				return o1.getID() - o2.getID();
+			}
+		});
+		if (weapons.size() == 1) { return itemMap.get(weapons.get(0).getID()); }
 		else if (weapons.isEmpty()) { return null; }
-		return itemMap.get(weaponArray[rng.nextInt(weapons.size())].getID());
+		return itemMap.get(weapons.get(rng.nextInt(weapons.size())).getID());
 	}
 	
-	public GBAFEItemData getSidegradeWeapon(GBAFEClassData targetClass, GBAFEItemData originalWeapon, boolean strict, boolean includePromo, boolean includePoison, Random rng) {
+	public GBAFEItemData getSidegradeWeapon(GBAFEClassData targetClass, GBAFEItemData originalWeapon, boolean strict, boolean includePromo, boolean includePoison, GameType type, Random rng) {
 		if (!isWeapon(originalWeapon) && originalWeapon.getType() != WeaponType.STAFF) {
 			return null;
 		}
 		
-		Set<GBAFEItem> potentialItems = provider.comparableWeaponsForClass(targetClass.getID(), new WeaponRanks(targetClass, provider), originalWeapon, strict);
+		Set<GBAFEItem> potentialItems = provider.comparableWeaponsForClass(targetClass.getID(), new WeaponRanks(targetClass, true, type), originalWeapon, strict);
 		if (!includePromo) {
 			potentialItems.removeAll(provider.promoWeapons());
 		}
@@ -585,12 +789,12 @@ public class ItemDataLoader {
 		return itemMap.get(itemList.get(rng.nextInt(itemList.size())).getID());
 	}
 	
-	public GBAFEItemData getSidegradeWeapon(GBAFECharacterData character, GBAFEClassData charClass, GBAFEItemData originalWeapon, boolean isEnemy, boolean strict, boolean includePromo, boolean includePoison, Random rng) {
+	public GBAFEItemData getSidegradeWeapon(GBAFECharacterData character, GBAFEClassData charClass, GBAFEItemData originalWeapon, boolean isEnemy, boolean strict, boolean includePromo, boolean includePoison, boolean mustBeWeapon, Random rng) {
 		if (!isWeapon(originalWeapon) && originalWeapon.getType() != WeaponType.STAFF) {
 			return null;
 		}
 		
-		Set<GBAFEItem> potentialItems = provider.comparableWeaponsForClass(character.getClassID(), new WeaponRanks(character, charClass, provider), originalWeapon, strict);
+		Set<GBAFEItem> potentialItems = provider.comparableWeaponsForClass(character.getClassID(), new WeaponRanks(character, charClass), originalWeapon, strict);
 		if (!includePromo) {
 			potentialItems.removeAll(provider.promoWeapons());
 		}
@@ -603,6 +807,10 @@ public class ItemDataLoader {
 			if (potentialItems.isEmpty()) {
 				return null;
 			}
+		}
+		
+		if (mustBeWeapon) {
+			potentialItems.removeAll(Item.allStaves);
 		}
 		
 		if (isEnemy) {
@@ -628,8 +836,8 @@ public class ItemDataLoader {
 		return item != null ? itemWithID(item.getID()) : null;
 	}
 	
-	public GBAFEItemData getRandomWeaponForCharacter(GBAFECharacterData character, Boolean ranged, Boolean melee, boolean isEnemy, boolean includePromo, boolean includePoison, Random rng) {
-		GBAFEItemData[] potentialItems = usableWeaponsForCharacter(character, ranged, melee, isEnemy, includePromo, includePoison);
+	public GBAFEItemData getRandomWeaponForCharacter(GBAFECharacterData character, Boolean ranged, Boolean melee, boolean isEnemy, boolean includePromo, boolean includePoison, boolean excludeBasic, boolean excludeStaves, Random rng) {
+		GBAFEItemData[] potentialItems = usableWeaponsForCharacter(character, ranged, melee, isEnemy, includePromo, includePoison, excludeBasic, excludeStaves);
 		if (potentialItems == null || potentialItems.length < 1) {
 			// Check class specific weapons (e.g. FE8 monsters)
 			Set<GBAFEItem> classWeaponSet = provider.weaponsForClass(character.getClassID());
@@ -647,7 +855,7 @@ public class ItemDataLoader {
 		return potentialItems[index];
 	}
 	
-	private GBAFEItemData[] usableWeaponsForCharacter(GBAFECharacterData character, Boolean ranged, Boolean melee, boolean isEnemy, boolean includePromo, boolean includePoison) {
+	private GBAFEItemData[] usableWeaponsForCharacter(GBAFECharacterData character, Boolean ranged, Boolean melee, boolean isEnemy, boolean includePromo, boolean includePoison, boolean excludeBasic, boolean excludeStaves) {
 		ArrayList<GBAFEItemData> items = new ArrayList<GBAFEItemData>();
 		
 		if (character.getSwordRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.SWORD, character.getSwordRank(), ranged, melee))); }
@@ -657,7 +865,9 @@ public class ItemDataLoader {
 		if (character.getAnimaRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.ANIMA, character.getAnimaRank(), ranged, melee))); }
 		if (character.getLightRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.LIGHT, character.getLightRank(), ranged, melee))); }
 		if (character.getDarkRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.DARK, character.getDarkRank(), ranged, melee))); }
-		if (character.getStaffRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.STAFF, character.getStaffRank(), ranged, melee))); }
+		if (excludeStaves == false) {
+			if (character.getStaffRank() > 0) { items.addAll(Arrays.asList(itemsOfTypeAndBelowRankValue(WeaponType.STAFF, character.getStaffRank(), ranged, melee))); }
+		}
 		
 		Set<GBAFEItem> prfs = provider.prfWeaponsForClassID(character.getClassID());
 		items.addAll(Arrays.asList(feItemsFromItemSet(prfs)));
@@ -672,6 +882,10 @@ public class ItemDataLoader {
 		
 		if (!includePoison) {
 			items.removeIf(item -> provider.poisonWeapons().contains(provider.itemWithID(item.getID())));
+		}
+		
+		if (excludeBasic) {
+			items.removeIf(item -> isBasicWeapon(item.getID()));
 		}
 		
 		return items.toArray(new GBAFEItemData[items.size()]);
@@ -691,6 +905,14 @@ public class ItemDataLoader {
 	
 	public GBAFEItemData[] specialInventoryForClass(int classID, Random rng) {
 		return feItemsFromItemSet(provider.itemKitForSpecialClass(classID, rng));
+	}
+	
+	public GBAFEItemData legendaryWeaponForClass(GBAFEClassData charClass, boolean isLord, GameType type) {
+		WeaponRanks ranks = charClass.getWeaponRanks(true, type);
+		WeaponType highestType = ranks.getHighestRank();
+		GBAFEItem legendaryWeapon = provider.legendaryWeaponOfType(highestType, isLord);
+		if (legendaryWeapon != null) { return itemWithID(legendaryWeapon.getID()); }
+		return null;
 	}
 	
 	public void commit() {
@@ -768,6 +990,17 @@ public class ItemDataLoader {
 		}
 	}
 	
+	public List<GBAFEItemData> itemsByStatboostAddress(long address){
+		List<GBAFEItemData> ret = new ArrayList<>();
+		
+		for (GBAFEItemData gbafeItemData : itemMap.values()) {
+			if (gbafeItemData.getStatBonusPointer() == address + 0x08000000) {
+				ret.add(gbafeItemData);
+			}
+		}
+		return ret;
+	}
+	
 	private GBAFEItemData[] feItemsFromItemSet(Set<GBAFEItem> itemSet) {
 		if (itemSet == null) { return new GBAFEItemData[] {}; }
 		
@@ -787,6 +1020,28 @@ public class ItemDataLoader {
 		}
 	}
 	
+	public void recordItems(RecordKeeper rk, Boolean isInitial, TextLoader textData, FileHandler handler) {
+		for (GBAFEItemData item : getAllItems()) {
+			if (item != null && item.getType() == WeaponType.NOT_A_WEAPON) {
+				recordItem(rk, item, isInitial, textData, handler);
+			}
+		}
+	}
+	
+	private void recordItem(RecordKeeper rk, GBAFEItemData item, Boolean isInitial, TextLoader textData, FileHandler handler) {
+		int nameIndex = item.getNameIndex();
+		String name = textData.getStringAtIndex(nameIndex, true).trim();
+		int descriptionIndex = item.getDescriptionIndex();
+		String description = textData.getStringAtIndex(descriptionIndex, true).trim();
+		if (isInitial) {
+			rk.recordOriginalEntry(RecordKeeperCategoryItemKey, name, "Description", description);
+			rk.recordOriginalEntry(RecordKeeperCategoryItemKey, name, "Cost per Use", String.format("%d",  item.getCostPerUse()));
+		} else {
+			rk.recordUpdatedEntry(RecordKeeperCategoryItemKey, name, "Description", description);
+			rk.recordUpdatedEntry(RecordKeeperCategoryItemKey, name, "Cost per Use", String.format("%d",  item.getCostPerUse()));
+		}
+	}
+	
 	private void recordWeapon(RecordKeeper rk, GBAFEItemData item, Boolean isInitial, ClassDataLoader classData, TextLoader textData, FileHandler handler) {
 		int nameIndex = item.getNameIndex();
 		String name = textData.getStringAtIndex(nameIndex, true).trim();
@@ -800,6 +1055,7 @@ public class ItemDataLoader {
 			rk.recordOriginalEntry(RecordKeeperCategoryWeaponKey, name, "Weight (WT)", String.format("%d", item.getWeight()));
 			rk.recordOriginalEntry(RecordKeeperCategoryWeaponKey, name, "Durability", String.format("%d", item.getDurability()));
 			rk.recordOriginalEntry(RecordKeeperCategoryWeaponKey, name, "Critical", String.format("%d",  item.getCritical()));
+			rk.recordOriginalEntry(RecordKeeperCategoryWeaponKey, name, "Cost per Use", String.format("%d", item.getCostPerUse()));
 			
 			long statPointerAddress = item.getStatBonusPointer();
 			if (statPointerAddress != 0) {
@@ -876,6 +1132,7 @@ public class ItemDataLoader {
 			rk.recordUpdatedEntry(RecordKeeperCategoryWeaponKey, name, "Weight (WT)", String.format("%d", item.getWeight()));
 			rk.recordUpdatedEntry(RecordKeeperCategoryWeaponKey, name, "Durability", String.format("%d", item.getDurability()));
 			rk.recordUpdatedEntry(RecordKeeperCategoryWeaponKey, name, "Critical", String.format("%d",  item.getCritical()));
+			rk.recordUpdatedEntry(RecordKeeperCategoryWeaponKey, name, "Cost per Use", String.format("%d", item.getCostPerUse()));
 			
 			long statPointerAddress = item.getStatBonusPointer();
 			if (statPointerAddress != 0) {

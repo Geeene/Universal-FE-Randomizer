@@ -194,6 +194,13 @@ public class PaletteV2 {
 		return result;
 	}
 	
+	public void setPalette(List<PaletteColor> hair, List<PaletteColor> primary, List<PaletteColor> secondary, List<PaletteColor> tertiary, PaletteType paletteType) {
+		setHair(hair, paletteType);
+		setPrimary(primary, paletteType);
+		setSecondary(secondary != null && !secondary.isEmpty() ? secondary : PaletteColor.adjustColors(primary, false, false), paletteType);
+		setTertiary(tertiary != null && !tertiary.isEmpty() ? tertiary : PaletteColor.adjustColors(primary, false, false), paletteType);
+	}
+	
 	public void adaptPalette(PaletteV2[] referencePalettes, PaletteType paletteType, PaletteColor[] supplementalHairColors) {
 		List<PaletteColor> referenceHair = new ArrayList<PaletteColor>();
 		List<PaletteColor> referencePrimary = new ArrayList<PaletteColor>();
@@ -201,10 +208,23 @@ public class PaletteV2 {
 		List<PaletteColor> referenceTertiary = new ArrayList<PaletteColor>();
 		
 		for (PaletteV2 palette : referencePalettes) {
-			if (palette.hasHair()) { referenceHair.addAll(Arrays.asList(palette.getHairColors(paletteType))); }
-			if (palette.hasPrimary()) { referencePrimary.addAll(Arrays.asList(palette.getPrimaryColors(paletteType))); }
-			if (palette.hasSecondary()) { referenceSecondary.addAll(Arrays.asList(palette.getSecondaryColors(paletteType))); }
-			if (palette.hasTertiary()) { referenceTertiary.addAll(Arrays.asList(palette.getTertiaryColors(paletteType))); }
+			// Only pull colors if we don't already have any colors OR if the current palette has more colors to work with for a specific area.
+			if (palette.hasHair() && (referenceHair.isEmpty() || palette.getHairColors(paletteType).length > referenceHair.size())) {
+				referenceHair.clear();
+				referenceHair.addAll(Arrays.asList(palette.getHairColors(paletteType)));
+			}
+			if (palette.hasPrimary() && (referencePrimary.isEmpty() || palette.getPrimaryColors(paletteType).length > referencePrimary.size())) {
+				referencePrimary.clear();
+				referencePrimary.addAll(Arrays.asList(palette.getPrimaryColors(paletteType)));
+			}
+			if (palette.hasSecondary() && (referenceSecondary.isEmpty() || palette.getSecondaryColors(paletteType).length > referenceSecondary.size())) {
+				referenceSecondary.clear();
+				referenceSecondary.addAll(Arrays.asList(palette.getSecondaryColors(paletteType)));
+			}
+			if (palette.hasTertiary() && (referenceTertiary.isEmpty() || palette.getTertiaryColors(paletteType).length > referenceTertiary.size())) {
+				referenceTertiary.clear();
+				referenceTertiary.addAll(Arrays.asList(palette.getTertiaryColors(paletteType)));
+			}
 		}
 		
 		if (supplementalHairColors != null && supplementalHairColors.length > 0) {
@@ -281,7 +301,7 @@ public class PaletteV2 {
 			}
 			newHairColor[newHairColor.length-1] = newColor;
 		}
-		
+    
 		int newIndex = 0;
 		for (int colorIndex : info.hairColorOffsets) {
 			ColorSet set = colorArray[colorIndex];
@@ -316,7 +336,7 @@ public class PaletteV2 {
 				newPrimaryColor[lastIndex-1] = PaletteColor.averageColorFromColors(new PaletteColor[] {newPrimaryColor[lastIndex-2], newColor});
 			}
 		}
-		
+
 		int newIndex = 0;
 		for (int colorIndex : info.primaryColorOffsets) {
 			ColorSet set = colorArray[colorIndex];
@@ -346,7 +366,7 @@ public class PaletteV2 {
 				newSecondaryColor[i] = newSecondaryColor[i+1];
 			}
 			newSecondaryColor[newSecondaryColor.length-1] = newColor;
-		}
+    }
 		int newIndex = 0;
 		for (int colorIndex : info.secondaryColorOffsets) {
 			ColorSet set = colorArray[colorIndex];
@@ -362,7 +382,7 @@ public class PaletteV2 {
 		
 		List<PaletteColor> sortedTertiary = referenceTertiary.stream().sorted(PaletteColor.lowToHighBrightnessComparator).collect(Collectors.toList());
 		Collections.reverse(sortedTertiary);
-		PaletteColor[] newTertiaryColor = PaletteColor.coerceColors(sortedTertiary.toArray(new PaletteColor[sortedTertiary.size()]), info.tertiaryColorOffsets.length);
+		PaletteColor[] newTertiaryColor = PaletteColor.coerceColors(sortedTertiary.toArray(new PaletteColor[sortedTertiary.size()]), info.tertiaryColorOffsets.length, false);
 		int newIndex = 0;
 		for (int colorIndex : info.tertiaryColorOffsets) {
 			ColorSet set = colorArray[colorIndex];

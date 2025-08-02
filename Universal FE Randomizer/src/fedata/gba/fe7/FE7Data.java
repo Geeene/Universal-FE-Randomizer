@@ -283,7 +283,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		public static CharacterAndClassAbility2Mask maskForDisplayString(String displayString) {
 			CharacterAndClassAbility2Mask mask = null;
 			try {
-				mask = displayStrings.keySet().stream().filter(ability -> displayStrings.equals(displayStrings.get(ability))).findFirst().get();
+				mask = displayStrings.keySet().stream().filter(ability -> displayString.equals(displayStrings.get(ability))).findFirst().get();
 			} catch (NoSuchElementException e) {}
 			
 			return mask;
@@ -3002,6 +3002,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {7, 6}, new int[] {11, 12, 9, 13, 10, 14}, new int[] {});
 					break;
 				case GENERAL:
+					// this.info = new PaletteInfo(classID, charID, offset, new int[] {}, new int[] {12, 13, 14}, new int[] {});
 				case GENERAL_F:
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {}, new int[] {11, 12, 13, 14}, new int[] {4, 5}, new int[] {8, 9, 10});
 					break;
@@ -3011,6 +3012,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7}, new int[] {11, 12, 13}, new int[] {}, new int[] {8, 9, 10});
 					break;
 				case KNIGHT:
+//					this.info = new PaletteInfo(classID, charID, offset, new int[] {}, new int[] {4, 2, 5, 3, 1}, new int[] {});
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {}, new int[] {6, 4, 2, 1}, new int[] {}, new int[] {9, 5, 3});
 					break;
 				case LORD_ELIWOOD:
@@ -3037,6 +3039,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7, 14}, new int[] {3, 4, 5}, new int[] {});
 					break;
 				case NOMAD_TROOPER:
+//					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7}, new int[] {9, 10, 11}, new int[] {});
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7}, new int[] {8, 2, 9, 5, 10, 11}, new int[] {});
 					break;
 				case PALADIN:
@@ -3061,10 +3064,10 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {5, 6, 7}, new int[] {12, 11, 4}, new int[] {13, 14});
 					break;
 				case TROUBADOUR:
-					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7}, new int[] {9, 8, 10, 5, 11}, new int[] {});
+					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7}, new int[] {8, 5, 11}, new int[] {9, 10});
 					break;
 				case VALKYRIE:
-					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7}, new int[] {8, 9, 10, 14, 11}, new int[] {});
+					this.info = new PaletteInfo(classID, charID, offset, new int[] {6, 7}, new int[] {8, 9, 10, 11}, new int[] {12, 13, 14});
 					break;
 				case WARRIOR:
 					this.info = new PaletteInfo(classID, charID, offset, new int[] {}, new int[] {12, 13, 14}, new int[] {7, 11}); // No Hair. Primary is pants/helmet color. Secondary is breastplate.
@@ -3115,6 +3118,24 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				return new PaletteColor[] {new PaletteColor(56, 184, 72), new PaletteColor(32, 144, 48)};
 			case VAIDA:
 				return new PaletteColor[] {new PaletteColor(248, 248, 112), new PaletteColor(216, 208, 64), new PaletteColor(176, 152, 64)};
+			case BOOL:
+				return new PaletteColor[] {new PaletteColor(181, 132, 57), new PaletteColor(140, 99, 49), new PaletteColor(99, 82, 57)};
+			case YOGI:
+				return new PaletteColor[] {new PaletteColor(181, 115, 115), new PaletteColor(140, 99, 99), new PaletteColor(115, 90, 99)};
+			case EAGLER:
+				return new PaletteColor[] {new PaletteColor(123, 189, 123), new PaletteColor(115, 148, 107), new PaletteColor(90, 107, 82)};
+			case LUNDGREN:
+				return new PaletteColor[] {new PaletteColor(222, 239, 239), new PaletteColor(181, 206, 222), new PaletteColor(156, 181, 222)};
+			case BOIES:
+				return new PaletteColor[] {new PaletteColor(49, 181, 74), new PaletteColor(16, 140, 41), new PaletteColor(16, 99, 24)};
+			case BAUKER:
+				return new PaletteColor[] {new PaletteColor(198, 107, 90), new PaletteColor(156, 82, 74), new PaletteColor(115, 74, 66)};
+			case BERNARD:
+				return new PaletteColor[] {new PaletteColor(214, 66, 57), new PaletteColor(181, 57, 49), new PaletteColor(132, 74, 82)};
+			case DARIN:
+				return new PaletteColor[] {new PaletteColor(189, 74, 214), new PaletteColor(156, 41, 181), new PaletteColor(123, 49, 140)};
+			case EUBANS:
+				return new PaletteColor[] {new PaletteColor(156, 189, 206), new PaletteColor(123, 148, 165), new PaletteColor(99, 107, 115)};
 			default:
 				return null;
 			}

@@ -188,14 +188,14 @@ public class CharacterShuffler {
 
             // (e) Update the bases, and potentially auto level the Character to the level of the slot.
             // Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
-            targetClass = updateBases(linkedSlot, crossGameData, targetClassId,
+            GBAFEClassData targetClassCurrentSlot = updateBases(linkedSlot, crossGameData, targetClassId,
                     targetClass, sourceClass, slotLevel);
-            targetClassId = targetClass.getID();
+            int targetClassIdCurrentSlot = targetClass.getID();
 
-            updateWeaponRanks(linkedSlot, crossGameData, sourceClass, targetClass, rng);
+            updateWeaponRanks(linkedSlot, crossGameData, sourceClass, targetClassCurrentSlot, rng);
 
             // (f) Update the class for all the slots of the character
-            updateUnitInChapter(linkedSlot, crossGameData, targetClassId);
+            updateUnitInChapter(linkedSlot, crossGameData, targetClassIdCurrentSlot);
 
             // (g) give the Unit new items to use
             ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClass, chapterData, inventoryOptions, type, rng, textData, classData, itemData);

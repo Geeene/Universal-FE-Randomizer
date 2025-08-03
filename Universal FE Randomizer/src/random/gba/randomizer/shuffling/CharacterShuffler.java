@@ -64,7 +64,8 @@ public class CharacterShuffler {
     private CharacterShufflingOptions options;
     private ItemAssignmentOptions inventoryOptions;
     private ItemDataLoader itemData;
-    
+    private boolean somethingShuffled;
+
     static final int rngSalt = 18489;
 
     public CharacterShuffler(GameType type, CharacterDataLoader characterData, TextLoader textData, Random rng,
@@ -99,7 +100,9 @@ public class CharacterShuffler {
             shuffleByForcedSlot(forcedSlotMapping);
             shuffleRandomly(partitions.get(false), forcedSlotMapping.keySet());
 
-            GBATextReplacementService.applyChanges(textData);
+            if (somethingShuffled) {
+                GBATextReplacementService.applyChanges(textData);
+            }
         }
     }
 
@@ -159,7 +162,9 @@ public class CharacterShuffler {
 
         // (c) Insert the portrait for the current character into the rom and repoint the Portrait Data
         try {
-            changePortrait(slot, crossGameData);
+            if (!changePortrait(slot, crossGameData)) {
+                return;
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return;
@@ -176,8 +181,10 @@ public class CharacterShuffler {
         }
 
         for (GBAFECharacterData linkedSlot : characterData.linkedCharactersForCharacter(slot)) {
+            linkedSlot.prepareForClassRandomization();
             linkedSlot.setGrowths(crossGameData.growths);
             linkedSlot.setConstitution(crossGameData.constitution);
+            linkedSlot.setIsLord(characterData.isLordCharacterID(slot.getID()));
 
             // (e) Update the bases, and potentially auto level the Character to the level of the slot.
             // Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
@@ -193,6 +200,7 @@ public class CharacterShuffler {
             // (g) give the Unit new items to use
             ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClass, chapterData, inventoryOptions, type, rng, textData, classData, itemData);
         }
+        somethingShuffled = true;
     }
 
 
@@ -288,7 +296,7 @@ public class CharacterShuffler {
      *                     replaced
      * @param chara        - the Character that will get randomized into the rom
      */
-    private void changePortrait(GBAFECharacterData character, GBACrossGameData chara) throws IOException {
+    private boolean changePortrait(GBAFECharacterData character, GBACrossGameData chara) throws IOException {
         // Grab the Portrait Data (Pointers)
         GBAFEPortraitData characterPortraitData = portraitData.getPortraitDataByFaceId(character.getFaceID());
 
@@ -302,6 +310,12 @@ public class CharacterShuffler {
         byte[] mainPortrait = GBAImageCodec.getGBAPortraitGraphicsDataForImage(chara.portraitPath, palette,
                 targetFormat.getMainPortraitChunks(), targetFormat.getMainPortraitSize(),
                 targetFormat.getMainPortraitPrefix());
+
+        if (mainPortrait == null) {
+            DebugPrinter.error(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING, "Main Portrait for Character " + chara.name + " couldn't be loaded.");
+            return false;
+        }
+
         if (targetFormat.isMainPortraitCompressed()) {
             mainPortrait = LZ77.compress(mainPortrait);
         }
@@ -313,6 +327,10 @@ public class CharacterShuffler {
         // Insert and repoint Mini Portrait
         byte[] miniPortrait = GBAImageCodec.getGBAPortraitGraphicsDataForImage(chara.portraitPath, palette,
                 targetFormat.getMiniPortraitChunks(), targetFormat.getMiniPortraitSize());
+        if (miniPortrait == null) {
+            DebugPrinter.error(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING,"Mini Portrait for Character " + chara.name + " couldn't be loaded.");
+            return false;
+        }
         if (targetFormat.isMiniCompressed()) {
             miniPortrait = LZ77.compress(miniPortrait);
         }
@@ -324,6 +342,10 @@ public class CharacterShuffler {
         if (targetFormat.getMouthChunksSize() != null) {
             byte[] mouthFrames = GBAImageCodec.getGBAPortraitGraphicsDataForImage(chara.portraitPath, palette,
                     targetFormat.getMouthChunks(), targetFormat.getMouthChunksSize());
+            if (mouthFrames == null) {
+                DebugPrinter.error(DebugPrinter.Key.GBA_CHARACTER_SHUFFLING,"Mouth Frames for Character " + chara.name + " couldn't be loaded.");
+                return false;
+            }
             long mouthFramesAddress = freeSpace.setValue(mouthFrames, character.getFaceID() + "_MouthFramesPortrait", true);
             characterPortraitData.setMouthFramesPointer(WhyDoesJavaNotHaveThese.bytesFromAddress(mouthFramesAddress));
         }
@@ -341,7 +363,7 @@ public class CharacterShuffler {
 
         // Write the Palette of the image
         characterPortraitData.setNewPalette(PaletteUtil.getByteArrayFromString(chara.paletteString));
-
+        return true;
     }
 
 }

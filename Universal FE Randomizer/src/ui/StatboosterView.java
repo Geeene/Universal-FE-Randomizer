@@ -1,10 +1,8 @@
 package ui;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
-import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
@@ -15,12 +13,9 @@ import org.eclipse.swt.widgets.Spinner;
 
 import ui.common.GuiUtil;
 import ui.general.MinMaxControl;
-import ui.model.GrowthOptions;
 import ui.model.MinMaxOption;
-import ui.model.MinMaxVarOption;
 import ui.model.StatboosterOptions;
 import ui.model.StatboosterOptions.StatboosterRandomizationModes;
-import ui.model.VarOption;
 import ui.views.YuneView;
 
 public class StatboosterView extends YuneView<StatboosterOptions> {
@@ -44,6 +39,7 @@ public class StatboosterView extends YuneView<StatboosterOptions> {
 
 	private Button includeBoots;
 	private Button includeBodyring;
+	private Button excludeMovCon;
 
 	public StatboosterView(Composite parent) {
 		super(parent);
@@ -133,8 +129,8 @@ public class StatboosterView extends YuneView<StatboosterOptions> {
 		multipleParamContainer.setLayout(GuiUtil.formLayoutWithMargin());
 		
 		multipleBoostsRangeControl = new MinMaxControl(multipleParamContainer, SWT.NONE, "Min Boosts:", "Max Boosts:");
-		multipleBoostsRangeControl.getMinSpinner().setValues(1, 0, 20, 0, 1, 5);
-		multipleBoostsRangeControl.getMaxSpinner().setValues(3, 0, 20, 0, 1, 5);
+		multipleBoostsRangeControl.getMinSpinner().setValues(1, 0, 9, 0, 1, 5);
+		multipleBoostsRangeControl.getMaxSpinner().setValues(3, 0, 9, 0, 1, 5);
 		multipleBoostsRangeControl.setEnabled(false);
 		
 		optionData = new FormData();
@@ -187,7 +183,17 @@ public class StatboosterView extends YuneView<StatboosterOptions> {
 		optionData.top = new FormAttachment(includeBoots, 5);
 		optionData.left = new FormAttachment(includeBoots, 0, SWT.LEFT);
 		includeBodyring.setLayoutData(optionData);
-		
+
+		excludeMovCon = new Button(group, SWT.CHECK);
+		excludeMovCon.setText("Exclude MOV/CON");
+		excludeMovCon.setToolTipText("Move / Con will not be randomized onto other Statboosters.");
+		excludeMovCon.setEnabled(false);
+
+		optionData = new FormData();
+		optionData.top = new FormAttachment(includeBodyring, 5);
+		optionData.left = new FormAttachment(includeBodyring, 0, SWT.LEFT);
+		excludeMovCon.setLayoutData(optionData);
+
 		hpModifierButton = new Button(group, SWT.CHECK);
 		hpModifierButton.setText("Apply HP Modifier");
 		hpModifierButton.setToolTipText("In Vanilla the HP Statbooster grants much more stats, with this option all HP statboosts will grant the selected flat modifier.");
@@ -200,7 +206,7 @@ public class StatboosterView extends YuneView<StatboosterOptions> {
 		});
 		
 		optionData = new FormData();
-		optionData.top = new FormAttachment(includeBodyring, 5);
+		optionData.top = new FormAttachment(excludeMovCon, 5);
 		optionData.left = new FormAttachment(includeBoots, 0, SWT.LEFT);
 		hpModifierButton.setLayoutData(optionData);
 		
@@ -232,6 +238,7 @@ public class StatboosterView extends YuneView<StatboosterOptions> {
 		hpModifierButton.setEnabled(enabled);
 		includeBodyring.setEnabled(enabled);
 		includeBoots.setEnabled(enabled);
+		excludeMovCon.setEnabled(enabled);
 		isEnabled = enabled;
 	}
 
@@ -260,7 +267,7 @@ public class StatboosterView extends YuneView<StatboosterOptions> {
 		MinMaxOption boostRange = boostRangeControl.getMinMaxOption();
 		
 		
-		return new StatboosterOptions(true, currentMode,boostRange.minValue, boostRange.maxValue, multipleStats.minValue, multipleStats.maxValue, includeBoots.getSelection(), includeBodyring.getSelection(), hpModifierButton.getSelection(), hpModifierSpinner.getSelection());
+		return new StatboosterOptions(true, currentMode,boostRange.minValue, boostRange.maxValue, multipleStats.minValue, multipleStats.maxValue, includeBoots.getSelection(), includeBodyring.getSelection(), hpModifierButton.getSelection(), hpModifierSpinner.getSelection(), excludeMovCon.getSelection());
 	}
 
 	@Override

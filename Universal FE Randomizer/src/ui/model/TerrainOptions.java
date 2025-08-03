@@ -105,25 +105,25 @@ public class TerrainOptions implements RecordableOption {
 
         sb.append("Avoid Randomized? ").append(randomizeAvoid ? "YES" : "NO");
         if (randomizeAvoid) {
-            sb.append(" Avoid Chance: ").append(avoidChance).append(" Min Avoid: ").append(avoidRange.minValue).append(" Max Avoid: ").append(avoidRange.minValue);
+            sb.append(" Avoid Chance: ").append(avoidChance).append(" Min Avoid: ").append(avoidRange.minValue).append(" Max Avoid: ").append(avoidRange.maxValue);
         }
         sb.append("<br>");
 
         sb.append("Def Randomized? ").append(randomizeDef ? "YES" : "NO");
         if (randomizeDef) {
-            sb.append(" Defense Chance: ").append(defChance).append(" Min Defense: ").append(defRange.minValue).append(" Max Defense: ").append(defRange.minValue);
+            sb.append(" Defense Chance: ").append(defChance).append(" Min Defense: ").append(defRange.minValue).append(" Max Defense: ").append(defRange.maxValue);
         }
         sb.append("<br>");
 
         sb.append("Res Randomized? ").append(randomizeRes ? "YES" : "NO");
         if (randomizeRes) {
-            sb.append(" Resistance Chance: ").append(resChance).append(" Min Resistance: ").append(resRange.minValue).append(" Max Resistance: ").append(resRange.minValue);
+            sb.append(" Resistance Chance: ").append(resChance).append(" Min Resistance: ").append(resRange.minValue).append(" Max Resistance: ").append(resRange.maxValue);
         }
         sb.append("<br>");
 
         sb.append("Healing Randomized? ").append(randomizeHealing ? "YES" : "NO");
         if (randomizeHealing) {
-            sb.append(" Healing Chance: ").append(healingChance).append(" Min Healing: ").append(healingRange.minValue).append(" Max Healing: ").append(healingRange.minValue);
+            sb.append(" Healing Chance: ").append(healingChance).append(" Min Healing: ").append(healingRange.minValue).append(" Max Healing: ").append(healingRange.maxValue);
         }
         sb.append("<br>");
         sb.append("Status Recovery Randomized? ").append(randomizeStatusRecovery ? "YES" : "NO");

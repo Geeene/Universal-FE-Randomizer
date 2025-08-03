@@ -169,11 +169,11 @@ public class CharacterShuffler {
 
 			// (e) Update the bases, and potentially auto level the Character to the level of the slot.
 			// Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
-			targetClass = updateBases(textData,rng, classData, options, linkedSlot, crossGameData, targetClassId, targetClass, sourceClass, slotLevel);
-			targetClassId = targetClass.getID();
+			GBAFEClassData targetClassCurrentSlot = updateBases(textData,rng, classData, options, linkedSlot, crossGameData, targetClassId, targetClass, sourceClass, slotLevel);
+			int targetClassIdCurrentSlot = targetClass.getID();
 
-			updateWeaponRanks(linkedSlot, crossGameData, sourceClass, targetClass, rng);
-			linkedSlot.setConstitution(crossGameData.constitution - targetClass.getCON());
+			updateWeaponRanks(linkedSlot, crossGameData, sourceClass, targetClassCurrentSlot, rng);
+			linkedSlot.setConstitution(crossGameData.constitution - targetClassCurrentSlot.getCON());
 			linkedSlot.setIsLord(characterData.isLordCharacterID(slotReference.getID()));
 
 			GBAFECharacterData.Affinity resolvedAffinity = GBAFECharacterData.Affinity.affinityForString(crossGameData.affinity);
@@ -184,10 +184,10 @@ public class CharacterShuffler {
 			}
 
 			// (f) Update the class for all the slots of the character
-			updateUnitInChapter(linkedSlot, crossGameData, targetClassId);
+			updateUnitInChapter(linkedSlot, crossGameData, targetClassIdCurrentSlot);
 
 			// (g) give the Unit new items to use
-			ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClass, chapterData, inventoryOptions, rng, textData, classData, itemData);
+			ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClassCurrentSlot, chapterData, inventoryOptions, rng, textData, classData, itemData);
 
 			// (h) Update the battle palette, if possible.
 			linkedSlot.overrideBattleHairColor = crossGameData.battlePalette.getHairColors();

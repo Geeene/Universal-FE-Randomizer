@@ -149,7 +149,7 @@ public class GBACrossGameData {
                     // for just he map sprite, don't have Promo Bonuses either.
                     FE7Data.CharacterClass.SHAMAN_F, FE7Data.CharacterClass.MYRMIDON_F, FE7Data.CharacterClass.DRUID_F,
                     FE7Data.CharacterClass.HERO_F, FE7Data.CharacterClass.KNIGHT_F, FE7Data.CharacterClass.GENERAL_F,
-                    FE7Data.CharacterClass.WYVERN_LORD_F, FE7Data.CharacterClass.NOMAD_F,
+                    FE7Data.CharacterClass.WYVERN_RIDER_F, FE7Data.CharacterClass.NOMAD_F,
                     FE7Data.CharacterClass.NOMAD_TROOPER_F
 
             ).contains(chosenClass));
@@ -235,12 +235,12 @@ public class GBACrossGameData {
 		addEntry(GameType.FE6, FE6Data.CharacterClass.DRUID, FE7Data.CharacterClass.DRUID, FE8Data.CharacterClass.DRUID);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.DRUID_F, FE7Data.CharacterClass.DRUID, FE8Data.CharacterClass.DRUID);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.CLERIC, FE7Data.CharacterClass.CLERIC, FE8Data.CharacterClass.CLERIC);
-		addEntry(GameType.FE6, FE6Data.CharacterClass.WYVERN_RIDER, FE7Data.CharacterClass.WYVERN_LORD, FE8Data.CharacterClass.WYVERN_RIDER);
-		addEntry(GameType.FE6, FE6Data.CharacterClass.WYVERN_RIDER_F, FE7Data.CharacterClass.WYVERN_LORD, FE8Data.CharacterClass.WYVERN_RIDER);
+		addEntry(GameType.FE6, FE6Data.CharacterClass.WYVERN_RIDER, FE7Data.CharacterClass.WYVERN_RIDER, FE8Data.CharacterClass.WYVERN_RIDER);
+		addEntry(GameType.FE6, FE6Data.CharacterClass.WYVERN_RIDER_F, FE7Data.CharacterClass.WYVERN_RIDER, FE8Data.CharacterClass.WYVERN_RIDER);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.NOMAD, FE7Data.CharacterClass.NOMAD, FE8Data.CharacterClass.ARCHER);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.NOMAD_F, FE7Data.CharacterClass.NOMAD, FE8Data.CharacterClass.ARCHER_F);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.NOMAD_TROOPER, FE7Data.CharacterClass.NOMAD_TROOPER, FE8Data.CharacterClass.RANGER);
-		addEntry(GameType.FE6, FE6Data.CharacterClass.NOMAD_TROOPER_F, FE7Data.CharacterClass.NOMAD_TROOPER_F, FE8Data.CharacterClass.RANGER_F);
+		addEntry(GameType.FE6, FE6Data.CharacterClass.NOMAD_TROOPER_F, FE7Data.CharacterClass.NOMAD_TROOPER, FE8Data.CharacterClass.RANGER_F);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.BISHOP, FE7Data.CharacterClass.BISHOP, FE8Data.CharacterClass.BISHOP);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.SWORDMASTER, FE7Data.CharacterClass.SWORDMASTER, FE8Data.CharacterClass.SWORDMASTER);
 		addEntry(GameType.FE6, FE6Data.CharacterClass.SWORDMASTER_F, FE7Data.CharacterClass.SWORDMASTER_F, FE8Data.CharacterClass.SWORDMASTER_F);

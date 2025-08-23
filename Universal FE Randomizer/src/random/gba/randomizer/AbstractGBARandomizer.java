@@ -19,6 +19,7 @@ import fedata.gba.fe6.FE6Data;
 import fedata.gba.general.GBAFEChapterMetadataChapter;
 import fedata.gba.general.GBAFEChapterMetadataData;
 import fedata.gba.general.GBAFEClass;
+import fedata.gba.general.WeaponEffects;
 import fedata.general.FEBase;
 import fedata.general.FEBase.GameType;
 import io.DiffApplicator;
@@ -759,6 +760,11 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			PaletteHelper.synchronizePalettes(gameType, recruitOptions != null ? recruitOptions.includeExtras : false,
 					charData, classData, paletteData, characterMap, freeSpace);
 		}
+	}
+
+	protected void makeDoorKeyUnbreakable() {
+		GBAFEItemData doorKey = itemData.getDoorKey();
+		doorKey.applyEffect(WeaponEffects.UNBREAKABLE, itemData, null, null);
 	}
 
 	/**

@@ -105,6 +105,7 @@ public class FE7Randomizer extends AbstractGBARandomizer {
 		ensureHectorBeatsWire();
 		createSpecialLordClasses();
 		createPrfs(rng);
+		makeDoorKeyUnbreakable();
 	}
 
 	@Override

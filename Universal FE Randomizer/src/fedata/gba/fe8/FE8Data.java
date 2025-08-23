@@ -99,7 +99,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	public static final long WorldMapEventTableOffset = 0x8B39F0L;
 	public static final int WorldMapEventItemSize = 4;
 	public static final int WorldMapEventCount = 58;
-	
+
 	// These are spaces confirmed free inside the natural ROM size (0xFFFFFF).
 	// It's somewhat limited, so let's not use these unless we absolutely have to (like for palettes).
 	public static final List<AddressRange> InternalFreeRange = createFreeRangeList();
@@ -1016,7 +1016,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			public static Ability1Mask valueOf(int val) {
 				return map.get(val);
 			}
-			
+
 			public static String stringOfActiveAbilities(int abilityValue, String delimiter) {
 				List<String> strings = new ArrayList<String>();
 				for (Ability1Mask mask : Ability1Mask.values()) {
@@ -1044,7 +1044,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			public static Ability2Mask valueOf(int val) {
 				return map.get(val);
 			}
-			
+
 			public static String stringOfActiveAbilities(int abilityValue, String delimiter) {
 				List<String> strings = new ArrayList<String>();
 				for (Ability2Mask mask : Ability2Mask.values()) {
@@ -1073,7 +1073,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			public static Ability3Mask valueOf(int val) {
 				return map.get(val);
 			}
-			
+
 			public static String stringOfActiveAbilities(int abilityValue, String delimiter) {
 				List<String> strings = new ArrayList<String>();
 				for (Ability3Mask mask : Ability3Mask.values()) {
@@ -1101,7 +1101,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			public static WeaponEffect valueOf(int val) {
 				return map.get(val);
 			}
-			
+
 			public static String stringOfActiveEffect(int effectValue) {
 				for (WeaponEffect effect : WeaponEffect.values()) {
 					if (effectValue == effect.ID) { return WhyDoesJavaNotHaveThese.stringByCapitalizingFirstLetter(effect.toString()); }
@@ -1215,7 +1215,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		public static Set<Item> allBasicWeapons = new HashSet<Item>(Arrays.asList(IRON_SWORD, IRON_LANCE, IRON_AXE, IRON_BOW, FIRE, LIGHTNING, FLUX, ROTTEN_CLAW, FIERY_FANG, EVIL_EYE));
 		public static Set<Item> allSteelWeapons = new HashSet<Item>(Arrays.asList(STEEL_SWORD, STEEL_LANCE, STEEL_AXE, STEEL_BOW, THUNDER));
 		public static Set<Item> allBasicThrownWeapons = new HashSet<Item>(Arrays.asList(JAVELIN, HAND_AXE));
-		
+
 		public static Set<Item> basicItemsOfType(WeaponType type) {
 			Set<Item> set = new HashSet<Item>();
 			set.addAll(weaponsOfType(type));
@@ -1224,7 +1224,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		}
 		
 		public static List<Item> formerThiefKit() {
-			return new ArrayList<Item>(Arrays.asList(CHEST_KEY_5, DOOR_KEY, DOOR_KEY));
+			return new ArrayList<Item>(Arrays.asList(CHEST_KEY_5, DOOR_KEY));
 		}
 		
 		public static Set<Item> itemsToRemoveFromFormerThief() {
@@ -2195,7 +2195,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			}
 		}
 	}
-	
+
 	public enum Palette {
 		ARCHER_NEIMI(0x01, Character.NEIMI.ID, CharacterClass.ARCHER_F.ID, 0xEF9000),
 		
@@ -3037,7 +3037,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				classList.addAll(CharacterClass.promotionMap.get(charClass));
 			}
 		}
-		
+
 		return classList.toArray(new GBAFEClass[classList.size()]);
 	}
 	
@@ -3049,7 +3049,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				classList.add(baseClass);
 			}
 		}
-		
+
 		return classList.toArray(new GBAFEClass[classList.size()]);
 	}
 	
@@ -3167,7 +3167,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		}
 		return charClass;
 	}
-	
+
 	// Item Provider Methods
 
 	public long itemTablePointer() {
@@ -3261,7 +3261,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		
 		return new HashSet<GBAFEItem>(equalRankWeapons);
 	}
-	
+
 	public Set<GBAFEItem> healingStaves(WeaponRank maxRank) {
 		Set<Item> staves = Item.allHealingStaves;
 		return new HashSet<GBAFEItem>(staves);
@@ -3561,7 +3561,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	}
 	
 	public Set<GBAFEItem> formerThiefInventory() {
-		return new HashSet<GBAFEItem>(Item.formerThiefKit());
+		return new HashSet<>(Item.formerThiefKit());
 	}
 
 	public Set<GBAFEItem> thiefItemsToRemove() {
@@ -3601,7 +3601,7 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	public Set<GBAFEItem> rareDrops() {
 		return new HashSet<GBAFEItem>(Item.rareDrops);
 	}
-	
+
 	public String statBoostStringForWeapon(GBAFEItem weapon) {
 		if (weapon == Item.EXCALIBUR || weapon == Item.GARM) { return "+5 Speed"; }
 		if (weapon == Item.GLEIPNIR) { return "+5 Skill"; }
@@ -3974,5 +3974,10 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	@Override
 	public int getNumberEntries() {
 		return 23;
+	}
+
+	@Override
+	public GBAFEItem getDoorKey() {
+		return FE8Data.Item.DOOR_KEY;
 	}
 }

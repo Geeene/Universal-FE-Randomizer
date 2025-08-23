@@ -1281,7 +1281,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		}
 		
 		public static List<Item> formerThiefKit() {
-			return new ArrayList<Item>(Arrays.asList(CHEST_KEY_5, DOOR_KEY, DOOR_KEY));
+			return new ArrayList<Item>(Arrays.asList(CHEST_KEY_5, DOOR_KEY));
 		}
 		
 		public static Set<Item> itemsToRemoveFromFormerThief() {
@@ -3326,7 +3326,7 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	}
 	
 	public Set<GBAFEItem> formerThiefInventory() {
-		return new HashSet<GBAFEItem>(Item.formerThiefKit());
+		return new HashSet<>(Item.formerThiefKit());
 	}
 
 	public Set<GBAFEItem> thiefItemsToRemove() {
@@ -3571,6 +3571,11 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 
 	public GBAFESpellAnimationCollection spellAnimationCollectionAtAddress(byte[] data, long offset) {
 		return new FE7SpellAnimationCollection(data, offset);
+	}
+
+	@Override
+	public GBAFEItem getDoorKey() {
+		return Item.DOOR_KEY;
 	}
 
 	@Override

@@ -116,6 +116,7 @@ public class FE8Randomizer extends AbstractGBARandomizer {
         ensureHealersHaveStaves(rng);
         createSpecialLordClasses();
         createPrfs(rng);
+        makeDoorKeyUnbreakable();
     }
 
     @Override

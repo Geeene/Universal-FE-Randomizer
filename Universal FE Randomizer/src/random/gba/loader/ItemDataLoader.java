@@ -1,15 +1,6 @@
 package random.gba.loader;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import fedata.gba.GBAFECharacterData;
@@ -359,7 +350,7 @@ public class ItemDataLoader {
 	public GBAFEItemData[] getAllWeapons() {
 		return feItemsFromItemSet(provider.allWeapons());
 	}
-	
+
 	public long[] possibleStatBoostAddresses() {
 		return new long[] { offsetsForAdditionalData.get(AdditionalData.STR_MAG_BOOST),
 				offsetsForAdditionalData.get(AdditionalData.SKL_BOOST),
@@ -605,7 +596,7 @@ public class ItemDataLoader {
 				return null;
 			}
 		}
-		
+
 		if (isEnemy) {
 			potentialItems.removeAll(provider.playerOnlyWeapons());
 		}
@@ -674,7 +665,7 @@ public class ItemDataLoader {
 		if (!includePoison) {
 			items.removeIf(item -> provider.poisonWeapons().contains(provider.itemWithID(item.getID())));
 		}
-		
+
 		return items.toArray(new GBAFEItemData[items.size()]);
 	}
 	
@@ -693,7 +684,7 @@ public class ItemDataLoader {
 	public GBAFEItemData[] specialInventoryForClass(int classID, Random rng) {
 		return feItemsFromItemSet(provider.itemKitForSpecialClass(classID, rng));
 	}
-	
+
 	public void commit() {
 		for (GBAFEItemData item : itemMap.values()) {
 			item.commitChanges();
@@ -779,7 +770,11 @@ public class ItemDataLoader {
 		}
 		return ret;
 	}
-	
+
+	public GBAFEItemData getDoorKey() {
+		return itemWithID(provider.getDoorKey().getID());
+	}
+
 	private GBAFEItemData[] feItemsFromItemSet(Set<GBAFEItem> itemSet) {
 		if (itemSet == null) { return new GBAFEItemData[] {}; }
 		
@@ -798,7 +793,7 @@ public class ItemDataLoader {
 			recordWeapon(rk, item, isInitial, classData, textData, handler);
 		}
 	}
-	
+
 	private void recordWeapon(RecordKeeper rk, GBAFEItemData item, Boolean isInitial, ClassDataLoader classData, TextLoader textData, FileHandler handler) {
 		int nameIndex = item.getNameIndex();
 		String name = textData.getStringAtIndex(nameIndex, true).trim();

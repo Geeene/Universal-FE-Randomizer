@@ -12,7 +12,6 @@ import java.util.Random;
 import java.util.Set;
 
 import fedata.gba.GBAFECharacterData;
-import fedata.gba.GBAFECharacterData.Affinity;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFESpellAnimationCollection;
@@ -72,7 +71,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	public static final long PaletteTableOffset = 0x7FC004L;
 	public static final int PaletteEntryCount = 130;
 	public static final int PaletteEntrySize = 16;
-	
+
 	// These are spaces confirmed free inside the natural ROM size (0xFFFFFF).
 	// It's somewhat limited, so let's not use these unless we absolutely have to (like for palettes).
 	// These are only valid when patched. The JP ROM does *not* have these.
@@ -152,7 +151,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		
 		KLEIN_UNIT(0xD8), TATE_UNIT(0xD9),
 		
-		DAYAN_NPC(0x07), DOUGLAS_NPC(0x0C), YODEL_NPC(0x13), BARTRE_NPC(0x24), NIIME_NPC(0x29), YUNNO_NPC(0x2D), THITO_NPC(0x30), GONZALES_NPC(0x39), ECHIDNA_NPC(0x3E), GEESE_NPC(0x40), 
+		DAYAN_NPC(0x07), DOUGLAS_NPC(0x0C), YODEL_NPC(0x13), BARTRE_NPC(0x24), NIIME_NPC(0x29), YUNNO_NPC(0x2D), THITO_NPC(0x30), GONZALES_NPC(0x39), ECHIDNA_NPC(0x3E), GEESE_NPC(0x40),
 		
 		THITO_ENEMY(0x2F), 
 		
@@ -407,7 +406,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 
 		public static Set<CharacterClass> additionalClassesToPalletLoad = new HashSet<CharacterClass>(Arrays.asList(MANAKETE_F, KING));
 
-		
+
 		public static Set<CharacterClass> allPlayerOnlyClasses = new HashSet<CharacterClass>(Arrays.asList(BARD, DANCER));
 		
 		public static Set<CharacterClass> flyingClasses = new HashSet<CharacterClass>(Arrays.asList(WYVERN_KNIGHT, WYVERN_KNIGHT_F, WYVERN_RIDER, WYVERN_RIDER_F, PEGASUS_KNIGHT));
@@ -431,7 +430,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			map.put(SHAMAN, DRUID);
 			map.put(CAVALIER, PALADIN);
 			map.put(NOMAD, NOMAD_TROOPER);
-			map.put(WYVERN_RIDER, WYVERN_KNIGHT); 
+			map.put(WYVERN_RIDER, WYVERN_KNIGHT);
 			map.put(SOLDIER, GENERAL); 
 			map.put(BRIGAND, BERSERKER);
 			map.put(PIRATE, BERSERKER);
@@ -616,7 +615,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		public Boolean isThief() {
 			return CharacterClass.allThiefClasses.contains(this);
 		}
-		
+
 		public Boolean isFemale() {
 			return CharacterClass.allFemaleClasses.contains(this);
 		}
@@ -847,7 +846,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			public static Ability1Mask valueOf(int val) {
 				return map.get(val);
 			}
-			
+
 			public static String stringOfActiveAbilities(int abilityValue, String delimiter) {
 				List<String> strings = new ArrayList<String>();
 				for (Ability1Mask mask : Ability1Mask.values()) {
@@ -875,7 +874,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			public static Ability2Mask valueOf(int val) {
 				return map.get(val);
 			}
-			
+
 			public static String stringOfActiveAbilities(int abilityValue, String delimiter) {
 				List<String> strings = new ArrayList<String>();
 				for (Ability2Mask mask : Ability2Mask.values()) {
@@ -903,7 +902,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			public static WeaponEffect valueOf(int val) {
 				return map.get(val);
 			}
-			
+
 			public static String stringOfActiveEffect(int effectValue) {
 				for (WeaponEffect effect : WeaponEffect.values()) {
 					if (effectValue == effect.ID) { return WhyDoesJavaNotHaveThese.stringByCapitalizingFirstLetter(effect.toString()); }
@@ -996,7 +995,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		public static Set<Item> allBasicWeapons = new HashSet<Item>(Arrays.asList(IRON_SWORD, IRON_LANCE, IRON_AXE, IRON_BOW, FIRE, LIGHTNING, FLUX));
 		public static Set<Item> allSteelWeapons = new HashSet<Item>(Arrays.asList(STEEL_SWORD, STEEL_LANCE, STEEL_AXE, STEEL_BOW, THUNDER));
 		public static Set<Item> allBasicThrownWeapons = new HashSet<Item>(Arrays.asList(JAVELIN, HAND_AXE));
-		
+
 		public static Set<Item> basicItemsOfType(WeaponType type) {
 			Set<Item> set = new HashSet<Item>();
 			set.addAll(weaponsOfType(type));
@@ -1005,9 +1004,9 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		}
 		
 		public static List<Item> formerThiefKit() {
-			return new ArrayList<Item>(Arrays.asList(CHEST_KEY_5, DOOR_KEY, DOOR_KEY));
+			return new ArrayList<Item>(Arrays.asList(CHEST_KEY_5, DOOR_KEY));
 		}
-		
+
 		public static Set<Item> itemsToRemoveFromFormerThief() {
 			return new HashSet<Item>(Arrays.asList(LOCKPICK));
 		}
@@ -1472,7 +1471,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				return false;
 			}
 		}
-		
+
 		public CharacterNudge[] nudgesRequired() {
 			switch(this) {
 			case CHAPTER_6:
@@ -2301,7 +2300,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				classList.add(CharacterClass.promotionMap.get(charClass));
 			}
 		}
-		
+
 		return classList.toArray(new GBAFEClass[classList.size()]);
 	}
 	
@@ -2313,7 +2312,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				classList.add(baseClass);
 			}
 		}
-		
+
 		return classList.toArray(new GBAFEClass[classList.size()]);
 	}
 	
@@ -2423,7 +2422,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		}
 		return classData;
 	}
-	
+
 	// Item Provider Methods
 
 	public long itemTablePointer() {
@@ -2514,7 +2513,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		
 		return new HashSet<GBAFEItem>(equalRankWeapons);
 	}
-	
+
 	public Set<GBAFEItem> healingStaves(WeaponRank maxRank) {
 		Set<Item> staves = Item.allHealingStaves;
 		return new HashSet<GBAFEItem>(staves);
@@ -2688,9 +2687,9 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		if (originalItem == null) { return new HashSet<GBAFEItem>(); }
 		Item item = Item.valueOf(originalItem.getID());
 		if (item == null) { return new HashSet<GBAFEItem>(); }
-		
+
 		Set<GBAFEItem> itemsUsableByClass = new HashSet<GBAFEItem>(weaponsForClass(classID));
-		
+
 		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.SWORD && ranks.swordRank.isLowerThan(weapon.getRank())));
 		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.LANCE && ranks.lanceRank.isLowerThan(weapon.getRank())));
 		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.AXE && ranks.axeRank.isLowerThan(weapon.getRank())));
@@ -2699,7 +2698,7 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.LIGHT && ranks.lightRank.isLowerThan(weapon.getRank())));
 		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.DARK && ranks.darkRank.isLowerThan(weapon.getRank())));
 		itemsUsableByClass.removeIf(weapon -> (weapon.getType() == WeaponType.STAFF && ranks.staffRank.isLowerThan(weapon.getRank())));
-		
+
 		Set<GBAFEItem> usableSet = new HashSet<GBAFEItem>(itemsUsableByClass);
 		
 		itemsUsableByClass.removeIf(weapon -> (item.getRank().isLowerThan(weapon.getRank())));
@@ -2746,12 +2745,12 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 		Set<GBAFEItem> matchRank = new HashSet<GBAFEItem>(itemsUsableByClass);
 		matchRank.removeIf(weapon -> (weapon.getRank() != item.getRank()));
 		if (!matchRank.isEmpty()) { return matchRank; }
-		
+
 		return itemsUsableByClass;
 	}
 
 	public Set<GBAFEItem> formerThiefInventory() {
-		return new HashSet<GBAFEItem>(Item.formerThiefKit());
+		return new HashSet<>(Item.formerThiefKit());
 	}
 
 	public Set<GBAFEItem> thiefItemsToRemove() {
@@ -3054,4 +3053,9 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	public int getNumberEntries() {
 		return 20;
 	}
+
+    @Override
+    public GBAFEItem getDoorKey() {
+        return FE6Data.Item.DOOR_KEY;
+    }
 }

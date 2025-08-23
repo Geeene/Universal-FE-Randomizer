@@ -67,7 +67,7 @@ public class RandomRandomizer {
 
 				unit.setUnitToDropLastItem(true);
 				if (rng.nextInt(4) != 0) {
-					unit.giveItem(WhyDoesJavaNotHaveThese.clamp(Math.round(i / (chapters.length / 4)), 1,4) -1);
+					unit.giveItem(distributors.get(WhyDoesJavaNotHaveThese.clamp(Math.round(i / (chapters.length / 4)), 1,4) -1).getRandomItem(rng).getID());
 				}
 			}
 		}

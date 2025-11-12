@@ -63,6 +63,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	RecordKeeper recordKeeper;
 
 	// OPTION MODELS
+    protected GBAOptionBundle allOptions;
 	protected GrowthOptions growths;
 	protected BaseOptions bases;
 	protected ClassOptions classes;
@@ -101,6 +102,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		this.targetPath = targetPath;
 		this.seedString = seed;
 		this.diffCompiler = diffs;
+        this.allOptions = options;
 		this.growths = options.growths;
 		this.bases = options.bases;
 		this.classes = options.classes;
@@ -460,7 +462,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		if (classes.randomizePCs) {
 			updateStatusString("Randomizing player classes...");
 			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, ClassRandomizer.rngSalt + 1));
-			ClassRandomizer.randomizePlayableCharacterClasses(classes, itemAssignmentOptions, gameType, charData,
+			ClassRandomizer.randomizePlayableCharacterClasses(allOptions, gameType, charData,
 					classData, chapterData, itemData, textData, rng);
 			paletteFixRequired = true;
 		}

@@ -1,6 +1,8 @@
 package random.gba.loader;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import fedata.gba.GBAFEChapterData;
@@ -27,11 +29,8 @@ import fedata.gba.general.GBAFEChapterMetadataChapter;
 import fedata.gba.general.GBAFEChapterMetadataData;
 import fedata.general.FEBase;
 import io.FileHandler;
-import util.DebugPrinter;
-import util.Diff;
-import util.DiffCompiler;
-import util.FileReadHelper;
-import util.WhyDoesJavaNotHaveThese;
+import util.*;
+import util.OptionRecorder.GBAOptionBundle;
 import util.recordkeeper.RecordKeeper;
 
 public class ChapterLoader {
@@ -47,7 +46,7 @@ public class ChapterLoader {
 	
 	public static final String RecordKeeperCategoryKey = "Chapters";
 
-	public ChapterLoader(FEBase.GameType gameType, FileHandler handler) {
+	public ChapterLoader(FEBase.GameType gameType, FileHandler handler, GBAOptionBundle options) {
 		super();
 		this.gameType = gameType;
 		
@@ -63,11 +62,11 @@ public class ChapterLoader {
 					for (int index = 0; index < chapter.blacklistedClasses().length; index++) {
 						classBlacklist[index] = chapter.blacklistedClasses()[index].ID;
 					}
-					
+
 					CharacterNudge[] nudges = chapter.nudgesRequired();
 					long chapterOffset = baseAddress + (4 * chapter.chapterID);
 					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading " + chapter.toString());
-					FE6Chapter fe6Chapter = new FE6Chapter(handler, chapterOffset, chapter.isClassSafe(), chapter.shouldRemoveFightScenes(), classBlacklist, chapter.getMetadata().getFriendlyName(), chapter.shouldBeEasy(), nudges); 
+					FE6Chapter fe6Chapter = new FE6Chapter(handler, chapterOffset, chapter.isClassSafe(), chapter.shouldRemoveFightScenes(), classBlacklist, chapter.getMetadata().getFriendlyName(), chapter.shouldBeEasy(), nudges);
 					chapters[i++] = fe6Chapter;
 					mappedChapters.put(chapterID, fe6Chapter);
 					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Chapter " + chapter.toString() + " loaded " + fe6Chapter.allUnits().length + " characters and " + fe6Chapter.allRewards().length + " rewards");
@@ -108,7 +107,7 @@ public class ChapterLoader {
 					CharacterNudge[] nudges = chapter.nudgesRequired();
 					long chapterOffset = baseAddress + (4 * chapter.chapterID);
 					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading " + chapter.toString());
-					FE7Chapter fe7Chapter = new FE7Chapter(handler, chapterOffset, chapter.isClassSafe(), chapter.shouldRemoveFightScenes(), trackedRewardRecipients, classBlacklist, chapter.getMetadata().getFriendlyName(), chapter.shouldBeEasy(), nudges); 
+					FE7Chapter fe7Chapter = new FE7Chapter(handler, chapterOffset, chapter.isClassSafe(), chapter.shouldRemoveFightScenes(), trackedRewardRecipients, classBlacklist, chapter.getMetadata().getFriendlyName(), chapter.shouldBeEasy(), nudges);
 					chapters[i++] = fe7Chapter;
 					mappedChapters.put(chapterID, fe7Chapter);
 					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Chapter " + chapter.toString() + " loaded " + fe7Chapter.allUnits().length + " characters and " + fe7Chapter.allRewards().length + " rewards");
@@ -153,8 +152,12 @@ public class ChapterLoader {
 						unarmedCharacterIDs[index] = chapter.unarmedUnits()[index].ID;
 					}
 					
-					CharacterNudge[] nudges = chapter.nudgesRequired();
-					long chapterOffset = baseAddress + (4 * chapter.chapterID);
+					List<CharacterNudge> nudges = new ArrayList<>();
+                    nudges.addAll(List.of(chapter.nudgesRequired()));
+                    if (options.raceMode) {
+                        nudges.addAll(List.of(chapter.optionalNudges()));
+                    }
+                    long chapterOffset = baseAddress + (4 * chapter.chapterID);
 					DebugPrinter.log(DebugPrinter.Key.CHAPTER_LOADER, "Loading " + chapter.toString());
 					FE8Chapter fe8Chapter = new FE8Chapter(handler, chapterOffset, chapter.isClassSafe(), chapter.shouldRemoveFightScenes(), classBlacklist, chapter.getMetadata().getFriendlyName(), chapter.shouldBeEasy(), trackedRewardRecipients, unarmedCharacterIDs, chapter.additionalUnitOffsets(), nudges);
 					fe8Chapter.setMaxEnemyClassLimit(chapter.enemyClassLimit());

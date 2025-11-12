@@ -19,6 +19,7 @@ public class RomInfoGroup extends YuneGroup {
     protected Label checksum;
     protected Button importSettings;
     protected Button writeLogging;
+    protected Button raceMode;
     protected Button exportSettings;
     protected long crc32;
 
@@ -32,12 +33,19 @@ public class RomInfoGroup extends YuneGroup {
         romName = new Label(group, SWT.NONE);
         romCode = new Label(group, SWT.NONE);
         friendlyName = new Label(group, SWT.NONE);
+        GridData gridData = new GridData();
+        gridData.horizontalSpan = 2;
+        friendlyName.setLayoutData(gridData);
         importSettings = new Button(group, SWT.PUSH);
         importSettings.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, false));
         importSettings.setText("Import Settings");
+
         // row 2
         length = new Label(group, SWT.NONE);
         checksum = new Label(group, SWT.NONE);
+        raceMode = new Button(group, SWT.CHECK);
+        raceMode.setText("Racing Mode");
+        raceMode.setToolTipText("Utility changes for racing, FE8 Only so far.");
         writeLogging = new Button(group, SWT.CHECK);
         writeLogging.setText("Write logging to file?");
 
@@ -58,7 +66,7 @@ public class RomInfoGroup extends YuneGroup {
     @Override
     protected Layout getGroupLayout() {
         GridLayout gridLayout = new GridLayout();
-        gridLayout.numColumns = 4;
+        gridLayout.numColumns = 5;
         gridLayout.makeColumnsEqualWidth = false;
         gridLayout.verticalSpacing = 1;
         gridLayout.horizontalSpacing = 50;
@@ -116,5 +124,9 @@ public class RomInfoGroup extends YuneGroup {
 
     public Button getWriteLogging() {
         return writeLogging;
+    }
+
+    public boolean isRaceMode() {
+        return raceMode.getSelection();
     }
 }

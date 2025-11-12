@@ -1941,10 +1941,22 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 			}
 		}
 		
+		public CharacterNudge[] optionalNudges() {
+            switch(this) {
+                case CHAPTER_2:
+                    return new CharacterNudge[]{
+                            new CharacterNudge(Character.GARCIA.ID, 11, 2, 6, 4, 0),
+                            new CharacterNudge(Character.ROSS.ID, 11, 2, 5, 4, 0)
+                    };
+                default:
+                    return new CharacterNudge[] {};
+            }
+        }
+
 		public CharacterNudge[] nudgesRequired() {
 			switch(this) {
-			case CHAPTER_9_EIRIKA:
-				return new CharacterNudge[] {new CharacterNudge(Character.TANA.ID, 0, 2, 0, 5) }; // Tana flies onscreen for a scene. This allows us to keep her class from being locked into flying classes.
+                case CHAPTER_9_EIRIKA:
+                return new CharacterNudge[] {new CharacterNudge(Character.TANA.ID, 0, 2, 0, 5) }; // Tana flies onscreen for a scene. This allows us to keep her class from being locked into flying classes.
 			case CHAPTER_13_EIRIKA:
 				return new CharacterNudge[] { // Cormag Spawns on a Mountain.
 						new CharacterNudge(Character.CORMAG.ID, 0, 15, 5, 15), // Move his starting spot off the mountain 
@@ -3782,6 +3794,8 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 				CharacterClass.GARGOYLE,
 				CharacterClass.DEATHGOYLE,
 				CharacterClass.DRACOZOMBIE,
+				CharacterClass.MANAKETE_F,
+				CharacterClass.MANAKETE_2,
 				CharacterClass.DEMON_KING,
 				CharacterClass.GHOST_FIGHTER,
 				CharacterClass.NONE,

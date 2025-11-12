@@ -26,6 +26,8 @@ import ui.model.ItemAssignmentOptions;
 import ui.model.ClassOptions.GenderRestrictionOption;
 import ui.model.ItemAssignmentOptions.WeaponReplacementPolicy;
 import util.DebugPrinter;
+import util.OptionRecorder;
+import util.OptionRecorder.GBAOptionBundle;
 
 public class ClassRandomizer {
 
@@ -62,7 +64,9 @@ public class ClassRandomizer {
 		}
 	}
 
-	public static void randomizePlayableCharacterClasses(ClassOptions options, ItemAssignmentOptions inventoryOptions, GameType type, CharacterDataLoader charactersData, ClassDataLoader classData, ChapterLoader chapterData, ItemDataLoader itemData, TextLoader textData, Random rng) {
+	public static void randomizePlayableCharacterClasses(GBAOptionBundle allOptions, GameType type, CharacterDataLoader charactersData, ClassDataLoader classData, ChapterLoader chapterData, ItemDataLoader itemData, TextLoader textData, Random rng) {
+        ClassOptions options = allOptions.classes;
+        ItemAssignmentOptions inventoryOptions = allOptions.itemAssignmentOptions;
 		GBAFECharacterData[] allPlayableCharacters = charactersData.playableCharacters();
 		Map<Integer, GBAFEClassData> determinedClasses = new HashMap<Integer, GBAFEClassData>();
 
@@ -89,7 +93,7 @@ public class ClassRandomizer {
 			Boolean isLordCharacter = charactersData.isLordCharacterID(character.getID());
 			Boolean isThiefCharacter = charactersData.isThiefCharacterID(character.getID());
 			Boolean isSpecialCharacter = charactersData.isSpecialCharacterID(character.getID());
-			Boolean canChange = charactersData.canChangeCharacterID(character.getID());
+			Boolean canChange = allOptions.raceMode || charactersData.canChangeCharacterID(character.getID());
 
 			if (isLordCharacter && !includeLords) { continue; }
 			if (isThiefCharacter && !includeThieves) { continue; }

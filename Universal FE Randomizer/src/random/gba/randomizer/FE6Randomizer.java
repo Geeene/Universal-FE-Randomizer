@@ -72,7 +72,7 @@ public class FE6Randomizer extends AbstractGBARandomizer {
 		classData = new ClassDataLoader(FE6Data.classProvider, sourceFileHandler);
 		updateStatusString("Loading Chapter Data...");
 		updateProgress(0.20);
-		chapterData = new ChapterLoader(FEBase.GameType.FE6, sourceFileHandler);
+		chapterData = new ChapterLoader(FEBase.GameType.FE6, sourceFileHandler, allOptions);
 		updateStatusString("Loading Item Data...");
 		updateProgress(0.25);
 		itemData = new ItemDataLoader(FE6Data.itemProvider, sourceFileHandler, freeSpace);

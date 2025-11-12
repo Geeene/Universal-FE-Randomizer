@@ -57,11 +57,11 @@ public class FE8Chapter implements GBAFEChapterData {
 	@SuppressWarnings("unused")
 	private Set<Long> fightEventOffsets;
 	
-	private CharacterNudge[] nudges;
+	private List<CharacterNudge> nudges;
 	
 	private int maxEnemyClassLimit = 0;
 	
-	public FE8Chapter(FileHandler handler, long pointer, Boolean isClassSafe, Boolean removeFightScenes, int[] blacklistedClassIDs, String friendlyName, Boolean simple, int[] targetedRewardRecipientsToTrack, int[] unarmedCharacters, long[] additionalUnitOffsets, CharacterNudge[] nudgesRequired) {
+	public FE8Chapter(FileHandler handler, long pointer, Boolean isClassSafe, Boolean removeFightScenes, int[] blacklistedClassIDs, String friendlyName, Boolean simple, int[] targetedRewardRecipientsToTrack, int[] unarmedCharacters, long[] additionalUnitOffsets, List<CharacterNudge> nudgesRequired) {
 		this.friendlyName = friendlyName;
 		this.blacklistedClassIDs = new HashSet<Integer>();
 		for (int classID : blacklistedClassIDs) {
@@ -182,7 +182,7 @@ public class FE8Chapter implements GBAFEChapterData {
 	}
 	
 	public void applyNudges() {
-		if (nudges == null || nudges.length == 0) { return; }
+		if (nudges == null || nudges.isEmpty()) { return; }
 		for (CharacterNudge nudge : nudges) {
 			characterLoop : for (GBAFEChapterUnitData unit : allUnits()) {
 				// If the nudge isn't for the current character, just continue

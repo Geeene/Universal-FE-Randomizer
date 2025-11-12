@@ -87,6 +87,7 @@ public class RandomizeButtonListener implements Listener {
         Bundle baseBundle = mainView.saveCurrentOptions();
         if (type.isGBA()) {
             GBAOptionBundle bundle = (GBAOptionBundle) baseBundle;
+            bundle.raceMode = mainView.romInfo.isRaceMode();
             // Update the Bundle in the Option Recorder
             randomizer = AbstractGBARandomizer.buildRandomizer(sourceFile, writePath, type, compiler, bundle, bundle.seed);
         } else if (type.isSFC()) {

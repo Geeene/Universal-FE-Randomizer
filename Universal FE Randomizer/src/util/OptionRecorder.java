@@ -42,6 +42,7 @@ public class OptionRecorder {
         public StatboosterOptions statboosters;
         public PromotionOptions promotionOptions;
         public TerrainOptions terrainOptions;
+        public boolean raceMode;
     }
 
     public static class FE4OptionBundle extends Bundle {

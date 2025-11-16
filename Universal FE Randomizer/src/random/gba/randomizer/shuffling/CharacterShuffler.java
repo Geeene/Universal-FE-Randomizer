@@ -187,7 +187,7 @@ public class CharacterShuffler {
 			updateUnitInChapter(linkedSlot, crossGameData, targetClassIdCurrentSlot);
 
 			// (g) give the Unit new items to use
-			ItemAssignmentService.assignNewItems(characterData, linkedSlot, targetClassCurrentSlot, chapterData, inventoryOptions, rng, textData, classData, itemData);
+			ItemAssignmentService.instance.assignNewItems(linkedSlot, targetClassCurrentSlot);
 
 			// (h) Update the battle palette, if possible.
 			linkedSlot.overrideBattleHairColor = crossGameData.battlePalette.getHairColors();

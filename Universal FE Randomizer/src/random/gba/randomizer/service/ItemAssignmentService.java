@@ -31,7 +31,7 @@ public class ItemAssignmentService extends AbstractGBARandomizerComponent {
         instance = this;
     }
 
-    public void assignNewItems(CharacterDataLoader characterData, GBAFECharacterData slot, GBAFEClassData targetClass) {
+    public void assignNewItems(GBAFECharacterData slot, GBAFEClassData targetClass) {
 		for (GBAFEChapterData chapter : chapterData.allChapters()) {
 			GBAFEChapterItemData reward = chapter.chapterItemGivenToCharacter(slot.getID());
 			if (reward != null) {
@@ -41,7 +41,7 @@ public class ItemAssignmentService extends AbstractGBARandomizerComponent {
 					item = prfWeapons[rng.nextInt(prfWeapons.length)];
 				} else {
 					item = itemData.getRandomWeaponForCharacter(slot, false, false,
-							characterData.isEnemyAtAnyPoint(slot.getID()), itemAssignmentOptions.assignPromoWeapons,
+							charData.isEnemyAtAnyPoint(slot.getID()), itemAssignmentOptions.assignPromoWeapons,
                             itemAssignmentOptions.assignPoisonWeapons, rng);
 				}
 
@@ -56,9 +56,9 @@ public class ItemAssignmentService extends AbstractGBARandomizerComponent {
 
 					// Set Inventory.
 					validateCharacterInventory(slot, targetClass, unit,
-							characterData.characterIDRequiresRange(slot.getID()),
-							characterData.characterIDRequiresMelee(slot.getID()), false);
-					if (characterData.isThiefCharacterID(slot.getID())) {
+							charData.characterIDRequiresRange(slot.getID()),
+                            charData.characterIDRequiresMelee(slot.getID()), false);
+					if (charData.isThiefCharacterID(slot.getID())) {
 						validateFormerThiefInventory(unit);
 					}
 					validateSpecialClassInventory(unit);

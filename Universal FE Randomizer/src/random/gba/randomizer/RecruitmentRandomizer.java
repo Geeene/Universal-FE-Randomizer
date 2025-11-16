@@ -495,6 +495,6 @@ public class RecruitmentRandomizer extends AbstractGBARandomizerComponent {
 		GBAFEClassData originalClass = classData.classForID(oldClassID);
 		slot.setClassID(targetClass.getID());
 		GBASlotAdjustmentService.transferWeaponRanks(slot, originalClass, targetClass, rng);
-		ItemAssignmentService.assignNewItems(charData, slot, targetClass, chapterData, itemAssignmentOptions, rng, textData, classData, itemData);
+		ItemAssignmentService.instance.assignNewItems(slot, targetClass);
 	}
 }

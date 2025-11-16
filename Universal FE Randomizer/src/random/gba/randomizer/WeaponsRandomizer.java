@@ -4,19 +4,28 @@ import java.util.Random;
 
 import fedata.gba.GBAFEItemData;
 import fedata.gba.general.WeaponEffects;
+import fedata.general.FEBase;
+import random.gba.loader.GBADataLoaders;
 import random.gba.loader.ItemDataLoader;
 import random.gba.loader.TextLoader;
 import random.general.WeightedDistributor;
 import ui.model.WeaponEffectOptions;
+import util.OptionRecorder;
 import util.WhyDoesJavaNotHaveThese;
 
-public class WeaponsRandomizer {
+public class WeaponsRandomizer extends AbstractGBARandomizerComponent{
 	
 	static final int rngSalt = 64;
-	
-	public static void randomizeMights(int minMT, int maxMT, int variance, ItemDataLoader itemsData, Random rng) {
-		GBAFEItemData[] allWeapons = itemsData.getAllWeapons();
-		
+
+    public WeaponsRandomizer(OptionRecorder.GBAOptionBundle allOptions, GBADataLoaders dataLoaders, Random rng, FEBase.GameType type) {
+        super(allOptions, dataLoaders, rng, type);
+    }
+
+    public void randomizeMights() {
+		GBAFEItemData[] allWeapons = itemData.getAllWeapons();
+		int variance = weapons.mightOptions.variance;
+		int minMT = weapons.mightOptions.minValue;
+		int maxMT = weapons.mightOptions.maxValue;
 		for (GBAFEItemData weapon : allWeapons) {
 			int originalMight = weapon.getMight();
 			int newMight = originalMight;
@@ -30,12 +39,14 @@ public class WeaponsRandomizer {
 			weapon.setMight(WhyDoesJavaNotHaveThese.clamp(newMight, minMT, maxMT));
 		}
 		
-		itemsData.commit();
+		itemData.commit();
 	}
 	
-	public static void randomizeHit(int minHit, int maxHit, int variance, ItemDataLoader itemsData, Random rng) {
-		GBAFEItemData[] allWeapons = itemsData.getAllWeapons();
-		
+	public void randomizeHit() {
+		GBAFEItemData[] allWeapons = itemData.getAllWeapons();
+        int variance = weapons.hitOptions.variance;
+        int minHit = weapons.hitOptions.minValue;
+        int maxHit = weapons.hitOptions.maxValue;
 		for (GBAFEItemData weapon : allWeapons) {
 			int originalHit = weapon.getHit();
 			int newHit = originalHit;
@@ -49,12 +60,14 @@ public class WeaponsRandomizer {
 			weapon.setHit(WhyDoesJavaNotHaveThese.clamp(newHit, minHit, maxHit));
 		}
 		
-		itemsData.commit();
+		itemData.commit();
 	}
 	
-	public static void randomizeDurability(int minDurability, int maxDurability, int variance, ItemDataLoader itemsData, Random rng) {
-		GBAFEItemData[] allWeapons = itemsData.getAllWeapons();
-		
+	public void randomizeDurability() {
+		GBAFEItemData[] allWeapons = itemData.getAllWeapons();
+        int variance = weapons.durabilityOptions.variance;
+        int minDurability = weapons.durabilityOptions.minValue;
+        int maxDurability = weapons.durabilityOptions.maxValue;
 		for (GBAFEItemData weapon : allWeapons) {
 			int originalDurability = weapon.getDurability();
 			int newDurability = originalDurability;
@@ -73,12 +86,14 @@ public class WeaponsRandomizer {
 			}
 		}
 		
-		itemsData.commit();
+		itemData.commit();
 	}
 	
-	public static void randomizeWeight(int minWT, int maxWT, int variance, ItemDataLoader itemsData, Random rng) {
-		GBAFEItemData[] allWeapons = itemsData.getAllWeapons();
-		
+	public void randomizeWeight() {
+		GBAFEItemData[] allWeapons = itemData.getAllWeapons();
+        int variance = weapons.weightOptions.variance;
+        int minWT = weapons.weightOptions.minValue;
+        int maxWT = weapons.weightOptions.maxValue;
 		for (GBAFEItemData weapon : allWeapons) {
 			int originalWeight = weapon.getWeight();
 			int newWeight = originalWeight;
@@ -92,12 +107,12 @@ public class WeaponsRandomizer {
 			weapon.setWeight(WhyDoesJavaNotHaveThese.clamp(newWeight, minWT, maxWT));
 		}
 		
-		itemsData.commit();
+		itemData.commit();
 	}
 	
-	public static void randomizeEffects(WeaponEffectOptions effectOptions, ItemDataLoader itemsData, TextLoader textData, Boolean ignoreIronWeapons, Boolean ignoreSteelWeapons, Boolean ignoreThrownWeapons, int effectChance, Random rng) {
-		GBAFEItemData[] allWeapons = itemsData.getAllWeapons();
-		
+	public void randomizeEffects() {
+		GBAFEItemData[] allWeapons = itemData.getAllWeapons();
+        WeaponEffectOptions effectOptions = weapons.effectsList;
 		WeightedDistributor<WeaponEffects> enabledEffects = new WeightedDistributor<WeaponEffects>();
 		
 		if (effectOptions.statBoosts > 0) { enabledEffects.addItem(WeaponEffects.STAT_BOOSTS, effectOptions.statBoosts); }
@@ -117,15 +132,15 @@ public class WeaponsRandomizer {
 		if (effectOptions.devil > 0) { enabledEffects.addItem(WeaponEffects.DEVIL, effectOptions.devil); }
 		
 		for (GBAFEItemData weapon : allWeapons) {
-			if (ignoreIronWeapons && itemsData.isBasicWeapon(weapon.getID())) { continue; }
-			if (ignoreSteelWeapons && itemsData.isSteelWeapon(weapon.getID())) { continue; }
-			if (ignoreThrownWeapons && itemsData.isBasicThrowingWeapon(weapon.getID())) { continue; }
+			if (weapons.noEffectIronWeapons && itemData.isBasicWeapon(weapon.getID())) { continue; }
+			if (weapons.noEffectSteelWeapons && itemData.isSteelWeapon(weapon.getID())) { continue; }
+			if (weapons.noEffectThrownWeapons && itemData.isBasicThrowingWeapon(weapon.getID())) { continue; }
 			
-			if (rng.nextInt(100) < effectChance) {
-				weapon.applyRandomEffect(new WeightedDistributor<WeaponEffects>(enabledEffects), itemsData, textData, itemsData.spellAnimations, rng);
+			if (rng.nextInt(100) < weapons.effectChance) {
+				weapon.applyRandomEffect(new WeightedDistributor<WeaponEffects>(enabledEffects), itemData, textData, itemData.spellAnimations, rng);
 			}
 		}
 		
-		itemsData.commit();
+		itemData.commit();
 	}
 }

@@ -11,23 +11,30 @@ import fedata.gba.GBAFEChapterItemData;
 import fedata.gba.GBAFEChapterUnitData;
 import fedata.gba.GBAFEItemData;
 import fedata.gcnwii.fe9.FE9Data.Chapter;
+import fedata.general.FEBase;
 import random.gba.loader.ChapterLoader;
 import random.gba.loader.CharacterDataLoader;
+import random.gba.loader.GBADataLoaders;
 import random.gba.loader.ItemDataLoader;
 import random.general.PoolDistributor;
 import random.general.WeightedDistributor;
+import util.OptionRecorder;
 import util.WhyDoesJavaNotHaveThese;
 
-public class RandomRandomizer {
+public class RandomRandomizer extends AbstractGBARandomizerComponent {
 	static final int rngSalt = 27682;
-	
-	public static void randomizeRewards(ItemDataLoader itemData, ChapterLoader chapterData, boolean includePromoWeapons, Random rng) {
+
+    public RandomRandomizer(OptionRecorder.GBAOptionBundle allOptions, GBADataLoaders dataLoaders, Random rng, FEBase.GameType type) {
+        super(allOptions, dataLoaders, rng, type);
+    }
+
+    public void randomizeRewards() {
 		for (GBAFEChapterData chapter : chapterData.allChapters()) {
 			GBAFEChapterItemData[] allRewards = chapter.allRewards();
 			for (GBAFEChapterItemData chapterItem : allRewards) {
 				int itemID = chapterItem.getItemID();
 				GBAFEItemData[] relatedItems = itemData.relatedItems(itemID);
-				GBAFEItemData[] allPossibleItems = itemData.getChestRewards(includePromoWeapons);
+				GBAFEItemData[] allPossibleItems = itemData.getChestRewards(itemAssignmentOptions.assignPromoWeapons);
 				
 				if (relatedItems.length == 0 && allPossibleItems.length == 0) {
 					continue;
@@ -50,7 +57,7 @@ public class RandomRandomizer {
 		}
 	}
 
-	public static void addRandomEnemyDrops(int chance, CharacterDataLoader charData, ItemDataLoader itemData, ChapterLoader chapterData, Random rng) {
+	public void addRandomEnemyDrops() {
 		GBAFEChapterData[] chapters = chapterData.allChapters();
 		List<WeightedDistributor<GBAFEItemData>> distributors = getDistributorsForDrops(itemData);
 
@@ -61,7 +68,7 @@ public class RandomRandomizer {
 					continue;
 				}
 
-				if (rng.nextInt(100) >= chance) {
+				if (rng.nextInt(100) >= rewardOptions.enemyDropChance) {
 					continue;
 				}
 
@@ -73,7 +80,7 @@ public class RandomRandomizer {
 		}
 	}
 
-	private static List<WeightedDistributor<GBAFEItemData>> getDistributorsForDrops(ItemDataLoader itemData) {
+	private List<WeightedDistributor<GBAFEItemData>> getDistributorsForDrops(ItemDataLoader itemData) {
 		WeightedDistributor<GBAFEItemData> firstQuarter = new WeightedDistributor<>();
 		WeightedDistributor<GBAFEItemData> secondQuarter = new WeightedDistributor<>();
 		WeightedDistributor<GBAFEItemData> thirdQuarter = new WeightedDistributor<>();

@@ -9,11 +9,13 @@ import fedata.gba.fe8.PromotionBranch;
 import fedata.gba.general.GBAFEClass;
 import fedata.general.FEBase.GameType;
 import random.gba.loader.ClassDataLoader;
+import random.gba.loader.GBADataLoaders;
 import random.gba.loader.PromotionDataLoader;
 import random.general.PoolDistributor;
 import ui.model.PromotionOptions;
 import ui.model.PromotionOptions.Mode;
 import util.DebugPrinter;
+import util.OptionRecorder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -21,47 +23,50 @@ import java.util.stream.Collectors;
 /**
  * Class responsible to perform the Promotion Randomization for GBAFE
  */
-public class GBAPromotionRandomizer {
+public class GBAPromotionRandomizer extends AbstractGBARandomizerComponent{
     static final int rngSalt = 879845164;
 
     private static Map<GBAFEClass, GBAFEClassData> classMap;
 
-    public static void randomizePromotions(PromotionOptions options, PromotionDataLoader promotionData,
-                                           ClassDataLoader classData, GameType type, Random rng) {
+    public GBAPromotionRandomizer(OptionRecorder.GBAOptionBundle allOptions, GBADataLoaders dataLoaders, Random rng, GameType type) {
+        super(allOptions, dataLoaders, rng, type);
+    }
 
-        classMap = getClassMapForGame(options, classData, type);
+    public void randomizePromotions() {
+
+        classMap = getClassMapForGame();
 
         if (classMap.isEmpty()) {
             DebugPrinter.log(DebugPrinter.Key.PROMOTION_RANDOMIZATION, "couldn't build the classMap");
             return;
         }
 
-        if (PromotionOptions.Mode.RANDOM.equals(options.promotionMode) || options.allowEnemyOnlyPromotedClasses) {
-            fixPromotionBonusesOfSpecialClasses(classData, type);
+        if (PromotionOptions.Mode.RANDOM.equals(promotionOptions.promotionMode) || promotionOptions.allowEnemyOnlyPromotedClasses) {
+            fixPromotionBonusesOfSpecialClasses();
         }
 
         switch (type) {
             case FE6:
             case FE7:
-                randomizePromotions(options, classData, type, rng);
+                randomizePromotionsFE6And7();
                 break;
             case FE8:
-                randomizePromotionsForFE8(options, promotionData, classData, rng);
+                randomizePromotionsForFE8();
                 break;
             default:
         }
     }
 
-    private static void fixPromotionBonusesOfSpecialClasses(ClassDataLoader data, GameType type) {
+    private void fixPromotionBonusesOfSpecialClasses() {
         if (GameType.FE8.equals(type)) {
-            copyPromotionBonuses(data, FE8Data.CharacterClass.NECROMANCER, FE8Data.CharacterClass.SUMMONER);
+            copyPromotionBonuses(FE8Data.CharacterClass.NECROMANCER, FE8Data.CharacterClass.SUMMONER);
         } else if (GameType.FE7.equals(type)) {
-            copyPromotionBonuses(data, FE7Data.CharacterClass.ARCHSAGE, FE7Data.CharacterClass.SAGE);
-            copyPromotionBonuses(data, FE7Data.CharacterClass.DARK_DRUID, FE7Data.CharacterClass.DRUID);
+            copyPromotionBonuses(FE7Data.CharacterClass.ARCHSAGE, FE7Data.CharacterClass.SAGE);
+            copyPromotionBonuses( FE7Data.CharacterClass.DARK_DRUID, FE7Data.CharacterClass.DRUID);
         }
     }
 
-    private static void copyPromotionBonuses(ClassDataLoader classData, GBAFEClass to, GBAFEClass from) {
+    private void copyPromotionBonuses(GBAFEClass to, GBAFEClass from) {
         GBAFEClassData template = classData.classForID(from.getID());
         GBAFEClassData target = classData.classForID(to.getID());
         target.setPromoBonuses(template.getPromoBonuses());
@@ -71,22 +76,20 @@ public class GBAPromotionRandomizer {
      * Due to branched Promotions FE8 needs to be handled much different from FE6
      * and FE7.
      */
-    public static void randomizePromotionsForFE8(PromotionOptions options, PromotionDataLoader promotionData,
-                                                 ClassDataLoader classData, Random rng) {
+    public void randomizePromotionsForFE8() {
         // Get the promotion table
         Map<FE8Data.CharacterClass, PromotionBranch> promotionBranches = promotionData.getAllPromotionBranches();
 
         List<FE8Data.CharacterClass> classesNeedingPromotions = new ArrayList<>();
         classesNeedingPromotions.addAll(FE8Data.CharacterClass.allUnpromotedClasses);
-        if (!options.allowMonsterClasses) {
+        if (!promotionOptions.allowMonsterClasses) {
             classesNeedingPromotions.removeAll(CharacterClass.allMonsterClasses);
         }
 
         // for each entry pick new promotions
         for (FE8Data.CharacterClass classToRandomize : classesNeedingPromotions) {
             // gather all the valid promotions based on the options
-            List<GBAFEClass> promotions = getValidPromotionsForClass(options, classData, classToRandomize,
-                    GameType.FE8);
+            List<GBAFEClass> promotions = getValidPromotionsForClass(classToRandomize);
 
             // If there aren't enough valid promotions to satisfy the branch, keep it vanilla
             if (promotions == null || promotions.isEmpty() || promotions.size() == 1) {
@@ -143,16 +146,15 @@ public class GBAPromotionRandomizer {
      * Figures out valid promotions for each class based on the given options and
      * sets their new promotions.
      */
-    public static void randomizePromotions(PromotionOptions options, ClassDataLoader classData, GameType type,
-                                           Random rng) {
+    public void randomizePromotionsFE6And7() {
         // Get the classdata for all unpromoted classes that should promote (i.e. not
         // dancers)
         Map<GBAFEClass, GBAFEClassData> unpromotedClassDataMapping = classMap.entrySet()
-                .stream().filter(e -> shouldPromote(classData, e, options))
+                .stream().filter(e -> shouldPromote(classData, e, promotionOptions))
                 .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
 
         for (GBAFEClass unpromotedClass : unpromotedClassDataMapping.keySet()) {
-            PoolDistributor<GBAFEClass> promotionDistributor = PoolDistributor.of(getValidPromotionsForClass(options, classData, unpromotedClass, type));
+            PoolDistributor<GBAFEClass> promotionDistributor = PoolDistributor.of(getValidPromotionsForClass(unpromotedClass));
             GBAFEClassData classToEdit = unpromotedClassDataMapping.get(unpromotedClass);
             int newPromotion = promotionDistributor.getRandomItem(rng, false).getID();
             classToEdit.setTargetPromotionID(newPromotion);
@@ -181,8 +183,7 @@ public class GBAPromotionRandomizer {
      * Given a character class returns all Classes that are valid promotions for the
      * given promotion requirements.
      */
-    public static List<GBAFEClass> getValidPromotionsForClass(PromotionOptions options, ClassDataLoader classData,
-                                                              GBAFEClass baseClass, GameType type) {
+    public List<GBAFEClass> getValidPromotionsForClass(GBAFEClass baseClass) {
         List<GBAFEClass> validPromotions = classMap.keySet().stream().filter(candidate -> {
             // (A) Basic case, the class is on the wrong tier
             if (!isCorrectTier(baseClass, candidate, type)) {
@@ -192,21 +193,21 @@ public class GBAPromotionRandomizer {
             GBAFEClassData candidateData = classMap.get(candidate);
 
             // (B) Check specific weapon usage
-            if (options.promotionMode.equals(Mode.LOOSE)) {
+            if (promotionOptions.promotionMode.equals(Mode.LOOSE)) {
                 if (!canUseAllUnpromotedWeapons(baseClassData, candidateData)) {
                     return false;
                 }
-            } else if (options.promotionMode.equals(Mode.RANDOM)) {
-                if (options.keepSameDamageType && !useSameDamageType(baseClassData, candidateData)) {
+            } else if (promotionOptions.promotionMode.equals(Mode.RANDOM)) {
+                if (promotionOptions.keepSameDamageType && !useSameDamageType(baseClassData, candidateData)) {
                     return false;
-                } else if (options.requireCommonWeapon && !hasAnyMatchingWeaponType(baseClassData, candidateData)) {
+                } else if (promotionOptions.requireCommonWeapon && !hasAnyMatchingWeaponType(baseClassData, candidateData)) {
                     return false;
                 }
             }
 
             // (D) Mount validations
-            return options.promotionMode.equals(Mode.RANDOM) // Random Mode always allows Mount Changes
-                    || options.allowMountChanges // User Opted for Allowing Mount Changes for Lose mode
+            return promotionOptions.promotionMode.equals(Mode.RANDOM) // Random Mode always allows Mount Changes
+                    || promotionOptions.allowMountChanges // User Opted for Allowing Mount Changes for Lose mode
                     // Otherwise, check that unit stays flying
                     || (classData.isFlying(baseClass.getID()) == classData.isFlying(candidate.getID())
                     // Or Unit Stays Horse Unit (excl. flying)
@@ -288,28 +289,28 @@ public class GBAPromotionRandomizer {
      * Builds a map between the FE6/7/8Data.CharacterClass Enum and the actual game
      * data, to figure out what are valid promotions for the Data.CharacterClass
      */
-    public static Map<GBAFEClass, GBAFEClassData> getClassMapForGame(PromotionOptions options, ClassDataLoader classData, GameType type) {
+    public Map<GBAFEClass, GBAFEClassData> getClassMapForGame() {
         Map<Integer, GBAFEClassData> classes = classData.getClassMap();
         Map<GBAFEClass, GBAFEClassData> ret = new HashMap<>();
         switch (type) {
             case FE6:
                 FE6Data.CharacterClass.allValidClasses.stream().forEach(c -> ret.put(c, classes.get(c.ID)));
-                if (PromotionOptions.Mode.RANDOM.equals(options.promotionMode) || options.allowEnemyOnlyPromotedClasses) {
+                if (PromotionOptions.Mode.RANDOM.equals(promotionOptions.promotionMode) || promotionOptions.allowEnemyOnlyPromotedClasses) {
                     ret.put(FE6Data.CharacterClass.KING, classes.get(FE6Data.CharacterClass.KING));
                 }
                 break;
             case FE7:
                 FE7Data.CharacterClass.allValidClasses.stream().forEach(c -> ret.put(c, classes.get(c.ID)));
-                if (PromotionOptions.Mode.RANDOM.equals(options.promotionMode) || options.allowEnemyOnlyPromotedClasses) {
+                if (PromotionOptions.Mode.RANDOM.equals(promotionOptions.promotionMode) || promotionOptions.allowEnemyOnlyPromotedClasses) {
                     FE7Data.CharacterClass.allSpecialEnemyClasses.stream().forEach(c -> ret.put(c, classes.get(c.ID)));
                 }
                 break;
             case FE8:
                 FE8Data.CharacterClass.allValidClasses.stream()
                         // Filter out monster classes if user doesn't want them
-                        .filter(c -> options.allowMonsterClasses || !CharacterClass.allMonsterClasses.contains(c))
+                        .filter(c -> promotionOptions.allowMonsterClasses || !CharacterClass.allMonsterClasses.contains(c))
                         .forEach(c -> ret.put(c, classes.get(c.ID)));
-                if (PromotionOptions.Mode.RANDOM.equals(options.promotionMode) || options.allowEnemyOnlyPromotedClasses) {
+                if (PromotionOptions.Mode.RANDOM.equals(promotionOptions.promotionMode) || promotionOptions.allowEnemyOnlyPromotedClasses) {
                     FE8Data.CharacterClass.allSpecialEnemyClasses.stream().forEach(c -> ret.put(c, classes.get(c.ID)));
                 }
                 break;

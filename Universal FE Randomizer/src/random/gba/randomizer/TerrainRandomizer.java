@@ -2,10 +2,14 @@ package random.gba.randomizer;
 
 import fedata.gba.general.TerrainTable;
 import fedata.gba.general.TerrainTable.TerrainTableType;
+import fedata.general.FEBase;
+import random.gba.loader.GBADataLoaders;
 import random.gba.loader.TerrainDataLoader;
 import ui.model.MinMaxOption;
 import ui.model.TerrainOptions;
 import util.DebugPrinter;
+import util.OptionRecorder;
+import util.OptionRecorder.GBAOptionBundle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,23 +18,18 @@ import java.util.stream.Collectors;
 
 import static util.DebugPrinter.Key.GBA_TERRAIN_RANDOMIZER;
 
-public class TerrainRandomizer {
+public class TerrainRandomizer extends AbstractGBARandomizerComponent{
 
     public static int rngSalt = 564894;
 
-    private final Random rng;
-    private final TerrainDataLoader terrainData;
-    private final TerrainOptions options;
     private final List<Integer> untraversableTiles = new ArrayList<>();
     private final List<Integer> excludedTiles = new ArrayList<>();
     private final List<Integer> flierOnlyTiles = new ArrayList<>();
     private final List<Integer> safeTiles = new ArrayList<>();
     private final int numberTiles;
 
-    public TerrainRandomizer(Random rng, TerrainDataLoader terrainData, TerrainOptions options) {
-        this.rng = rng;
-        this.terrainData = terrainData;
-        this.options = options;
+    public TerrainRandomizer(GBAOptionBundle allOptions, GBADataLoaders dataLoaders, Random rng, FEBase.GameType type) {
+        super(allOptions, dataLoaders, rng, type);
 
         // All tables in a game have the same number of entries, so this is fine
         numberTiles = terrainData.dataLengthBytes;
@@ -44,38 +43,38 @@ public class TerrainRandomizer {
                 excludedTiles.add(i);
                 continue;
             }
-            if (rng.nextInt(100) > options.effectChance) {
+            if (rng.nextInt(100) > terrainOptions.effectChance) {
                 excludedTiles.add(i);
             }
         }
     }
 
     public void randomize() {
-        if (options.randomizeMovementCost) {
-            handleTable(TerrainTableType.MOVEMENT, options.movementCostRange, true);
-            handleTable(TerrainTableType.MOVEMENT_RAIN, options.movementCostRange, true);
-            handleTable(TerrainTableType.MOVEMENT_SNOW, options.movementCostRange, true);
+        if (terrainOptions.randomizeMovementCost) {
+            handleTable(TerrainTableType.MOVEMENT, terrainOptions.movementCostRange, true);
+            handleTable(TerrainTableType.MOVEMENT_RAIN, terrainOptions.movementCostRange, true);
+            handleTable(TerrainTableType.MOVEMENT_SNOW, terrainOptions.movementCostRange, true);
         }
 
 
-        if (options.randomizeHealing) {
-            handleTable(TerrainTableType.HEALING, options.healingRange, false, options.healingChance);
+        if (terrainOptions.randomizeHealing) {
+            handleTable(TerrainTableType.HEALING, terrainOptions.healingRange, false, terrainOptions.healingChance);
         }
 
-        if (options.randomizeStatusRecovery) {
-            handleTable(TerrainTableType.STATUS_RECOVERY, new MinMaxOption(0, 1), false, options.statusRestoreChance);
+        if (terrainOptions.randomizeStatusRecovery) {
+            handleTable(TerrainTableType.STATUS_RECOVERY, new MinMaxOption(0, 1), false, terrainOptions.statusRestoreChance);
         }
 
-        if (options.randomizeAvoid) {
-            handleTable(TerrainTableType.AVOID, options.avoidRange, true, options.avoidChance);
+        if (terrainOptions.randomizeAvoid) {
+            handleTable(TerrainTableType.AVOID, terrainOptions.avoidRange, true, terrainOptions.avoidChance);
         }
 
-        if (options.randomizeDef) {
-            handleTable(TerrainTableType.DEF, options.defRange, true, options.defChance);
+        if (terrainOptions.randomizeDef) {
+            handleTable(TerrainTableType.DEF, terrainOptions.defRange, true, terrainOptions.defChance);
         }
 
-        if (options.randomizeRes) {
-            handleTable(TerrainTableType.RES, options.resRange, true, options.resChance);
+        if (terrainOptions.randomizeRes) {
+            handleTable(TerrainTableType.RES, terrainOptions.resRange, true, terrainOptions.resChance);
         }
     }
 
@@ -154,7 +153,7 @@ public class TerrainRandomizer {
             for (int i = 1; i < table.getData().length; i++) {
                 int oldValue = table.dataAtIndex(i);
                 if (untraversableTiles.contains(i) // never randomize completely untraversable Tiles
-                        || (options.keepSafeTiles && safeTiles.contains(i)) // If the user chose, keep things such as roads / plains safe
+                        || (terrainOptions.keepSafeTiles && safeTiles.contains(i)) // If the user chose, keep things such as roads / plains safe
                         || excludedTiles.contains(i) // if this tile was randomized to not have a change, skip it
                         || tableType.mayNotChange(oldValue) // Exclude all Untraversable Tiles
                 ) {

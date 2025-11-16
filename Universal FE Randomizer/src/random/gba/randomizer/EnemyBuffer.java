@@ -13,20 +13,25 @@ import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
-import random.gba.loader.ChapterLoader;
-import random.gba.loader.CharacterDataLoader;
-import random.gba.loader.ClassDataLoader;
-import random.gba.loader.ItemDataLoader;
+import fedata.general.FEBase;
+import random.gba.loader.*;
 import ui.model.EnemyOptions;
+import util.OptionRecorder;
 
-public class EnemyBuffer {
+public class EnemyBuffer extends AbstractGBARandomizerComponent{
 	
 	static final int rngSalt = 252521;
 	
 	// Enemy growths top out at 127. Going above that will underflow back to 0.
 	private static int MaximumGrowthRate = 127;
 
-	public static void buffMinionGrowthRates(int buffAmount, ClassDataLoader classData, EnemyOptions.BuffStats buffStats) {
+    public EnemyBuffer(OptionRecorder.GBAOptionBundle allOptions, GBADataLoaders dataLoaders, Random rng, FEBase.GameType type) {
+        super(allOptions, dataLoaders, rng, type);
+    }
+
+    public void buffMinionGrowthRates() {
+        EnemyOptions.BuffStats buffStats = enemies.minionBuffStats;
+        int buffAmount = enemies.minionBuff;
 		GBAFEClassData[] allClasses = classData.allClasses();
 		for (GBAFEClassData currentClass : allClasses) {
 			if (buffStats.hp) { currentClass.setHPGrowth(Math.min(MaximumGrowthRate, currentClass.getHPGrowth() + buffAmount)); }
@@ -39,8 +44,10 @@ public class EnemyBuffer {
 		}
 	}
 	
-	public static void buffBossStatsLinearly(int maxBuff, CharacterDataLoader charData, ClassDataLoader classData, EnemyOptions.BuffStats buffStats) {
-		for (GBAFECharacterData boss : charData.bossCharacters()) {
+	public void buffBossStatsLinearly() {
+        EnemyOptions.BuffStats buffStats = enemies.bossBuffStats;
+        int maxBuff = enemies.bossBuff;
+        for (GBAFECharacterData boss : charData.bossCharacters()) {
 			double appearanceFactor = (double)charData.appearanceChapter(boss) / (double)charData.chapterCount();
 			int buffAmount = Math.min(maxBuff, (int)Math.ceil(maxBuff * appearanceFactor));
 			GBAFEClassData bossClass = classData.classForID(boss.getClassID());
@@ -54,9 +61,10 @@ public class EnemyBuffer {
 		}
 	}
 	
-	public static void scaleEnemyGrowthRates(int scaleAmount, ClassDataLoader classData, EnemyOptions.BuffStats buffStats) {
-		GBAFEClassData[] allClasses = classData.allClasses();
-		double multiplier = 1 + (double)scaleAmount / 100.0;
+	public void scaleEnemyGrowthRates() {
+        EnemyOptions.BuffStats buffStats = enemies.minionBuffStats;
+        GBAFEClassData[] allClasses = classData.allClasses();
+		double multiplier = 1 + enemies.minionBuff / 100.0d;
 		for (GBAFEClassData currentClass : allClasses) {
 			if (buffStats.hp) { currentClass.setHPGrowth(Math.min(MaximumGrowthRate, (int)(currentClass.getHPGrowth() * multiplier))); }
 			if (buffStats.str) { currentClass.setSTRGrowth(Math.min(MaximumGrowthRate, (int)(currentClass.getSTRGrowth() * multiplier))); }
@@ -68,7 +76,9 @@ public class EnemyBuffer {
 		}
 	}
 	
-	public static void buffBossStatsWithEaseInOutCurve(int maxBuff, CharacterDataLoader charData, ClassDataLoader classData, EnemyOptions.BuffStats buffStats) {
+	public void buffBossStatsWithEaseInOutCurve() {
+        EnemyOptions.BuffStats buffStats = enemies.bossBuffStats;
+        int maxBuff = enemies.bossBuff;
 		for (GBAFECharacterData boss : charData.bossCharacters()) {
 			double appearanceFactor = (double)charData.appearanceChapter(boss) / (double)charData.chapterCount();
 			appearanceFactor = Math.pow(appearanceFactor, 2) / (Math.pow(appearanceFactor, 2) + Math.pow(1 - appearanceFactor, 2));
@@ -84,12 +94,11 @@ public class EnemyBuffer {
 		}
 	}
 	
-	public static void improveMinionWeapons(int probability, CharacterDataLoader charactersData, 
-			ClassDataLoader classData, ChapterLoader chapterData, ItemDataLoader itemData, Random rng) {
+	public void improveMinionWeapons() {
 		for (GBAFEChapterData chapter : chapterData.allChapters()) {
 			for (GBAFEChapterUnitData chapterUnit : chapter.allUnits()) {
 				int leaderID = chapterUnit.getLeaderID();
-				if (charactersData.isBossCharacterID(leaderID) || (chapterUnit.isEnemy() && chapterUnit.isAutolevel())) {
+				if (charData.isBossCharacterID(leaderID) || (chapterUnit.isEnemy() && chapterUnit.isAutolevel())) {
 					GBAFEClassData originalClass = classData.classForID(chapterUnit.getStartingClass());
 					if (originalClass == null) {
 						continue;
@@ -99,8 +108,8 @@ public class EnemyBuffer {
 						continue;
 					}
 					
-					if (rng.nextInt(100) < probability) {
-						upgradeWeapons(chapterUnit, classData, itemData, rng);
+					if (rng.nextInt(100) < enemies.minionImprovementChance) {
+						upgradeWeapons(chapterUnit);
 					}
 				}
 			}
@@ -119,15 +128,14 @@ public class EnemyBuffer {
 		}
 	}
 	
-	public static void improveBossWeapons(int probability, CharacterDataLoader charactersData, 
-			ClassDataLoader classData, ChapterLoader chapterData, ItemDataLoader itemData, Random rng) {
+	public void improveBossWeapons() {
 		for (GBAFEChapterData chapter : chapterData.allChapters()) {
 			for (GBAFEChapterUnitData chapterUnit : chapter.allUnits()) {
-				if (!charactersData.isBossCharacterID(chapterUnit.getCharacterNumber())) { continue; }
-				if (rng.nextInt(100) < probability) {
-					upgradeWeapons(chapterUnit, classData, itemData, rng);
+				if (!charData.isBossCharacterID(chapterUnit.getCharacterNumber())) { continue; }
+				if (rng.nextInt(100) < enemies.bossImprovementChance) {
+					upgradeWeapons(chapterUnit);
 				}
-				GBAFECharacterData character = charactersData.characterWithID(chapterUnit.getCharacterNumber());
+				GBAFECharacterData character = charData.characterWithID(chapterUnit.getCharacterNumber());
 				if (character.getSwordRank() > 0) { character.setSwordRank(itemData.getHighestWeaponRank()); }
 				if (character.getLanceRank() > 0) { character.setLanceRank(itemData.getHighestWeaponRank()); }
 				if (character.getAxeRank() > 0) { character.setAxeRank(itemData.getHighestWeaponRank()); }
@@ -140,12 +148,12 @@ public class EnemyBuffer {
 		}
 	}
 	
-	private static void upgradeWeapons(GBAFEChapterUnitData unit, ClassDataLoader classData, ItemDataLoader itemData, Random rng) {
+	private void upgradeWeapons(GBAFEChapterUnitData unit) {
 		GBAFEClassData unitClass = classData.classForID(unit.getStartingClass());
 		int item1ID = unit.getItem1();
 		GBAFEItemData item1 = itemData.itemWithID(item1ID);
 		if (item1 != null && item1.getType() != WeaponType.NOT_A_WEAPON && item1.getWeaponRank() != WeaponRank.A) {
-			GBAFEItemData[] improvedItems = availableItems(unitClass, item1, itemData);
+			GBAFEItemData[] improvedItems = availableItems(unitClass, item1);
 			if (improvedItems.length > 0) {
 				GBAFEItemData replacementItem = improvedItems[rng.nextInt(improvedItems.length)];
 				unit.setItem1(replacementItem.getID());
@@ -155,7 +163,7 @@ public class EnemyBuffer {
 		int item2ID = unit.getItem2();
 		GBAFEItemData item2 = itemData.itemWithID(item2ID);
 		if (item2 != null && item2.getType() != WeaponType.NOT_A_WEAPON && item2.getWeaponRank() != WeaponRank.A) {
-			GBAFEItemData[] improvedItems = availableItems(unitClass, item2, itemData);
+			GBAFEItemData[] improvedItems = availableItems(unitClass, item2);
 			if (improvedItems.length > 0) {
 				GBAFEItemData replacementItem = improvedItems[rng.nextInt(improvedItems.length)];
 				unit.setItem2(replacementItem.getID());
@@ -165,7 +173,7 @@ public class EnemyBuffer {
 		int item3ID = unit.getItem3();
 		GBAFEItemData item3 = itemData.itemWithID(item3ID);
 		if (item3 != null && item3.getType() != WeaponType.NOT_A_WEAPON && item3.getWeaponRank() != WeaponRank.A) {
-			GBAFEItemData[] improvedItems = availableItems(unitClass, item3, itemData);
+			GBAFEItemData[] improvedItems = availableItems(unitClass, item3);
 			if (improvedItems.length > 0) {
 				GBAFEItemData replacementItem = improvedItems[rng.nextInt(improvedItems.length)];
 				unit.setItem3(replacementItem.getID());
@@ -175,7 +183,7 @@ public class EnemyBuffer {
 		int item4ID = unit.getItem4();
 		GBAFEItemData item4 = itemData.itemWithID(item4ID);
 		if (item4 != null && item4.getType() != WeaponType.NOT_A_WEAPON && item4.getWeaponRank() != WeaponRank.A) {
-			GBAFEItemData[] improvedItems = availableItems(unitClass, item4, itemData);
+			GBAFEItemData[] improvedItems = availableItems(unitClass, item4);
 			if (improvedItems.length > 0) {
 				GBAFEItemData replacementItem = improvedItems[rng.nextInt(improvedItems.length)];
 				unit.setItem4(replacementItem.getID());
@@ -183,7 +191,7 @@ public class EnemyBuffer {
 		}
 	}
 	
-	private static GBAFEItemData[] availableItems(GBAFEClassData characterClass, GBAFEItemData original, ItemDataLoader itemData) {
+	private GBAFEItemData[] availableItems(GBAFEClassData characterClass, GBAFEItemData original) {
 		WeaponRank rank = WeaponRank.nextRankHigherThanRank(original.getWeaponRank());
 		WeaponType type = original.getType();
 		

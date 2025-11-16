@@ -36,6 +36,7 @@ public class LegacyViewContainer extends YuneViewContainer {
     private RecruitmentView recruitView;
     private ItemAssignmentView itemAssignmentView;
     private CharacterShufflingView characterShufflingView;
+    private AutoLevelingParametersView autoLevelingParametersView;
     private PrfView prfView;
     private StatboosterView statboosterView;
 
@@ -256,6 +257,15 @@ public class LegacyViewContainer extends YuneViewContainer {
         characterShufflingData.left = new FormAttachment(recruitView.group, 0, SWT.LEFT);
         characterShufflingData.right = new FormAttachment(recruitView.group, 0, SWT.RIGHT);
         characterShufflingView.group.setLayoutData(characterShufflingData);
+
+        autoLevelingParametersView = new AutoLevelingParametersView(this, type);
+        autoLevelingParametersView.group.setSize(200, 200);
+
+        FormData autoLevelingParametersViewData = new FormData();
+        characterShufflingData.top = new FormAttachment(characterShufflingView.group, 0);
+        characterShufflingData.left = new FormAttachment(characterShufflingView.group, 0, SWT.LEFT);
+        characterShufflingData.right = new FormAttachment(characterShufflingView.group, 0, SWT.RIGHT);
+        autoLevelingParametersView.group.setLayoutData(autoLevelingParametersViewData);
 
         // --------------------------------------------------------------
         // Start of Column 6

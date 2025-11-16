@@ -3,6 +3,7 @@ package ui.tabs.gba;
 import fedata.general.FEBase;
 import org.eclipse.swt.custom.CTabFolder;
 import ui.common.YuneTabItem;
+import ui.views.AutoLevelingParametersView;
 import ui.views.CharacterShufflingView;
 import ui.views.ClassesView;
 import ui.views.RecruitmentView;
@@ -25,11 +26,13 @@ public class GBACharactersTab extends YuneTabItem {
 
     private RecruitmentView recruitment;
     private CharacterShufflingView shuffling;
+    private AutoLevelingParametersView autoLeveling;
 
     @Override
     protected void compose() {
         recruitment = addView(new RecruitmentView(container, type));
         shuffling = addView(new CharacterShufflingView(container, type));
+        autoLeveling = addView(new AutoLevelingParametersView(container, type));
     }
 
     @Override

@@ -4,16 +4,24 @@ import java.util.Random;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
+import fedata.general.FEBase;
 import random.gba.loader.CharacterDataLoader;
 import random.gba.loader.ClassDataLoader;
+import random.gba.loader.GBADataLoaders;
+import util.OptionRecorder;
+import util.OptionRecorder.GBAOptionBundle;
 import util.WhyDoesJavaNotHaveThese;
 
-public class BasesRandomizer {
+public class BasesRandomizer extends AbstractGBARandomizerComponent {
 	
 	public static int rngSalt = 9001;
-	
-	public static void randomizeBasesByRedistribution(int variance, CharacterDataLoader charactersData, ClassDataLoader classData, Random rng) {
-		GBAFECharacterData[] allPlayableCharacters = charactersData.playableCharacters();
+
+    public BasesRandomizer(GBADataLoaders dataLoaders, GBAOptionBundle options, Random rng, FEBase.GameType type) {
+        super(options, dataLoaders, rng, type);
+    }
+
+    public void randomizeBasesByRedistribution() {
+		GBAFECharacterData[] allPlayableCharacters = dataLoaders.getCharData().playableCharacters();
 		for (GBAFECharacterData character : allPlayableCharacters) {
 			int baseTotal = character.getBaseHP() + character.getBaseSTR() + character.getBaseSKL() + character.getBaseSPD() + character.getBaseDEF() +
 					character.getBaseRES() + character.getBaseLCK();
@@ -23,9 +31,9 @@ public class BasesRandomizer {
 			
 			int randomNum = rng.nextInt(2);
 			if (randomNum == 0) {
-				baseTotal += rng.nextInt(variance + 1);
+				baseTotal += rng.nextInt(bases.redistributionOption.variance + 1);
 			} else {
-				baseTotal -= rng.nextInt(variance + 1);
+				baseTotal -= rng.nextInt(bases.redistributionOption.variance + 1);
 			}
 			
 			int newHPBase = 0;
@@ -111,11 +119,11 @@ public class BasesRandomizer {
 			character.setBaseRES(newRESBase);
 		}
 		
-		charactersData.commit();
+		charData.commit();
 	}
 	
-	public static void randomizeBasesByRandomDelta(int maxDelta, CharacterDataLoader charactersData, ClassDataLoader classData, Random rng) {
-		GBAFECharacterData[] allPlayableCharacters = charactersData.playableCharacters();
+	public void randomizeBasesByRandomDelta() {
+		GBAFECharacterData[] allPlayableCharacters = charData.playableCharacters();
 		for (GBAFECharacterData character : allPlayableCharacters) {
 			
 			int classID = character.getClassID();
@@ -134,7 +142,7 @@ public class BasesRandomizer {
 			if (randomNum == 0) {
 				multiplier = -1;
 			}
-			newHPBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newHPBase, 
+			newHPBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(bases.deltaOption.variance + 1) * multiplier + newHPBase,
 					-1 * charClass.getBaseHP(), charClass.getMaxHP() - charClass.getBaseHP());
 			
 			randomNum = rng.nextInt(2);
@@ -143,7 +151,7 @@ public class BasesRandomizer {
 			} else {
 				multiplier = -1;
 			}
-			newSTRBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newSTRBase, 
+			newSTRBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(bases.deltaOption.variance + 1) * multiplier + newSTRBase,
 					-1 * charClass.getBaseSTR(), charClass.getMaxSTR() - charClass.getBaseSTR());
 			
 			randomNum = rng.nextInt(2);
@@ -152,7 +160,7 @@ public class BasesRandomizer {
 			} else {
 				multiplier = -1;
 			}
-			newSKLBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newSKLBase, 
+			newSKLBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(bases.deltaOption.variance + 1) * multiplier + newSKLBase,
 					-1 * charClass.getBaseSKL(), charClass.getMaxSKL() - charClass.getBaseSKL());
 			
 			randomNum = rng.nextInt(2);
@@ -161,7 +169,7 @@ public class BasesRandomizer {
 			} else {
 				multiplier = -1;
 			}
-			newSPDBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newSPDBase, 
+			newSPDBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(bases.deltaOption.variance + 1) * multiplier + newSPDBase,
 					-1 * charClass.getBaseSPD(), charClass.getMaxSPD() - charClass.getBaseSPD());
 			
 			randomNum = rng.nextInt(2);
@@ -170,7 +178,7 @@ public class BasesRandomizer {
 			} else {
 				multiplier = -1;
 			}
-			newLCKBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newLCKBase, 
+			newLCKBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(bases.deltaOption.variance + 1) * multiplier + newLCKBase,
 					-1 * charClass.getBaseLCK(), charClass.getMaxLCK() - charClass.getBaseLCK());
 			
 			randomNum = rng.nextInt(2);
@@ -179,7 +187,7 @@ public class BasesRandomizer {
 			} else {
 				multiplier = -1;
 			}
-			newDEFBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newDEFBase, 
+			newDEFBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(bases.deltaOption.variance + 1) * multiplier + newDEFBase,
 					-1 * charClass.getBaseDEF(), charClass.getMaxDEF() - charClass.getBaseDEF());
 			
 			randomNum = rng.nextInt(2);
@@ -188,7 +196,7 @@ public class BasesRandomizer {
 			} else {
 				multiplier = -1;
 			}
-			newRESBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(maxDelta + 1) * multiplier + newRESBase, 
+			newRESBase = WhyDoesJavaNotHaveThese.clamp(rng.nextInt(bases.deltaOption.variance + 1) * multiplier + newRESBase,
 					-1 * charClass.getBaseRES(), charClass.getMaxRES() - charClass.getBaseRES());
 			
 			character.setBaseHP(newHPBase);
@@ -200,6 +208,6 @@ public class BasesRandomizer {
 			character.setBaseRES(newRESBase);
 		}
 		
-		charactersData.commit();
+		charData.commit();
 	}
 }

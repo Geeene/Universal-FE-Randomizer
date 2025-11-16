@@ -4,24 +4,29 @@ import java.util.Random;
 
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
-import random.gba.loader.CharacterDataLoader;
-import random.gba.loader.ClassDataLoader;
+import fedata.general.FEBase;
+import random.gba.loader.GBADataLoaders;
+import util.OptionRecorder;
 
-public class CharacterRandomizer {
+public class CharacterRandomizer extends AbstractGBARandomizerComponent {
 	
 	public static int rngSalt = 9002;
-	
-	public static void randomizeAffinity(CharacterDataLoader charactersData, Random rng) {
-		GBAFECharacterData[] playableCharacters = charactersData.playableCharacters();
-		int[] values = charactersData.validAffinityValues();
+
+    public CharacterRandomizer(OptionRecorder.GBAOptionBundle allOptions, GBADataLoaders dataLoaders, Random rng, FEBase.GameType type) {
+        super(allOptions, dataLoaders, rng, type);
+    }
+
+    public void randomizeAffinity() {
+		GBAFECharacterData[] playableCharacters = charData.playableCharacters();
+		int[] values = charData.validAffinityValues();
 		for (GBAFECharacterData character : playableCharacters) {
 			int affinity = values[rng.nextInt(values.length)];
 			character.setAffinityValue(affinity);
 		}
 	}
 	
-	public static void randomizeConstitution(int minCON, int variance, CharacterDataLoader characterData, ClassDataLoader classData, Random rng) {
-		GBAFECharacterData[] allPlayableCharacters = characterData.playableCharacters();
+	public void randomizeConstitution() {
+		GBAFECharacterData[] allPlayableCharacters = charData.playableCharacters();
 		for (GBAFECharacterData character : allPlayableCharacters) {
 			GBAFEClassData currentClass = classData.classForID(character.getClassID());
 			int classCON = currentClass.getCON();
@@ -32,12 +37,12 @@ public class CharacterRandomizer {
 			
 			int direction = rng.nextInt(2);
 			if (direction == 0) {
-				newCON += rng.nextInt(variance);
+				newCON += rng.nextInt(otherCharacterOptions.constitutionOptions.variance);
 			} else {
-				newCON -= rng.nextInt(variance);
+				newCON -= rng.nextInt(otherCharacterOptions.constitutionOptions.variance);
 			}
 			
-			newCON = Math.max(minCON, newCON);
+			newCON = Math.max(otherCharacterOptions.constitutionOptions.minValue, newCON);
 			
 			int newPersonalCON = newCON - classCON;
 			

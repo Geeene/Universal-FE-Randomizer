@@ -13,10 +13,7 @@ import org.eclipse.swt.widgets.Listener;
 import fedata.general.FEBase.GameType;
 import ui.common.GuiUtil;
 import ui.model.RecruitmentOptions;
-import ui.model.RecruitmentOptions.BaseStatAutolevelType;
 import ui.model.RecruitmentOptions.ClassMode;
-import ui.model.RecruitmentOptions.GrowthAdjustmentMode;
-import ui.model.RecruitmentOptions.StatAdjustmentMode;
 
 public class RecruitmentView extends YuneView<RecruitmentOptions> {
 	
@@ -360,28 +357,14 @@ public class RecruitmentView extends YuneView<RecruitmentOptions> {
 	@Override
 	public RecruitmentOptions getOptions() {
 		boolean isEnabled = enableButton.getSelection();
-		StatAdjustmentMode basesMode = null;
-		BaseStatAutolevelType autolevel = null;
-		if (autolevelButton.getSelection()) { 
-			basesMode = StatAdjustmentMode.AUTOLEVEL;
-			if (autolevelOriginalButton.getSelection()) { autolevel = BaseStatAutolevelType.USE_ORIGINAL; }
-			else if (autolevelNewButton.getSelection()) { autolevel = BaseStatAutolevelType.USE_NEW; }
-		}
-		else if (absoluteButton.getSelection()) { basesMode = StatAdjustmentMode.MATCH_SLOT; }
-		else if (relativeButton.getSelection()) { basesMode = StatAdjustmentMode.RELATIVE_TO_SLOT; }
-		
-		GrowthAdjustmentMode growthMode = null;
-		if (fillGrowthButton.getSelection()) { growthMode = GrowthAdjustmentMode.USE_FILL; }
-		else if (slotGrowthButton.getSelection()) { growthMode = GrowthAdjustmentMode.USE_SLOT; }
-		else if (slotRelativeGrowthButton.getSelection()) { growthMode = GrowthAdjustmentMode.RELATIVE_TO_SLOT; }
-		
+
 		boolean extras = includeExtras != null ? includeExtras.getSelection() : false;
 		
 		ClassMode classMode = ClassMode.USE_FILL;
 		if (slotClassButton.getSelection()) { classMode = ClassMode.USE_SLOT; }
 		
-		if (isEnabled && basesMode != null && growthMode != null) {
-			return new RecruitmentOptions(growthMode, basesMode, autolevel, classMode, lordsButton.getSelection(), thievesButton.getSelection(), specialButton.getSelection(), crossGenderButton.getSelection(), extras, keepDescriptions.getSelection());
+		if (isEnabled) {
+			return new RecruitmentOptions(classMode, lordsButton.getSelection(), thievesButton.getSelection(), specialButton.getSelection(), crossGenderButton.getSelection(), extras, keepDescriptions.getSelection());
 		} else {
 			return null;
 		}
@@ -422,17 +405,6 @@ public class RecruitmentView extends YuneView<RecruitmentOptions> {
 		}
 
 		if (optionsAvailable) {
-			fillGrowthButton.setSelection(options.growthMode == GrowthAdjustmentMode.USE_FILL || options.growthMode == null);
-			slotGrowthButton.setSelection(options.growthMode == GrowthAdjustmentMode.USE_SLOT);
-			slotRelativeGrowthButton.setSelection(options.growthMode == GrowthAdjustmentMode.RELATIVE_TO_SLOT);
-			
-			autolevelButton.setSelection(options.baseMode == StatAdjustmentMode.AUTOLEVEL || options.baseMode == null);
-			absoluteButton.setSelection(options.baseMode == StatAdjustmentMode.MATCH_SLOT);
-			relativeButton.setSelection(options.baseMode == StatAdjustmentMode.RELATIVE_TO_SLOT);
-			
-			autolevelOriginalButton.setSelection(options.autolevelMode == BaseStatAutolevelType.USE_ORIGINAL || options.autolevelMode == null);
-			autolevelNewButton.setSelection(options.autolevelMode == BaseStatAutolevelType.USE_NEW);
-			
 			fillClassButton.setSelection(options.classMode == ClassMode.USE_FILL || options.classMode == null);
 			slotClassButton.setSelection(options.classMode == ClassMode.USE_SLOT);
 			

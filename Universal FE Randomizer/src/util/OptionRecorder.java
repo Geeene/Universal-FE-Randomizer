@@ -42,6 +42,7 @@ public class OptionRecorder {
         public StatboosterOptions statboosters;
         public PromotionOptions promotionOptions;
         public TerrainOptions terrainOptions;
+        public AutolevelingParameters autolevelingParameters;
         public boolean raceMode;
     }
 

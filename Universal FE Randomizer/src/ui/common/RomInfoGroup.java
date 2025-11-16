@@ -129,4 +129,8 @@ public class RomInfoGroup extends YuneGroup {
     public boolean isRaceMode() {
         return raceMode.getSelection();
     }
+
+    public void setRaceMode(boolean newValue) {
+        raceMode.setSelection(newValue);
+    }
 }

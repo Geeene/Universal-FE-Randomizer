@@ -21,9 +21,9 @@ import ui.general.ModalButtonListener;
 import ui.general.ProgressModal;
 import util.Bundle;
 import util.OptionRecorder;
+import util.OptionRecorder.GBAOptionBundle;
 import util.SeedGenerator;
 
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -275,6 +275,9 @@ public class MainView implements FileFlowDelegate {
         final Bundle bundle = OptionRecorder.getBundle(loadedGameType);
         // if there are options saved for the game, then we can load them
         if (bundle != null) {
+            if (bundle instanceof GBAOptionBundle) {
+                romInfo.setRaceMode(((GBAOptionBundle) bundle).raceMode);
+            }
             viewContainer.preloadOptions(bundle);
         }
     }

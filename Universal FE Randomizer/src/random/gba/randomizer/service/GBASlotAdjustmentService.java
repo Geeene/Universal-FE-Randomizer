@@ -77,10 +77,10 @@ public class GBASlotAdjustmentService {
 						if (!promotionOptions.isEmpty()) {
 							targetClass = promotionOptions.get(rng.nextInt(promotionOptions.size()));
 							dto.levelAdjustment += 10;
-						}
-					}
-				} else {
-					targetClass = fillSourceClass;
+                        }
+                    }
+                } else {
+                    targetClass = fillSourceClass;
 				}
 				
 				if (options!= null && options.classMode == ClassMode.USE_SLOT) {

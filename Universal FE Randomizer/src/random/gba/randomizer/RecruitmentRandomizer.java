@@ -21,6 +21,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static ui.model.AutolevelingParameters.BaseStatAutolevelType.USE_ORIGINAL;
+
 public class RecruitmentRandomizer extends AbstractGBARandomizerComponent {
 	
 	static final int rngSalt = 911;
@@ -413,88 +415,31 @@ public class RecruitmentRandomizer extends AbstractGBARandomizerComponent {
 			
 			DebugPrinter.log(DebugPrinter.Key.GBA_RANDOM_RECRUITMENT, "Slot level: " + Integer.toString(targetLevel) + "\tFill Level: " + Integer.toString(sourceLevel));
 			
-			List<GBAFEStatDto> promoBonuses = new ArrayList<>();
 
-			
-			
-			ClassAdjustmentDto adjustmentDAO = GBASlotAdjustmentService.handleClassAdjustment(targetLevel, sourceLevel, shouldBePromoted, 
-					isPromoted, rng, classData, targetClass, fillSourceClass, fill, slotSourceClass, 
-					recruitOptions, textData, DebugPrinter.Key.GBA_RANDOM_RECRUITMENT);
+			ClassAdjustmentDto adjustmentDAO = GBASlotAdjustmentService.instance.handleClassAdjustment(targetLevel, sourceLevel, fillSourceClass, fill, slotSourceClass, targetClass, DebugPrinter.Key.GBA_RANDOM_RECRUITMENT);
 			targetClass = adjustmentDAO.targetClass;
 			int levelsToAdd = adjustmentDAO.levelAdjustment;
-			promoBonuses =  adjustmentDAO.promoBonuses;
+			List<GBAFEStatDto> promoBonuses =  adjustmentDAO.promoBonuses;
 			
 			setSlotClass(linkedSlot, targetClass);
-			
-			GBAFEStatDto targetGrowths;
-			switch(autolevelingParameters.growthMode) {
-				case AutolevelingParameters.GrowthAdjustmentMode.USE_SLOT:
-					targetGrowths = fill.getGrowths();
-					break;
-				case RELATIVE_TO_SLOT:
-					List<Integer> mappedStats = RelativeValueMapper.mappedValues(Arrays.asList(slot.getHPGrowth(), slot.getSTRGrowth(), slot.getSKLGrowth(), slot.getSPDGrowth(), slot.getDEFGrowth(), slot.getRESGrowth(), slot.getLCKGrowth()), 
-							Arrays.asList(fill.getHPGrowth(), fill.getSTRGrowth(), fill.getSKLGrowth(), fill.getSPDGrowth(), fill.getDEFGrowth(), fill.getRESGrowth(), fill.getLCKGrowth()));
-					targetGrowths = new GBAFEStatDto(mappedStats.get(0), mappedStats.get(1), mappedStats.get(2), mappedStats.get(3), mappedStats.get(4), mappedStats.get(5), mappedStats.get(6));
-					break;
-				case USE_FILL:
-				default:
-					targetGrowths = fill.getGrowths();
-			
-			}
-			
-			GBAFEStatDto newStats = new GBAFEStatDto();
-			
-			if (autolevelingParameters.baseMode == StatAdjustmentMode.AUTOLEVEL) {
-				GBAFEStatDto growthsToUse = autolevelingParameters.autolevelMode == BaseStatAutolevelType.USE_NEW ? targetGrowths : fill.getGrowths();
-				
-				// Calculate the auto leveled personal bases
-				newStats = GBASlotAdjustmentService.autolevel(fill.getBases(), growthsToUse, 
-						promoBonuses, levelsToAdd, targetClass, DebugPrinter.Key.GBA_RANDOM_RECRUITMENT); 
-				
-				DebugPrinter.log(DebugPrinter.Key.GBA_RANDOM_RECRUITMENT, String.format("== New Bases ==%n%s", newStats.toString()));
-			} else if (autolevelingParameters.baseMode == StatAdjustmentMode.MATCH_SLOT) {
-				newStats.add(linkedSlot.getBases()) // Add the original Bases of the slot
-					    .add(targetClass.getBases()) // Add the stats from the new class
-					    .subtract(slotSourceClass.getBases()); // remove the stats from the original class
-			} else if (autolevelingParameters.baseMode == StatAdjustmentMode.RELATIVE_TO_SLOT) {
-				newStats = new GBAFEStatDto();
-				newStats.hp = linkedSlot.getBaseHP() + slotSourceClass.getBaseHP() - targetClass.getBaseHP(); // Keep HP the same logic as above.
-				GBAFEStatDto slotStats = linkedSlot.getBases().add(slotSourceClass.getBases());
-				GBAFEStatDto fillStats = fill.getBases().add(fillSourceClass.getBases());
+			GBAFEStatDto growthsForAutolevels = autolevelingParameters.autolevelMode == USE_ORIGINAL ? slot.getGrowths() : fill.getGrowths();
+            GBAFEStatDto newStats = GBASlotAdjustmentService.instance.performStatAdjustment(fill.getGrowths(), linkedSlot, growthsForAutolevels, adjustmentDAO, slotSourceClass, fillSourceClass);
+            linkedSlot.setBases(newStats);
 
-				// Set HP to an absurdly high value so that the HP values will be mapped to one another and we can ignore them easily
-				slotStats.hp = Integer.MAX_VALUE; 
-				fillStats.hp = Integer.MAX_VALUE; 
-				
-				
-				List<Integer> mappedStats = RelativeValueMapper.mappedValues(slotStats.asList(), fillStats.asList()); 
-				
-				// ignore the index 0 in the list, as that is HP, and will be handled separately
-				newStats.str = Math.max(mappedStats.get(1) - targetClass.getBaseSTR(), -1 * targetClass.getBaseSTR());
-				newStats.skl = Math.max(mappedStats.get(2) - targetClass.getBaseSKL(), -1 * targetClass.getBaseSKL());
-				newStats.spd = Math.max(mappedStats.get(3) - targetClass.getBaseSPD(), -1 * targetClass.getBaseSPD());
-				newStats.def = Math.max(mappedStats.get(4) - targetClass.getBaseDEF(), -1 * targetClass.getBaseDEF());
-				newStats.res = Math.max(mappedStats.get(5) - targetClass.getBaseRES(), -1 * targetClass.getBaseRES());
-				newStats.lck = Math.max(mappedStats.get(6) - targetClass.getBaseLCK(), -1 * targetClass.getBaseLCK());
-			} else {
-				assert false : "Invalid stat adjustment mode for random recruitment.";
-			}
-			linkedSlot.setBases(newStats);
-			
-			// Transfer growths.
-			linkedSlot.setGrowths(targetGrowths);
-			
+            // Transfer growths.
+            GBAFEStatDto targetGrowths = autolevelingParameters.growthMode.getGrowthsByMode(slot, fill);
+            linkedSlot.setGrowths(targetGrowths);
+
 			linkedSlot.setConstitution(fill.getConstitution());
 			linkedSlot.setAffinityValue(fill.getAffinityValue());
 		}
 	}
-	
 
-	private void setSlotClass(GBAFECharacterData slot, GBAFEClassData targetClass) {
+    private void setSlotClass(GBAFECharacterData slot, GBAFEClassData targetClass) {
 		int oldClassID = slot.getClassID();
 		GBAFEClassData originalClass = classData.classForID(oldClassID);
 		slot.setClassID(targetClass.getID());
-		GBASlotAdjustmentService.transferWeaponRanks(slot, originalClass, targetClass, rng);
+		GBASlotAdjustmentService.instance.transferWeaponRanks(slot, originalClass, targetClass);
 		ItemAssignmentService.instance.assignNewItems(slot, targetClass);
 	}
 }

@@ -2255,6 +2255,10 @@ public class FE6Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	public Set<GBAFEClass> allSpecialEnemyClasses() {
 		return new HashSet<>(CharacterClass.allSpecialEnemyClasses);
 	}
+    @Override
+    public Set<GBAFEClass> allSpecialPlayerClasses() {
+        return new HashSet<>(FE6Data.CharacterClass.allSpecialClasses);
+    }
 
 	public Set<GBAFEClass> meleeSupportedClasses() {
 		Set<GBAFEClass> classes = new HashSet<GBAFEClass>(CharacterClass.allValidClasses);

@@ -26,6 +26,8 @@ public class ItemAssignmentService extends AbstractGBARandomizerComponent {
 
     public static ItemAssignmentService instance;
 
+    public static final int rngSalt = 458489168;
+
     public ItemAssignmentService(OptionRecorder.GBAOptionBundle allOptions, GBADataLoaders dataLoaders, Random rng, FEBase.GameType type) {
         super(allOptions, dataLoaders, rng, type);
         instance = this;

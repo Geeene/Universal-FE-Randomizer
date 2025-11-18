@@ -431,7 +431,7 @@ public class ClassRandomizer extends AbstractGBARandomizerComponent{
 		if (charData.isBossCharacterID(character.getID())) {
 			transferBossWeaponLevels(character, sourceClass, targetClass);
 		} else {
-			GBASlotAdjustmentService.transferWeaponRanks(character, sourceClass, targetClass, rng);
+			GBASlotAdjustmentService.instance.transferWeaponRanks(character, sourceClass, targetClass);
 		}
 		switch (classes.basesTransfer) {
 			case ADJUST_TO_MATCH:
@@ -582,7 +582,7 @@ public class ClassRandomizer extends AbstractGBARandomizerComponent{
 	private void updateMinionCharacterToClass(GBAFEChapterUnitData chapterUnit, GBAFECharacterData minionCharacter, GBAFEClassData sourceClass, GBAFEClassData targetClass) {
 		// Write this into the character data.
 		minionCharacter.setClassID(targetClass.getID());
-		GBASlotAdjustmentService.transferWeaponRanks(minionCharacter, sourceClass, targetClass, rng);
+		GBASlotAdjustmentService.instance.transferWeaponRanks(minionCharacter, sourceClass, targetClass);
 		chapterUnit.setStartingClass(targetClass.getID());
         ItemAssignmentService.instance.validateMinionInventory(chapterUnit, minionCharacter);
 	}

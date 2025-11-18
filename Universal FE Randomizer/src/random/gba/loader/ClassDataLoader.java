@@ -435,4 +435,8 @@ public class ClassDataLoader {
 			}
 		}
 	}
+
+    public boolean isSpecialLevelingClass(GBAFEClassData charClass) {
+        return provider.allSpecialPlayerClasses().stream().anyMatch(feClass -> feClass.getID() == charClass.getID());
+    }
 }

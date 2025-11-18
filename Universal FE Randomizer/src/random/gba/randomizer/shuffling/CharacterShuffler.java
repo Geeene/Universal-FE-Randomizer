@@ -3,8 +3,8 @@ package random.gba.randomizer.shuffling;
 import fedata.gba.*;
 import fedata.gba.general.PaletteColor;
 import fedata.general.FEBase.GameType;
-import io.FileHandler;
-import random.gba.loader.*;
+import random.gba.loader.GBADataLoaders;
+import random.gba.randomizer.AbstractGBARandomizerComponent;
 import random.gba.randomizer.service.ClassAdjustmentDto;
 import random.gba.randomizer.service.GBASlotAdjustmentService;
 import random.gba.randomizer.service.GBATextReplacementService;
@@ -14,7 +14,6 @@ import random.gba.randomizer.shuffling.data.PortraitFormat;
 import random.general.PoolDistributor;
 import ui.model.CharacterShufflingOptions;
 import ui.model.CharacterShufflingOptions.ShuffleLevelingMode;
-import ui.model.ItemAssignmentOptions;
 import util.*;
 
 import java.io.IOException;
@@ -22,54 +21,31 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import static ui.model.AutolevelingParameters.BaseStatAutolevelType.USE_ORIGINAL;
+
 /**
  * Randomizer that shuffles in characters from different games into the rom
  * being randomized.
  * <p>
  * The characters can dynamically be configured in json files.
  */
-public class CharacterShuffler {
+public class CharacterShuffler extends AbstractGBARandomizerComponent {
 
-	private GameType type;
-	private CharacterDataLoader characterData;
-	private TextLoader textData;
-	private Random rng;
-	private FileHandler fileHandler;
-	private PortraitDataLoader portraitData;
-	private FreeSpaceManager freeSpace;
-	private ChapterLoader chapterData;
-	private ClassDataLoader classData;
-	private CharacterShufflingOptions options;
-	private ItemAssignmentOptions inventoryOptions;
-	private ItemDataLoader itemData;
 	private boolean somethingShuffled;
 
-	public CharacterShuffler(GameType type, CharacterDataLoader characterData, TextLoader textData, Random rng,
-							 FileHandler fileHandler, PortraitDataLoader portraitData, FreeSpaceManager freeSpace,
-							 ChapterLoader chapterData, ClassDataLoader classData, CharacterShufflingOptions options,
-							 ItemAssignmentOptions inventoryOptions, ItemDataLoader itemData) {
-		this.type = type;
-		this.characterData = characterData;
-		this.textData = textData;
-		this.rng = rng;
-		this.fileHandler = fileHandler;
-		this.portraitData = portraitData;
-		this.freeSpace = freeSpace;
-		this.chapterData = chapterData;
-		this.classData = classData;
-		this.options = options;
-		this.inventoryOptions = inventoryOptions;
-		this.itemData = itemData;
-	}
 
-	public static final int rngSalt = 18489;
+    public CharacterShuffler(OptionRecorder.GBAOptionBundle allOptions, GBADataLoaders dataLoaders, Random rng, GameType type) {
+        super(allOptions, dataLoaders, rng, type);
+    }
+
+    public static final int rngSalt = 18489;
 
 	@SuppressWarnings("unused")
 	public void shuffleCharacters() {
 		// Shuffle in character from the other games
-		if (options.getIncludedShuffles().size() != 0) {
+		if (shufflingOptions.getIncludedShuffles().size() != 0) {
 			List<GBACrossGameData> availableChars = new ArrayList<GBACrossGameData>();
-			for (String includedCharacters : options.getIncludedShuffles()) {
+			for (String includedCharacters : shufflingOptions.getIncludedShuffles()) {
 				availableChars.addAll(CharacterImporter.importCharacterDataFromFiles(includedCharacters));
 			}
 
@@ -87,7 +63,7 @@ public class CharacterShuffler {
 
 	private void shuffleByForcedSlot(Map<Integer, GBACrossGameData> forcedSlots) {
 		for (Entry<Integer, GBACrossGameData> e : forcedSlots.entrySet()) {
-			GBAFECharacterData slot = characterData.characterWithID(e.getKey());
+			GBAFECharacterData slot = charData.characterWithID(e.getKey());
 			shuffleImpl(slot, e.getValue());
 		}
 	}
@@ -99,7 +75,7 @@ public class CharacterShuffler {
 		// Don't include playable post game characters into the ones that could be replaced,
 		// as most files probably won't be played enough to unlock those anyway.
 		List<GBAFECharacterData> characterPool = new ArrayList<GBAFECharacterData>(
-				characterData.canonicalPlayableCharacters(false));
+				charData.canonicalPlayableCharacters(false));
 
 		for (GBAFECharacterData slot : characterPool) {
 
@@ -107,7 +83,7 @@ public class CharacterShuffler {
 				continue;
 
 			// Determine if the current character should be replaced
-			if (options.getChance() < rng.nextInt(100)) {
+			if (shufflingOptions.getChance() < rng.nextInt(100)) {
 				continue;
 			}
 
@@ -155,32 +131,32 @@ public class CharacterShuffler {
 		updateName(slot, crossGameData);
 
 		// Give an option to not change the description to help with keeping track of which character is which
-		if (options.shouldChangeDescription()) {
+		if (shufflingOptions.shouldChangeDescription()) {
 			// [0x1] = new line
 			// [X] = end of text segment?
 			textData.setStringAtIndex(slot.getDescriptionIndex(), String.format("%s[0x1]%s[X]", crossGameData.description1, crossGameData.description2));
 		}
 
-		for (GBAFECharacterData linkedSlot : characterData.linkedCharactersForCharacter(slot)) {
+		for (GBAFECharacterData linkedSlot : charData.linkedCharactersForCharacter(slot)) {
 			linkedSlot.prepareForClassRandomization();
-			// linkedSlot.setGrowths(crossGameData.growths);
-			linkedSlot.setConstitution(crossGameData.constitution);
-			linkedSlot.setIsLord(characterData.isLordCharacterID(slot.getID()));
+            linkedSlot.setConstitution(crossGameData.constitution);
+            linkedSlot.setIsLord(charData.isLordCharacterID(slot.getID()));
 
-			// (e) Update the bases, and potentially auto level the Character to the level of the slot.
-			// Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
-			GBAFEClassData targetClassCurrentSlot = updateBases(textData,rng, classData, options, linkedSlot, crossGameData, targetClassId, targetClass, sourceClass, linkedSlot.getLevel());
-			int targetClassIdCurrentSlot = targetClassCurrentSlot.getID();
+            // (e) Update the bases, and potentially auto level the Character to the level of the slot.
+            // Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
+            GBAFEClassData targetClassCurrentSlot = updateBases(linkedSlot, crossGameData, targetClassId, targetClass, sourceClass, linkedSlot.getLevel());
+            int targetClassIdCurrentSlot = targetClassCurrentSlot.getID();
+            linkedSlot.setGrowths(autolevelingParameters.growthMode.getGrowthsByMode(linkedSlot.getGrowths(), crossGameData.growths));
 
-			updateWeaponRanks(linkedSlot, crossGameData, sourceClass, targetClassCurrentSlot, rng);
+			updateWeaponRanks(linkedSlot, crossGameData, sourceClass, targetClassCurrentSlot);
 			linkedSlot.setConstitution(crossGameData.constitution - targetClassCurrentSlot.getCON());
-			linkedSlot.setIsLord(characterData.isLordCharacterID(slotReference.getID()));
+			linkedSlot.setIsLord(charData.isLordCharacterID(slotReference.getID()));
 
 			GBAFECharacterData.Affinity resolvedAffinity = GBAFECharacterData.Affinity.affinityForString(crossGameData.affinity);
 			if (resolvedAffinity == GBAFECharacterData.Affinity.NONE) {
 				DebugPrinter.error("Invalid affinity detected for " + crossGameData.name + ": " + crossGameData.affinity);
 			} else {
-				linkedSlot.setAffinityValue(characterData.getAffinityValue(resolvedAffinity));
+				linkedSlot.setAffinityValue(charData.getAffinityValue(resolvedAffinity));
 			}
 
 			// (f) Update the class for all the slots of the character
@@ -214,10 +190,10 @@ public class CharacterShuffler {
 	/**
 	 * Sets the configured Weapon ranks (clamped to ensure it's between 0 and 255) for the given character
 	 */
-	private void updateWeaponRanks(GBAFECharacterData character, GBACrossGameData crossGameData, GBAFEClassData sourceClass, GBAFEClassData targetClass, Random rng) {
-		if (ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())) {
+	private void updateWeaponRanks(GBAFECharacterData character, GBACrossGameData crossGameData, GBAFEClassData sourceClass, GBAFEClassData targetClass) {
+		if (ShuffleLevelingMode.AUTOLEVEL.equals(shufflingOptions.getLevelingMode())) {
 			// Adjust the weapon ranks to the new class
-			GBASlotAdjustmentService.transferWeaponRanks(character, sourceClass, targetClass, rng);
+			GBASlotAdjustmentService.instance.transferWeaponRanks(character, sourceClass, targetClass);
 		} else {
 			// If we don't auto level transfer 1 to 1 while making sure it doesn't over or underflow
 			character.setSwordRank(WhyDoesJavaNotHaveThese.clamp(crossGameData.weaponRanks[0], 0, 255));
@@ -245,35 +221,28 @@ public class CharacterShuffler {
 	/**
 	 * Update the class and stats for the slot based on the configured personal bases and potentially autolevels and promotion bonuses
 	 */
-	private static GBAFEClassData updateBases(TextLoader textData, Random rng, ClassDataLoader classData,
-			CharacterShufflingOptions options, GBAFECharacterData slot, GBACrossGameData chara, int targetClassId,
+	private GBAFEClassData updateBases(GBAFECharacterData slot, GBACrossGameData chara, int targetClassId,
 			GBAFEClassData targetClass, GBAFEClassData sourceClass, int slotLevel) {
 
 		// These are effective bases (personal + class)
 		GBAFEStatDto oldBases = chara.bases;
 
-		if (CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(options.getLevelingMode())) {
+		if (CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(shufflingOptions.getLevelingMode())) {
 			slot.setBases(oldBases.subtract(targetClass.getBases()));
-		} else if (CharacterShufflingOptions.ShuffleLevelingMode.AUTOLEVEL.equals(options.getLevelingMode())) {
-
-			boolean shouldBePromoted = classData.isPromotedClass(slot.getClassID());
-
-			slot.setClassID(targetClassId);
-
-			boolean isPromoted = classData.isPromotedClass(targetClassId);
+		} else if (CharacterShufflingOptions.ShuffleLevelingMode.AUTOLEVEL.equals(shufflingOptions.getLevelingMode())) {
 
 			// Decide Target Class / Promotions or Demotions / Number of Autolevels
-			ClassAdjustmentDto adjustmentDAO = GBASlotAdjustmentService.handleClassAdjustment(slotLevel,
-					chara.level, shouldBePromoted, isPromoted, rng, classData, null, targetClass, slot,
-					sourceClass, null, textData, DebugPrinter.Key.GBA_CHARACTER_SHUFFLING);
+			ClassAdjustmentDto adjustmentDAO = GBASlotAdjustmentService.instance.handleClassAdjustment(slotLevel,
+					chara.level, targetClass, slot,
+					sourceClass, null, DebugPrinter.Key.GBA_CHARACTER_SHUFFLING);
 			targetClass = adjustmentDAO.targetClass;
 			slot.setClassID(targetClass.getID());
 
-			// Calculate the auto leveled personal bases
-			GBAFEStatDto newPersonalBases = GBASlotAdjustmentService.autolevel(oldBases, slot.getGrowths(),
-					adjustmentDAO.promoBonuses, adjustmentDAO.levelAdjustment, targetClass, DebugPrinter.Key.GBA_CHARACTER_SHUFFLING);
+            GBAFEStatDto newGrowths = autolevelingParameters.growthMode.getGrowthsByMode(slot.getGrowths(), chara.growths);
+            GBAFEStatDto growthsForAutolevels = autolevelingParameters.autolevelMode == USE_ORIGINAL ? slot.getGrowths() : newGrowths;
 
-			slot.setBases(newPersonalBases);
+            GBAFEStatDto newPersonalBases = GBASlotAdjustmentService.instance.performStatAdjustment(oldBases, slot, growthsForAutolevels, adjustmentDAO, sourceClass, targetClass);
+            slot.setBases(newPersonalBases);
 		}
 
 		return targetClass;
@@ -296,7 +265,7 @@ public class CharacterShuffler {
 					chapterUnit.setStartingClass(targetClass);
 
 					// If the user selects that the Units should be inserted as they are (which would be dumb) then update the level.
-					if (ui.model.CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(options.getLevelingMode())) {
+					if (ui.model.CharacterShufflingOptions.ShuffleLevelingMode.UNCHANGED.equals(shufflingOptions.getLevelingMode())) {
 						chapterUnit.setStartingLevel(replacement.level);
 					}
 

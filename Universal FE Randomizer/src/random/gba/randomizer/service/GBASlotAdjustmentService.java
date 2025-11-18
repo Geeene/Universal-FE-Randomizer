@@ -1,23 +1,27 @@
 package random.gba.randomizer.service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.stream.Collectors;
-
 import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEStatDto;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponRanks;
 import fedata.gba.general.WeaponType;
-import random.gba.loader.ClassDataLoader;
-import random.gba.loader.TextLoader;
-import ui.model.RecruitmentOptions;
+import fedata.general.FEBase;
+import random.gba.loader.GBADataLoaders;
+import random.gba.randomizer.AbstractGBARandomizerComponent;
+import random.general.RelativeValueMapper;
 import ui.model.RecruitmentOptions.ClassMode;
 import util.DebugPrinter;
+import util.OptionRecorder;
 
-public class GBASlotAdjustmentService {
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+
+public class GBASlotAdjustmentService extends AbstractGBARandomizerComponent {
+
+    public static GBASlotAdjustmentService instance;
 
 	/**
 	 * This Constant is for the level at which a character is assumed to be promoted with regards to Slot Adjustment.
@@ -33,22 +37,31 @@ public class GBASlotAdjustmentService {
 	 * and characters that get negative levels don't become too weak. 
 	 */
 	private static final int AUTOLEVEL_REDUCTION_THRESHOLD = 10;
-	
-	/**
+
+    public GBASlotAdjustmentService(OptionRecorder.GBAOptionBundle allOptions, GBADataLoaders dataLoaders, Random rng, FEBase.GameType type) {
+        super(allOptions, dataLoaders, rng, type);
+        this.instance = this;
+    }
+
+    /**
 	 * Used by Recruitment Randomization and Character Shuffling to Calculate the following information:
 	 * 
 	 * A) Should the character, be demoted, promoted or are they already in the right tier of class.
 	 * B) How many auto levels should they receive
 	 * C) Which promotion bonuses will they receive
+     *
+     * @param alreadyChosenTargetClass used for characters which appear in multiple places, so that each instance has the same promotion
 	 */
-	public static ClassAdjustmentDto handleClassAdjustment(int targetLevel, int sourceLevel,
-			boolean shouldBePromoted, boolean isPromoted, Random rng, ClassDataLoader classData, 
-			GBAFEClassData targetClass, GBAFEClassData fillSourceClass, GBAFECharacterData fill, 
-			GBAFEClassData slotSourceClass, RecruitmentOptions options, TextLoader textData, DebugPrinter.Key key) {
+	public ClassAdjustmentDto handleClassAdjustment(int toLevel, int fromLevel,
+			GBAFEClassData fillSourceClass, GBAFECharacterData fill,
+			GBAFEClassData slotSourceClass, GBAFEClassData alreadyChosenTargetClass, DebugPrinter.Key key) {
 		ClassAdjustmentDto dto = new ClassAdjustmentDto();
-		if (shouldBePromoted) { targetLevel += ASSUMED_PROMOTION_LEVEL; }
-		if (isPromoted) { sourceLevel += ASSUMED_PROMOTION_LEVEL; }
-		dto.levelAdjustment = targetLevel - sourceLevel;
+        boolean shouldBePromoted = classData.isPromotedClass(slotSourceClass.getID());
+        boolean isPromoted = classData.isPromotedClass(fillSourceClass.getID());
+        // if we have a level 15 unpromoted unit (e.g. Hugh FE6, and they replace a lvl 1 promoted unit, don't give them -4 levels, just promote)
+		if (shouldBePromoted) { toLevel += Math.max(ASSUMED_PROMOTION_LEVEL, fromLevel); }
+		if (isPromoted && !classData.isSpecialLevelingClass(fillSourceClass)) { fromLevel += ASSUMED_PROMOTION_LEVEL; }
+		dto.levelAdjustment = toLevel - fromLevel;
 		
 		// To make newly created pre-promotes not completely busted (since they probably had higher growths than real pre-promotes)
 		// we'll subtract a few levels from their autoleveling amount, assuming they get a lot (like 10).
@@ -60,82 +73,131 @@ public class GBASlotAdjustmentService {
 			DebugPrinter.log(key, "Dropping 3 less levels for newly demoted units.");
 			dto.levelAdjustment  += 3;
 		}
-		
+
 		if (shouldBePromoted && !isPromoted) {
 			DebugPrinter.log(key, "Promoting [" + textData.getStringAtIndex(fill.getNameIndex(), true) + "]");
 			// Promote Fill.
-			if (targetClass == null) {
-				List<GBAFEClassData> promotionOptions = classData.promotionOptions(fill.getClassID());
-				DebugPrinter.log(key, "Promotion Options: [" + String.join(", ", promotionOptions.stream().map(charClass -> (textData.getStringAtIndex(charClass.getNameIndex(), true))).collect(Collectors.toList())) + "]");
-				if (!promotionOptions.isEmpty()) {
-					targetClass = promotionOptions.get(rng.nextInt(promotionOptions.size()));
-					if (!classData.isPromotedClass(targetClass.getID())) {
-						// This is really only for FE8. If a trainee switches into a promoted unit, there's two promotions that need to be done.
-						dto.promoBonuses.add(targetClass.getPromoBonuses());
-						promotionOptions = classData.promotionOptions(targetClass.getID());
-						DebugPrinter.log(key, "Promotion Options: [" + String.join(", ", promotionOptions.stream().map(charClass -> (textData.getStringAtIndex(charClass.getNameIndex(), true))).collect(Collectors.toList())) + "]");
-						if (!promotionOptions.isEmpty()) {
-							targetClass = promotionOptions.get(rng.nextInt(promotionOptions.size()));
-							dto.levelAdjustment += 10;
+			if (alreadyChosenTargetClass == null) {
+                List<GBAFEClassData> promotionOptions = classData.promotionOptions(fillSourceClass.getID());
+                DebugPrinter.log(key, "Promotion Options: [" + String.join(", ", promotionOptions.stream().map(charClass -> (textData.getStringAtIndex(charClass.getNameIndex(), true))).collect(Collectors.toList())) + "]");
+                if (!promotionOptions.isEmpty()) {
+                    alreadyChosenTargetClass = promotionOptions.get(rng.nextInt(promotionOptions.size()));
+                    if (!classData.isPromotedClass(alreadyChosenTargetClass.getID())) {
+                        // This is really only for FE8. If a trainee switches into a promoted unit, there's two promotions that need to be done.
+                        dto.promoBonuses.add(alreadyChosenTargetClass.getPromoBonuses());
+                        promotionOptions = classData.promotionOptions(alreadyChosenTargetClass.getID());
+                        DebugPrinter.log(key, "Promotion Options: [" + String.join(", ", promotionOptions.stream().map(charClass -> (textData.getStringAtIndex(charClass.getNameIndex(), true))).collect(Collectors.toList())) + "]");
+                        if (!promotionOptions.isEmpty()) {
+                            alreadyChosenTargetClass = promotionOptions.get(rng.nextInt(promotionOptions.size()));
+                            dto.levelAdjustment += 10;
                         }
                     }
                 } else {
-                    targetClass = fillSourceClass;
-				}
-				
-				if (options!= null && options.classMode == ClassMode.USE_SLOT) {
-					targetClass = slotSourceClass;
-				}
-				
-				DebugPrinter.log(key, "Selected Class: " + (targetClass != null ? textData.getStringAtIndex(targetClass.getNameIndex(), true) : "None"));
+                    alreadyChosenTargetClass = fillSourceClass;
+                }
+
+                if (recruitOptions != null && recruitOptions.classMode == ClassMode.USE_SLOT) {
+                    alreadyChosenTargetClass = slotSourceClass;
+                }
+
+                DebugPrinter.log(key, "Selected Class: " + (alreadyChosenTargetClass != null ? textData.getStringAtIndex(alreadyChosenTargetClass.getNameIndex(), true) : "None"));
 			}
-			dto.promoBonuses.add(targetClass.getPromoBonuses());
+			dto.promoBonuses.add(alreadyChosenTargetClass.getPromoBonuses());
 			// For some reason, some promoted class seem to have lower bases than their unpromoted variants (FE8 lords are an example). If they are lower, adjust upwards.
-			dto.promoBonuses.add(GBAFEStatDto.upAdjust(targetClass.getBases(), fillSourceClass.getBases()));
+			dto.promoBonuses.add(GBAFEStatDto.upAdjust(alreadyChosenTargetClass.getBases(), fillSourceClass.getBases()));
 
 		} else if (!shouldBePromoted && isPromoted) {
 			DebugPrinter.log(key, "Demoting [" + textData.getStringAtIndex(fill.getNameIndex(), true) + "]");
 			// Demote Fill.
-			if (targetClass == null) {
-				List<GBAFEClassData> demotionOptions = classData.demotionOptions(fill.getClassID());
-				DebugPrinter.log(key, "Demotion Options: [" + String.join(", ", demotionOptions.stream().map(charClass -> (textData.getStringAtIndex(charClass.getNameIndex(), true))).collect(Collectors.toList())) + "]");
-				if (!demotionOptions.isEmpty()) {
-					targetClass = demotionOptions.get(rng.nextInt(demotionOptions.size()));
-				} else {
-					targetClass = fillSourceClass;
-				}
-				
-				if (options!= null && options.classMode == ClassMode.USE_SLOT) {
-					targetClass = slotSourceClass;
-				}
-				
-				DebugPrinter.log(key, "Selected Class: " + (targetClass != null ? textData.getStringAtIndex(targetClass.getNameIndex(), true) : "None"));
+			if (alreadyChosenTargetClass == null) {
+                List<GBAFEClassData> demotionOptions = classData.demotionOptions(fill.getClassID());
+                DebugPrinter.log(key, "Demotion Options: [" + String.join(", ", demotionOptions.stream().map(charClass -> (textData.getStringAtIndex(charClass.getNameIndex(), true))).collect(Collectors.toList())) + "]");
+                if (!demotionOptions.isEmpty()) {
+                    alreadyChosenTargetClass = demotionOptions.get(rng.nextInt(demotionOptions.size()));
+                } else {
+                    alreadyChosenTargetClass = fillSourceClass;
+                }
+
+                if (recruitOptions != null && recruitOptions.classMode == ClassMode.USE_SLOT) {
+                    alreadyChosenTargetClass = slotSourceClass;
+                }
+
+                DebugPrinter.log(key, "Selected Class: " + (alreadyChosenTargetClass != null ? textData.getStringAtIndex(alreadyChosenTargetClass.getNameIndex(), true) : "None"));
 			}
-			
+
 			dto.promoBonuses.add(fillSourceClass.getPromoBonuses()
 					.multiply(-1)); // Multiply the promotion bonuses with -1 to make them demotion bonuses 
 			
 			// For some reason, some promoted class seem to have lower bases than their unpromoted variants (FE8 lords are an example). If our demoted class has higher bases, adjust downwards
-			dto.promoBonuses.add(GBAFEStatDto.downAdjust(targetClass.getBases(), fillSourceClass.getBases()));
+			dto.promoBonuses.add(GBAFEStatDto.downAdjust(alreadyChosenTargetClass.getBases(), fillSourceClass.getBases()));
 		} else {
 			// Transfer as is.
-			if (targetClass == null) {
-				if (options!= null && options.classMode == ClassMode.USE_FILL) { targetClass = fillSourceClass; }
-				else if (options!= null && options.classMode == ClassMode.USE_SLOT) { targetClass = slotSourceClass; }
-				else {
-					// This shouldn't happen, but default to fill.
-					targetClass = fillSourceClass;
-				}
-			}
-			DebugPrinter.log(key, "No Promotion/Demotion Needed. Class: " + (targetClass != null ? textData.getStringAtIndex(targetClass.getNameIndex(), true) : "None"));
+            if (alreadyChosenTargetClass == null) {
+                if (recruitOptions != null && recruitOptions.classMode == ClassMode.USE_FILL) { alreadyChosenTargetClass = fillSourceClass; }
+                else if (recruitOptions != null && recruitOptions.classMode == ClassMode.USE_SLOT) { alreadyChosenTargetClass = slotSourceClass; }
+                else {
+                    // This shouldn't happen, but default to fill.
+                    alreadyChosenTargetClass = fillSourceClass;
+                }
+            }
+			DebugPrinter.log(key, "No Promotion/Demotion Needed. Class: " + (alreadyChosenTargetClass != null ? textData.getStringAtIndex(alreadyChosenTargetClass.getNameIndex(), true) : "None"));
 		}
 		
-		dto.targetClass = targetClass;
+		dto.targetClass = alreadyChosenTargetClass;
 		
 		DebugPrinter.log(key, String.format("Finished Adjusting class for character %s, fill sourceClass %s, slot source class %s, new class %s, should receive %d auto levels, and Promotion bonuses: %s",
 				fill.displayString(), fillSourceClass.displayString(), slotSourceClass.displayString(), dto.targetClass.displayString(), dto.levelAdjustment, dto.promoBonuses));
 		return dto;
 	}
+
+
+    public GBAFEStatDto performStatAdjustment(GBAFEStatDto fillStats, GBAFECharacterData linkedSlot, GBAFEStatDto growthsForAutoLevels, ClassAdjustmentDto classAdjustmentDto,
+                                              GBAFEClassData slotSourceClass, GBAFEClassData fillSourceClass) {
+        GBAFEStatDto newStats = new GBAFEStatDto();
+        List<GBAFEStatDto> promoBonuses = classAdjustmentDto.promoBonuses;
+        GBAFEClassData targetClass = classAdjustmentDto.targetClass;
+        int levelsToAdd = classAdjustmentDto.levelAdjustment;
+        switch(autolevelingParameters.baseMode) {
+            case AUTOLEVEL:
+
+                // Calculate the auto leveled personal bases
+                newStats = autolevel(fillStats, growthsForAutoLevels,
+                        promoBonuses, levelsToAdd, targetClass, DebugPrinter.Key.GBA_RANDOM_RECRUITMENT);
+
+                DebugPrinter.log(DebugPrinter.Key.GBA_RANDOM_RECRUITMENT, String.format("== New Bases ==%n%s", newStats.toString()));
+                return newStats;
+
+            case MATCH_SLOT:
+                newStats.add(linkedSlot.getBases()) // Add the original Bases of the slot
+                        .add(targetClass.getBases()) // Add the stats from the new class
+                        .subtract(slotSourceClass.getBases()); // remove the stats from the original class
+                return newStats;
+
+            case RELATIVE_TO_SLOT:
+                newStats = new GBAFEStatDto();
+                newStats.hp = linkedSlot.getBaseHP() + slotSourceClass.getBaseHP() - targetClass.getBaseHP(); // Keep HP the same logic as above.
+                GBAFEStatDto slotStats = linkedSlot.getBases().add(slotSourceClass.getBases());
+
+                // Set HP to an absurdly high value so that the HP values will be mapped to one another and we can ignore them easily
+                slotStats.hp = Integer.MAX_VALUE;
+                fillStats.hp = Integer.MAX_VALUE;
+
+
+                List<Integer> mappedStats = RelativeValueMapper.mappedValues(slotStats.asList(), fillStats.asList());
+
+                // ignore the index 0 in the list, as that is HP, and will be handled separately
+                newStats.str = Math.max(mappedStats.get(1) - targetClass.getBaseSTR(), -1 * targetClass.getBaseSTR());
+                newStats.skl = Math.max(mappedStats.get(2) - targetClass.getBaseSKL(), -1 * targetClass.getBaseSKL());
+                newStats.spd = Math.max(mappedStats.get(3) - targetClass.getBaseSPD(), -1 * targetClass.getBaseSPD());
+                newStats.def = Math.max(mappedStats.get(4) - targetClass.getBaseDEF(), -1 * targetClass.getBaseDEF());
+                newStats.res = Math.max(mappedStats.get(5) - targetClass.getBaseRES(), -1 * targetClass.getBaseRES());
+                newStats.lck = Math.max(mappedStats.get(6) - targetClass.getBaseLCK(), -1 * targetClass.getBaseLCK());
+                return newStats;
+
+        }
+
+        return newStats;
+    }
 	
 
 	/**
@@ -153,7 +215,7 @@ public class GBASlotAdjustmentService {
 	 * @param key            the Key for which to log the changes
 	 * @return a GBAFEStatDto with the new personal bases.
 	 */
-	public static GBAFEStatDto autolevel(GBAFEStatDto bases, GBAFEStatDto growths, List<GBAFEStatDto> promoBonuses
+	public GBAFEStatDto autolevel(GBAFEStatDto bases, GBAFEStatDto growths, List<GBAFEStatDto> promoBonuses
 			, int levelsRequired, GBAFEClassData targetClass, DebugPrinter.Key key) {
 		// initialize a new DAO with the original Bases
 		GBAFEStatDto newBases = new GBAFEStatDto(bases);
@@ -183,7 +245,7 @@ public class GBASlotAdjustmentService {
 		return newBases;
 	}
 
-	public static GBAFEStatDto calculateLevels(GBAFEStatDto growths, int levelsRequired, DebugPrinter.Key key) {
+	public GBAFEStatDto calculateLevels(GBAFEStatDto growths, int levelsRequired, DebugPrinter.Key key) {
 		GBAFEStatDto levelGains = new GBAFEStatDto();
 		levelGains.hp += (int) Math.floor((growths.hp / 100.0) * levelsRequired);
 		levelGains.str += (int) Math.floor((growths.str / 100.0) * levelsRequired);
@@ -202,9 +264,8 @@ public class GBASlotAdjustmentService {
 	 * @param slot {@link GBAFECharacterData} which contains the original weapon ranks of the current character slot
 	 * @param sourceClass the sourceClass that the character originated from
 	 * @param targetClass the targetClass that the character is now
-	 * @param rng rng to decide what rank will be chosen for which weapon type, assuming there is more than one option
 	 */
-	public static void transferWeaponRanks(GBAFECharacterData slot, GBAFEClassData sourceClass, GBAFEClassData targetClass, Random rng) {
+	public void transferWeaponRanks(GBAFECharacterData slot, GBAFEClassData sourceClass, GBAFEClassData targetClass) {
 		WeaponRanks weaponRanks = new WeaponRanks(slot, sourceClass);
 		WeaponRanks targetClassRanks = targetClass.getWeaponRanks();
 

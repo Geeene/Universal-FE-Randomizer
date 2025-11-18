@@ -11,6 +11,7 @@ import fedata.gba.GBAFEStatDto;
  */
 public class ClassAdjustmentDto {
 	public int levelAdjustment;
+    public GBAFEClassData sourceClass;
 	public GBAFEClassData targetClass;
 	public List<GBAFEStatDto> promoBonuses = new ArrayList<>();
 }

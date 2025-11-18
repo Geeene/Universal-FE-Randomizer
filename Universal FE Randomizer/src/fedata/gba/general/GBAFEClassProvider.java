@@ -25,6 +25,7 @@ public interface GBAFEClassProvider {
 	
 	public Set<GBAFEClass> allValidClasses();
 	public Set<GBAFEClass> allSpecialEnemyClasses();
+	public Set<GBAFEClass> allSpecialPlayerClasses();
 	public Set<GBAFEClass> meleeSupportedClasses();
 	public Set<GBAFEClass> rangeSupportedClasses();
 	public Set<GBAFEClass> playerOnlyClasses();

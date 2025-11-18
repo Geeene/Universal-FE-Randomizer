@@ -1,5 +1,10 @@
 package random.gba.loader;
 
+import util.FreeSpaceManager;
+
+/**
+ * Convenience object bundling all GBA Dataloaders. SO that we can avoid passing 50 dataloaders into every method call :)
+ */
 public class GBADataLoaders {
     protected CharacterDataLoader charData;
     protected ClassDataLoader classData;
@@ -12,8 +17,15 @@ public class GBADataLoaders {
     protected MapSpriteManager mapSprites;
     protected PromotionDataLoader promotionData;
     protected TerrainDataLoader terrainData;
+    protected FreeSpaceManager freeSpace;
 
-    public GBADataLoaders(CharacterDataLoader charData, ClassDataLoader classData, ChapterLoader chapterData, ItemDataLoader itemData, PaletteLoader paletteData, TextLoader textData, PortraitDataLoader portraitData, StatboostLoader statboostData, MapSpriteManager mapSprites, PromotionDataLoader promotionData, TerrainDataLoader terrainData) {
+    /**
+     * Default constructor for all GBA Dataloaders
+     */
+    public GBADataLoaders(CharacterDataLoader charData, ClassDataLoader classData, ChapterLoader chapterData,
+                          ItemDataLoader itemData, PaletteLoader paletteData, TextLoader textData, PortraitDataLoader portraitData,
+                          StatboostLoader statboostData, MapSpriteManager mapSprites, PromotionDataLoader promotionData,
+                          TerrainDataLoader terrainData, FreeSpaceManager freeSpace) {
         this.charData = charData;
         this.classData = classData;
         this.chapterData = chapterData;
@@ -25,6 +37,7 @@ public class GBADataLoaders {
         this.mapSprites = mapSprites;
         this.promotionData = promotionData;
         this.terrainData = terrainData;
+        this.freeSpace = freeSpace;
     }
 
     public CharacterDataLoader getCharData() {
@@ -69,5 +82,9 @@ public class GBADataLoaders {
 
     public TerrainDataLoader getTerrainData() {
         return terrainData;
+    }
+
+    public FreeSpaceManager getFreeSpace() {
+        return freeSpace;
     }
 }

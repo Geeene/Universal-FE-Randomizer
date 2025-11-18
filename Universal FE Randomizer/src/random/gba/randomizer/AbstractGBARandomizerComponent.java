@@ -3,6 +3,7 @@ package random.gba.randomizer;
 import fedata.general.FEBase.GameType;
 import random.gba.loader.*;
 import ui.model.*;
+import util.FreeSpaceManager;
 import util.OptionRecorder.GBAOptionBundle;
 import util.SeedGenerator;
 
@@ -25,6 +26,7 @@ public abstract class AbstractGBARandomizerComponent {
     protected MapSpriteManager mapSprites;
     protected PromotionDataLoader promotionData;
     protected TerrainDataLoader terrainData;
+    protected FreeSpaceManager freeSpace;
 
     protected GBAOptionBundle allOptions;
     protected GrowthOptions growths;
@@ -79,6 +81,7 @@ public abstract class AbstractGBARandomizerComponent {
         mapSprites = dataLoaders.getMapSprites();
         promotionData = dataLoaders.getPromotionData();
         terrainData = dataLoaders.getTerrainData();
+        freeSpace = dataLoaders.getFreeSpace();
     }
 
     public void updateRng(int salt) {

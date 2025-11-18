@@ -400,6 +400,7 @@ public class LegacyViewContainer extends YuneViewContainer {
         bundle.statboosters = statboosterView.getOptions();
         bundle.promotionOptions = promotionView.getOptions();
         bundle.terrainOptions = terrainView.getOptions();
+        bundle.autolevelingParameters = autoLevelingParametersView.getOptions();
     }
 
     @Override

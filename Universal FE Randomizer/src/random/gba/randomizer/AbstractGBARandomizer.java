@@ -27,6 +27,8 @@ import io.FileHandler;
 import io.UPSPatcher;
 import random.exc.RandomizationStoppedException;
 import random.gba.loader.*;
+import random.gba.randomizer.service.GBASlotAdjustmentService;
+import random.gba.randomizer.service.ItemAssignmentService;
 import random.gba.randomizer.shuffling.CharacterShuffler;
 import random.general.Randomizer;
 import ui.model.*;
@@ -234,6 +236,11 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			
 			// (3) Run the dataloaders for the current game.
 			runRandomizationStep("loading data", 1, () -> runDataloaders());
+            dataLoaders = new GBADataLoaders(charData, classData, chapterData, itemData, paletteData, textData, portraitData, statboostData, mapSprites, promotionData, terrainData, freeSpace);
+            // instantiate the singleton for the Item Assignment
+            Random rng = new Random(SeedGenerator.generateSeedValue(seedString, ItemAssignmentService.rngSalt));
+            new ItemAssignmentService(allOptions, dataLoaders, rng, gameType);
+            new GBASlotAdjustmentService(allOptions, dataLoaders, rng, gameType);
 
 			// (4) Initialize the Record Keeper with the data from the original game
 			initializeRecordKeeper();
@@ -268,6 +275,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			updateStatusString("Done!");
 			updateProgress(1);
 			notifyCompletion(recordKeeper, null);
+            targetFileHandler.close();
 		} catch (RandomizationStoppedException e) {
 			notifyError(e.getMessage());
 		}
@@ -647,8 +655,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	public void shuffleCharactersIfNecessary() {
 		if (shufflingOptions != null && shufflingOptions.isShuffleEnabled()) {
 			Random rng = new Random(SeedGenerator.generateSeedValue(seedString, CharacterShuffler.rngSalt));
-			new CharacterShuffler(gameType, charData, textData, rng, sourceFileHandler, portraitData, freeSpace,
-					chapterData, classData, shufflingOptions, itemAssignmentOptions, itemData).shuffleCharacters();
+			new CharacterShuffler(allOptions, dataLoaders, rng, gameType).shuffleCharacters();
 			paletteFixRequired = true;
 		}
 	}

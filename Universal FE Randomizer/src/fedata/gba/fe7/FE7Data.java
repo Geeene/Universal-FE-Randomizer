@@ -2837,6 +2837,10 @@ public class FE7Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	public Set<GBAFEClass> allSpecialEnemyClasses() {
 		return new HashSet<>(CharacterClass.allSpecialEnemyClasses);
 	}
+    @Override
+    public Set<GBAFEClass> allSpecialPlayerClasses() {
+        return new HashSet<>(FE7Data.CharacterClass.allSpecialClasses);
+    }
 	public Set<GBAFEClass> meleeSupportedClasses() {
 		Set<GBAFEClass> classes = new HashSet<GBAFEClass>(CharacterClass.allValidClasses);
 		classes.removeAll(CharacterClass.rangedOnlyClasses);

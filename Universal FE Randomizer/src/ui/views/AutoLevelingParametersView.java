@@ -11,8 +11,6 @@ import ui.model.AutolevelingParameters;
 import ui.model.AutolevelingParameters.BaseStatAutolevelType;
 import ui.model.AutolevelingParameters.GrowthAdjustmentMode;
 import ui.model.AutolevelingParameters.StatAdjustmentMode;
-import ui.model.RecruitmentOptions;
-import ui.model.RecruitmentOptions.ClassMode;
 
 public class AutoLevelingParametersView extends YuneView<AutolevelingParameters> {
 
@@ -50,15 +48,11 @@ public class AutoLevelingParametersView extends YuneView<AutolevelingParameters>
 		growthContainer.setText("Growths");
 		growthContainer.setToolTipText("Determines how growths are assigned.");
 		growthContainer.setLayout(GuiUtil.formLayoutWithMargin());
-		
-		FormData groupData = new FormData();
-		groupData.right = new FormAttachment(100, -5);
-		growthContainer.setLayoutData(groupData);
-		
+
 		fillGrowthButton = new Button(growthContainer, SWT.RADIO);
 		fillGrowthButton.setText("Use Fill Growths");
 		fillGrowthButton.setToolTipText("Characters use their natural growth rates.");
-		fillGrowthButton.setEnabled(false);
+		fillGrowthButton.setEnabled(true);
 		fillGrowthButton.setSelection(true);
 		
 		FormData optionData = new FormData();
@@ -70,7 +64,7 @@ public class AutoLevelingParametersView extends YuneView<AutolevelingParameters>
 		slotGrowthButton = new Button(growthContainer, SWT.RADIO);
 		slotGrowthButton.setText("Use Slot Growths");
 		slotGrowthButton.setToolTipText("Characters use the growth rates of the character they replace.");
-		slotGrowthButton.setEnabled(false);
+		slotGrowthButton.setEnabled(true);
 		slotGrowthButton.setSelection(false);
 		
 		optionData = new FormData();
@@ -81,7 +75,7 @@ public class AutoLevelingParametersView extends YuneView<AutolevelingParameters>
 		slotRelativeGrowthButton = new Button(growthContainer, SWT.RADIO);
 		slotRelativeGrowthButton.setText("Slot Relative Growths");
 		slotRelativeGrowthButton.setToolTipText("Characters use the growth values of the character they replace,\nbut retain their own growth strengths and weaknesses.");
-		slotRelativeGrowthButton.setEnabled(false);
+		slotRelativeGrowthButton.setEnabled(true);
 		slotRelativeGrowthButton.setSelection(false);
 		
 		optionData = new FormData();
@@ -96,7 +90,7 @@ public class AutoLevelingParametersView extends YuneView<AutolevelingParameters>
 		basesContainer.setToolTipText("Determines how bases are transferred.");
 		basesContainer.setLayout(GuiUtil.formLayoutWithMargin());
 		
-		groupData = new FormData();
+		FormData groupData = new FormData();
 		groupData.left = new FormAttachment(growthContainer, 0, SWT.LEFT);
 		groupData.top = new FormAttachment(growthContainer, 10);
 		groupData.right = new FormAttachment(100, -5);
@@ -105,7 +99,7 @@ public class AutoLevelingParametersView extends YuneView<AutolevelingParameters>
 		autolevelButton = new Button(basesContainer, SWT.RADIO);
 		autolevelButton.setText("Autolevel Base Stats");
 		autolevelButton.setToolTipText("Uses the character's growth rates to simulate leveling up or down from the character's original stats to their target level.");
-		autolevelButton.setEnabled(false);
+		autolevelButton.setEnabled(true);
 		autolevelButton.setSelection(true);
 		autolevelButton.addListener(SWT.Selection, new Listener() {
 			@Override
@@ -148,7 +142,7 @@ public class AutoLevelingParametersView extends YuneView<AutolevelingParameters>
 		absoluteButton = new Button(basesContainer, SWT.RADIO);
 		absoluteButton.setText("Match Base Stats");
 		absoluteButton.setToolTipText("Sets a character's base stats to match the character they replace.");
-		absoluteButton.setEnabled(false);
+		absoluteButton.setEnabled(true);
 		absoluteButton.setSelection(false);
 		
 		optionData = new FormData();
@@ -159,7 +153,7 @@ public class AutoLevelingParametersView extends YuneView<AutolevelingParameters>
 		relativeButton = new Button(basesContainer, SWT.RADIO);
 		relativeButton.setText("Relative Base Stats");
 		relativeButton.setToolTipText("Pins the character's max stat to the max stat of the character they replace and retains the character's stat spread.");
-		relativeButton.setEnabled(false);
+		relativeButton.setEnabled(true);
 		relativeButton.setSelection(false);
 		
 		optionData = new FormData();
@@ -223,7 +217,6 @@ public class AutoLevelingParametersView extends YuneView<AutolevelingParameters>
 			
 			autolevelOriginalButton.setSelection(options.autolevelMode == BaseStatAutolevelType.USE_ORIGINAL || options.autolevelMode == null);
 			autolevelNewButton.setSelection(options.autolevelMode == BaseStatAutolevelType.USE_NEW);
-			
 
 			autolevelOriginalButton.setEnabled(autolevelButton.getSelection());
 			autolevelNewButton.setEnabled(autolevelButton.getSelection());

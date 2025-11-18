@@ -3004,7 +3004,13 @@ public class FE8Data implements GBAFECharacterProvider, GBAFEClassProvider, GBAF
 	public Set<GBAFEClass> allSpecialEnemyClasses() {
 		return new HashSet<>(CharacterClass.allSpecialEnemyClasses);
 	}
-	public Set<GBAFEClass> meleeSupportedClasses() {
+
+    @Override
+    public Set<GBAFEClass> allSpecialPlayerClasses() {
+        return new HashSet<>(CharacterClass.allSpecialClasses);
+    }
+
+    public Set<GBAFEClass> meleeSupportedClasses() {
 		Set<GBAFEClass> classes = new HashSet<GBAFEClass>(CharacterClass.allValidClasses);
 		classes.removeAll(CharacterClass.rangedOnlyClasses);
 		classes.removeAll(CharacterClass.allPacifistClasses);

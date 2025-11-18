@@ -190,7 +190,7 @@ public class RandomizeButtonListener implements Listener {
 
         if (mainView.romInfo.getWriteLogging().getSelection()) {
             try {
-                DebugPrinter.registerListener(new LoggingDebugListener(baseBundle.seed), "logFile");
+                DebugPrinter.registerListener(new LoggingDebugListener(romPath+"_Log.txt"), "logFile");
             } catch (IOException e) {
                 // do nothing for now
             }

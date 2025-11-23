@@ -110,7 +110,7 @@ public class GBASlotAdjustmentService extends AbstractGBARandomizerComponent {
 			DebugPrinter.log(key, "Demoting [" + textData.getStringAtIndex(fill.getNameIndex(), true) + "]");
 			// Demote Fill.
 			if (alreadyChosenTargetClass == null) {
-                List<GBAFEClassData> demotionOptions = classData.demotionOptions(fill.getClassID());
+                List<GBAFEClassData> demotionOptions = classData.demotionOptions(fillSourceClass.getID());
                 DebugPrinter.log(key, "Demotion Options: [" + String.join(", ", demotionOptions.stream().map(charClass -> (textData.getStringAtIndex(charClass.getNameIndex(), true))).collect(Collectors.toList())) + "]");
                 if (!demotionOptions.isEmpty()) {
                     alreadyChosenTargetClass = demotionOptions.get(rng.nextInt(demotionOptions.size()));

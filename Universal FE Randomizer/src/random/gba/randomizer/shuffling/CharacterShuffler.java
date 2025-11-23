@@ -146,7 +146,7 @@ public class CharacterShuffler extends AbstractGBARandomizerComponent {
             // Due to Promotion / Demotion, the output of the targetClass might be different from what was passed into this method
             GBAFEClassData targetClassCurrentSlot = updateBases(linkedSlot, crossGameData, targetClassId, targetClass, sourceClass, linkedSlot.getLevel());
             int targetClassIdCurrentSlot = targetClassCurrentSlot.getID();
-            linkedSlot.setGrowths(autolevelingParameters.growthMode.getGrowthsByMode(linkedSlot.getGrowths(), crossGameData.growths));
+            linkedSlot.setGrowths(autolevelingParameters.growthMode.getGrowthsByMode(linkedSlot.getGrowths(), crossGameData.growths.subtract(targetClassCurrentSlot.getGrowths())));
 
 			updateWeaponRanks(linkedSlot, crossGameData, sourceClass, targetClassCurrentSlot);
 			linkedSlot.setConstitution(crossGameData.constitution - targetClassCurrentSlot.getCON());

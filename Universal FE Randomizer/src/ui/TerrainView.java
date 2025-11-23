@@ -231,7 +231,7 @@ public class TerrainView extends YuneView<TerrainOptions> {
     public TerrainOptions getOptions() {
         TerrainOptions options = new TerrainOptions();
         if (!enableButton.getSelection()) {
-            return options;
+            return null;
         }
 
         options.enabled = true;

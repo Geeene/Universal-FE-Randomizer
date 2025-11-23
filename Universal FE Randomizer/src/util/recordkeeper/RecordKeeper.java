@@ -12,7 +12,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class RecordKeeper {
-	
+
+    public String path;
+
 	private class Entry {
 		List<String> allKeys;
 		Map<String, String> originalValues;
@@ -167,6 +169,7 @@ public class RecordKeeper {
 	}
 	
 	public Boolean exportRecordsToHTML(String outputPath) {
+        this.path = outputPath;
 		try {
 			OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(outputPath), Charset.forName("UTF-8").newEncoder());
 			writer.write("<html><meta http-equiv=\"Content-Type\" content = \"text/html; charset=utf-8\" /><head><style>\n");

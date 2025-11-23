@@ -39,6 +39,9 @@ import util.DiffCompiler;
 import util.FreeSpaceManager;
 import util.SeedGenerator;
 import util.OptionRecorder.GBAOptionBundle;
+import util.recordkeeper.ChangelogBuilder;
+import util.recordkeeper.ChangelogSection;
+import util.recordkeeper.ChangelogTable;
 import util.recordkeeper.RecordKeeper;
 
 /**
@@ -275,6 +278,9 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 			updateStatusString("Done!");
 			updateProgress(1);
 			notifyCompletion(recordKeeper, null);
+            if (allOptions.raceMode) {
+                recordCharactersForRacing();
+            }
             targetFileHandler.close();
 		} catch (RandomizationStoppedException e) {
 			notifyError(e.getMessage());
@@ -875,15 +881,49 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	 */
 	public void recordPostRandomizationState() {
 		charData.recordCharacters(recordKeeper, false, classData, itemData, textData);
-		classData.recordClasses(recordKeeper, false, classData, textData, promotionData);
-		itemData.recordWeapons(recordKeeper, false, classData, textData, targetFileHandler);
-		chapterData.recordChapters(recordKeeper, false, charData, classData, itemData, textData);
-		paletteData.recordUpdatedPalettes(recordKeeper, charData, classData, textData);
+        classData.recordClasses(recordKeeper, false, classData, textData, promotionData);
+        itemData.recordWeapons(recordKeeper, false, classData, textData, targetFileHandler);
+        chapterData.recordChapters(recordKeeper, false, charData, classData, itemData, textData);
+        paletteData.recordUpdatedPalettes(recordKeeper, charData, classData, textData);
 
-		recordKeeper.sortKeysInCategory(CharacterDataLoader.RecordKeeperCategoryKey);
-		recordKeeper.sortKeysInCategory(ClassDataLoader.RecordKeeperCategoryKey);
-		recordKeeper.sortKeysInCategory(ItemDataLoader.RecordKeeperCategoryWeaponKey);
-	}
+        recordKeeper.sortKeysInCategory(CharacterDataLoader.RecordKeeperCategoryKey);
+        recordKeeper.sortKeysInCategory(ClassDataLoader.RecordKeeperCategoryKey);
+        recordKeeper.sortKeysInCategory(ItemDataLoader.RecordKeeperCategoryWeaponKey);
+    }
+
+    private void recordCharactersForRacing() {
+        ChangelogBuilder builder = new ChangelogBuilder();
+        ChangelogSection onlySection = new ChangelogSection("only");
+        builder.addElement(onlySection);
+
+        ChangelogTable table = new ChangelogTable(19, new String[]{"Name", "Replacement", "Class", "Level", "Base HP", "Base POW", "Base SKL", "Base SPD", "Base LCK", "Base DEF", "Base RES", "HP Growth", "POW Growth", "SKL Growth", "SPD Growth", "LCK Growth", "DEF Growth", "RES Growth", "CON"}, "charTable");
+        for (GBAFECharacterData playableCharacter : charData.playableCharacters()) {
+            GBAFEClassData characterClass = classData.classForID(playableCharacter.getClassID());
+            table.addRow(new String[] {playableCharacter.displayString(), textData.getStringAtIndex(playableCharacter.getNameIndex(), true),
+                    textData.getStringAtIndex(characterClass.getNameIndex(), true),
+                    String.valueOf(playableCharacter.getLevel()),
+                    String.valueOf(characterClass.getBaseHP() + playableCharacter.getBaseHP()),
+                    String.valueOf(characterClass.getBaseSTR() + playableCharacter.getBaseSTR()),
+                    String.valueOf(characterClass.getBaseSKL() + playableCharacter.getBaseSKL()),
+                    String.valueOf(characterClass.getBaseSPD() + playableCharacter.getBaseSPD()),
+                    String.valueOf(characterClass.getBaseLCK() + playableCharacter.getBaseLCK()),
+                    String.valueOf(characterClass.getBaseDEF() + playableCharacter.getBaseDEF()),
+                    String.valueOf(characterClass.getBaseRES() + playableCharacter.getBaseRES()),
+                    String.valueOf(playableCharacter.getHPGrowth()),
+                    String.valueOf(playableCharacter.getSTRGrowth()),
+                    String.valueOf(playableCharacter.getSKLGrowth()),
+                    String.valueOf(playableCharacter.getSPDGrowth()),
+                    String.valueOf(playableCharacter.getLCKGrowth()),
+                    String.valueOf(playableCharacter.getDEFGrowth()),
+                    String.valueOf(playableCharacter.getRESGrowth()),
+                    String.valueOf(characterClass.getCON() + playableCharacter.getConstitution())
+            });
+        }
+
+
+        onlySection.addElement(table);
+        builder.writeToPath(targetPath.replace(".gba", "_RacingLog.html"));
+    }
 
 	/**
 	 * Initialize the Record Keeper including the recording of the Selected Options.

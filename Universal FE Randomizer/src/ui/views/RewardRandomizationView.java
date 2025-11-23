@@ -192,10 +192,10 @@ public class RewardRandomizationView extends YuneView<RewardOptions> {
         if (GameType.FE4.equals(type)) {
             return new RewardOptions(randomizeChestVillageRewards.getSelection());
         } else if (GameType.FE9.equals(type)) {
-            return new RewardOptions(rewardMode, randomRewardsButton.getSelection(), enemyDropsButton.getSelection() == true ? enemyDropChanceSpinner.getSelection() : 0);
+            return new RewardOptions(rewardMode, randomRewardsButton.getSelection(), enemyDropsButton.getSelection() ? enemyDropChanceSpinner.getSelection() : 0);
         }
 
-        return new RewardOptions(randomizeChestVillageRewards.getSelection(), enemyDropsButton == null ? 0 : enemyDropChanceSpinner.getSelection());
+        return new RewardOptions(randomizeChestVillageRewards.getSelection(), enemyDropsButton.getSelection() ? enemyDropChanceSpinner.getSelection() : 0);
     }
 
 }

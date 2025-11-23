@@ -34,7 +34,7 @@ public class AutoLevelingParametersView extends YuneView<AutolevelingParameters>
 
 	@Override
 	public String getGroupTitle() {
-		return "Recruitment";
+		return "Autoleveling";
 	}
 
 	@Override

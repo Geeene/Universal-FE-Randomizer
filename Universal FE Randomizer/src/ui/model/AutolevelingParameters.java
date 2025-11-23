@@ -17,7 +17,7 @@ public class AutolevelingParameters implements RecordableOption {
             return getGrowthsByMode(slot.getGrowths(), fill.getGrowths());
         }
         public GBAFEStatDto getGrowthsByMode(GBAFEStatDto slot, GBAFEStatDto fill) {
-            switch(this) {
+            switch (this) {
                 case USE_SLOT:
                     return slot;
                 case RELATIVE_TO_SLOT:

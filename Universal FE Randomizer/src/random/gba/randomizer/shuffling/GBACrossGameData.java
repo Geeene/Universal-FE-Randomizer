@@ -37,6 +37,7 @@ public class GBACrossGameData {
 	public int eyeY;
 	public int mouthX;
 	public int mouthY;
+    public int weight;
 
 	/**
 	 * If this is a non-null value, it means that the user wants the character to be fixed in that slot.

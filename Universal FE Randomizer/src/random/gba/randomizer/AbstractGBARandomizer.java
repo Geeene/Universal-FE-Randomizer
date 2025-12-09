@@ -775,9 +775,11 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 	}
 
 	protected void makeDoorKeyUnbreakable() {
-		GBAFEItemData doorKey = itemData.getDoorKey();
-		doorKey.applyEffect(WeaponEffects.UNBREAKABLE, itemData, null, null);
-	}
+        if (!allOptions.raceMode) {
+            GBAFEItemData doorKey = itemData.getDoorKey();
+            doorKey.applyEffect(WeaponEffects.UNBREAKABLE, itemData, null, null);
+        }
+    }
 
 	/**
 	 * Loops through all ChapterUnit entries and ensures that all characters that have a staff rank have atleast one item that is a staff.
@@ -817,7 +819,7 @@ public abstract class AbstractGBARandomizer extends Randomizer {
 		// Some characters have discrepancies between character data and chapter data.
 		// We'll try to address that before we get to any modifications.
 		charData.applyLevelCorrectionsIfNecessary();
-		itemData.prepareForRandomization();
+		itemData.prepareForRandomization(gameType, diffCompiler);
 		addNewPromotions();
 	}
 	

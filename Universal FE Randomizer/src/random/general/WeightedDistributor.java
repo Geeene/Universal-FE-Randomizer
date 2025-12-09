@@ -1,10 +1,6 @@
 package random.general;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 public class WeightedDistributor<T> {
 	
@@ -15,6 +11,26 @@ public class WeightedDistributor<T> {
 		itemList = new ArrayList<T>();
 		itemSet = new HashSet<T>();
 	}
+
+    public static WeightedDistributor of(Collection c) {
+        WeightedDistributor pd = new WeightedDistributor();
+        for (Object item : c) {
+            pd.addItem(item, 1);
+        }
+        return pd;
+    }
+
+    public void addAll(T... items) {
+        for (T item : items) {
+            addItem(item, 1);
+        }
+    }
+
+    public void addAll(List<T> items) {
+        for (T item : items) {
+            addItem(item, 1);
+        }
+    }
 	
 	public WeightedDistributor(WeightedDistributor<T> original) {
 		itemList = new ArrayList<T>();
@@ -45,7 +61,13 @@ public class WeightedDistributor<T> {
 		int randomIndex = rng.nextInt(itemList.size());
 		return itemList.get(randomIndex);
 	}
-	
+
+	public T getAndRemoveRandomItem(Random rng) {
+        T item = getRandomItem(rng);
+        removeItem(item);
+        return item;
+	}
+
 	public Set<T> possibleResults() {
 		return itemSet;
 	}

@@ -12,6 +12,7 @@ import random.gba.randomizer.service.ItemAssignmentService;
 import random.gba.randomizer.shuffling.data.GBAFEPortraitData;
 import random.gba.randomizer.shuffling.data.PortraitFormat;
 import random.general.PoolDistributor;
+import random.general.WeightedDistributor;
 import ui.model.CharacterShufflingOptions;
 import ui.model.CharacterShufflingOptions.ShuffleLevelingMode;
 import util.*;
@@ -69,13 +70,18 @@ public class CharacterShuffler extends AbstractGBARandomizerComponent {
 	}
 
 	private void shuffleRandomly(List<GBACrossGameData> availableChars, Set<Integer> forcedSlots) {
-		PoolDistributor<GBACrossGameData> distributor = new PoolDistributor<>();
-		distributor.addAll(availableChars);
+		WeightedDistributor<GBACrossGameData> distributor = new WeightedDistributor<>();
+        for (GBACrossGameData availableChar : availableChars) {
+            distributor.addItem(availableChar, availableChar.weight);
+        }
+
+        distributor.addAll(availableChars);
 
 		// Don't include playable post game characters into the ones that could be replaced,
 		// as most files probably won't be played enough to unlock those anyway.
 		List<GBAFECharacterData> characterPool = new ArrayList<GBAFECharacterData>(
 				charData.canonicalPlayableCharacters(false));
+        Collections.shuffle(characterPool);
 
 		for (GBAFECharacterData slot : characterPool) {
 
@@ -88,7 +94,7 @@ public class CharacterShuffler extends AbstractGBARandomizerComponent {
 			}
 
 			// The character should be replaced, get a random character to shuffle in
-			GBACrossGameData crossGameData = distributor.getRandomItem(rng, true);
+			GBACrossGameData crossGameData = distributor.getAndRemoveRandomItem(rng);
 			if (crossGameData == null) {
 				// If no more character to find, then stop
 				break;

@@ -7,6 +7,8 @@ import fedata.gba.GBAFECharacterData;
 import fedata.gba.GBAFEClassData;
 import fedata.gba.GBAFEItemData;
 import fedata.gba.GBAFESpellAnimationCollection;
+import fedata.gba.fe6.FE6Data;
+import fedata.gba.fe8.FE8Data;
 import fedata.gba.general.GBAFEClass;
 import fedata.gba.general.GBAFEItem;
 import fedata.gba.general.GBAFEItemProvider;
@@ -14,6 +16,8 @@ import fedata.gba.general.WeaponRanks;
 import fedata.gba.general.GBAFEPromotionItem;
 import fedata.gba.general.WeaponRank;
 import fedata.gba.general.WeaponType;
+import fedata.general.FEBase;
+import fedata.general.FEBase.GameType;
 import io.FileHandler;
 import util.AddressRange;
 import util.ByteArrayBuilder;
@@ -54,7 +58,7 @@ public class ItemDataLoader {
 	private Map<String, Long> promotionItemAddressPointers;
 	private Map<String, List<Byte>> promotionClassLists;
 	private Map<Integer, List<GBAFEPromotionItem>> promotionItemsForClassIDs;
-	
+
 	public static final String RecordKeeperCategoryWeaponKey = "Weapons";
 	
 	public ItemDataLoader(GBAFEItemProvider provider, FileHandler handler, FreeSpaceManager freeSpace) {
@@ -62,7 +66,7 @@ public class ItemDataLoader {
 		
 		this.freeSpace = freeSpace;
 		this.provider = provider;
-		
+
 		long baseAddress = FileReadHelper.readAddress(handler, provider.itemTablePointer());
 		originalTableOffset = baseAddress;
 		for (GBAFEItem item : provider.allItems()) {
@@ -158,7 +162,7 @@ public class ItemDataLoader {
 		}
 	}
 	
-	public void prepareForRandomization() {
+	public void prepareForRandomization(GameType type, DiffCompiler diffCompiler) {
 		// Translate existing effectiveness pointers to our new ones.
 		for (GBAFEItemData itemData : itemMap.values()) {
 			long ptr = itemData.getEffectivenessPointer();
@@ -171,6 +175,25 @@ public class ItemDataLoader {
 				itemData.setEffectivenessPointer(newPtr);
 			}
 		}
+
+        // Delphi/Fili Shield uses a hard coded pointer check. Since we create
+        // a new effectiveness pointer for fliers, we need to overwrite that check
+        // too.
+        int delphiPointer = 0;
+        long oldAddress = 0;
+        long flierEffectivenessAddress = offsetsForAdditionalData.get(AdditionalData.FLIERS_EFFECT);
+        if (type == GameType.FE8) {
+            oldAddress = FE8Data.FlierEffectivenessPointer;
+            delphiPointer = FE8Data.FiliShieldEffectivenessCheckPointer;
+        }
+
+        if (delphiPointer != 0) {
+            diffCompiler.addDiff(new Diff(delphiPointer,
+                    4,
+                    WhyDoesJavaNotHaveThese.byteArrayFromLongValue(flierEffectivenessAddress + 0x8000000L, true, 4),
+                    WhyDoesJavaNotHaveThese.byteArrayFromLongValue(oldAddress, true, 4)));
+        }
+
 	}
 	
 	public void addClassToPromotionItem(GBAFEPromotionItem promotionItem, int classID) {

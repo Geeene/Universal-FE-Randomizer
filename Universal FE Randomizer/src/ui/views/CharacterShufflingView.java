@@ -257,8 +257,7 @@ public class CharacterShufflingView extends YuneView<CharacterShufflingOptions> 
 		if (includeFE8Button.getSelection()) {
 			shuffles.add("fe8chars.json");
 		}
-		
-		
+
 		return new CharacterShufflingOptions(levelingMode, isEnabled, chance, shuffles, changeDescriptionButton.getSelection());
 	}
 

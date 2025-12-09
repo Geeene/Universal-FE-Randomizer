@@ -104,6 +104,8 @@ public class FE8Randomizer extends AbstractGBARandomizer {
         }
 
         super.makePreliminaryAdjustments();
+        // Automatically unlock Fast enemy movement by pressing A
+        diffCompiler.addDiff(new Diff(0x794EE, 2, new byte[]{0,0}, null));
     }
 
     @Override

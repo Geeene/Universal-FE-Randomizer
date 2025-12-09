@@ -53,12 +53,11 @@ public class BasesRandomizer extends AbstractGBARandomizerComponent {
 			
 			if (baseTotal > 0) {	
 				do {
-					randomNum = rng.nextInt(10);
+					randomNum = rng.nextInt(8);
 					int amount = rng.nextInt(3) + 1;
 					
 					switch (randomNum) {
 					case 0:
-					case 5:
 					case 1:
 						if (!WhyDoesJavaNotHaveThese.isValueBetween(newHPBase + amount, -1 * charClass.getBaseHP(), charClass.getMaxHP() - charClass.getBaseHP())) {
 							continue;
@@ -83,8 +82,7 @@ public class BasesRandomizer extends AbstractGBARandomizerComponent {
 						}
 						newSPDBase += amount;
 						break;
-					case 8:
-					case 9:
+					case 5:
 						if (!WhyDoesJavaNotHaveThese.isValueBetween(newLCKBase + amount, -1 * charClass.getBaseLCK(), charClass.getMaxLCK() - charClass.getBaseLCK())) {
 							continue;
 						}
